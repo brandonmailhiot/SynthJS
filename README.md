@@ -11,7 +11,7 @@ let melody = {
    notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4'  //default is an empty string
 }
 ~~~
-All properties are optional, since they each have defaults. However, the `notes` property is highly recommended.
+All properties are optional, although the `notes` property is highly recommended.
 Next, pass the melody object to Offbeat's `play` method.
 ~~~
 Offbeat.play(melody)
