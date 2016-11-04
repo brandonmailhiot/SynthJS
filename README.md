@@ -1,5 +1,5 @@
 # Offbeat
-Create melodies quickly with the Web Audio API.
+Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.github.io/Offbeat/
 
 ## Syntax
 First, create a melody object.
@@ -38,5 +38,7 @@ These notes are repeated across several octaves. In Offbeat, D natural in the 5t
 G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`.
 
 ### Putting duration and pitch together
-General format: `[note_duration][space][note_pitch][comma][space]`   
-In practice: `h d5, q g_3, q c#6` etc. 
+General format: `[note_duration][space][note_pitch][comma]`   
+In practice: `h d5, q g_3, q c#6` etc.
+
+_Note: any amount of tabs, newlines, or whitespace can appear after the comma, but not between the duration and pitch_
