@@ -5,9 +5,9 @@ Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.gith
 First, create a melody object.
 ~~~
 let melody = {  
-   bpm: 128,                                              //default is 60
+   tempo: 128,                                            //default is 60
    instrument: 'square',                                  //default is 'sine'
-   timeSig: 1,                                            //default is 1
+   timeSig: 4/4,                                          //default is 4/4
    notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4'  //default is an empty string
 }
 ~~~
