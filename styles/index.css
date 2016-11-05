@@ -12,10 +12,16 @@ h1 {
 }
 
 .flex-container {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
   max-width: 1200px;
-  flex-direction: row;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
 }
 
 .container {
@@ -50,9 +56,11 @@ h1 {
   border-radius: 3px;
   margin: 10px auto;
   cursor: pointer;
-  transition-duration: 0.1s;
+  -webkit-transition-duration: 0.1s;
+          transition-duration: 0.1s;
 }
 
 .play-btn:active {
-  transform: scale(0.9);
+  -webkit-transform: scale(0.9);
+          transform: scale(0.9);
 }
