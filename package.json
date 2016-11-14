@@ -1,0 +1,26 @@
+{
+  "name": "offbeat",
+  "version": "1.0.0",
+  "description": "Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.github.io/Offbeat/",
+  "main": "lib/Offbeat.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blmgeo/Offbeat.git"
+  },
+  "author": "Brandon Mailhiot",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blmgeo/Offbeat/issues"
+  },
+  "homepage": "https://github.com/blmgeo/Offbeat#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2"
+  }
+}
