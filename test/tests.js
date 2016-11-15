@@ -1,6 +1,5 @@
-'use strict'
 const assert = require('chai').assert,
-Offbeat = require('../lib/Offbeat')
+Offbeat = require('../lib/Offbeat.min.js')
 
 describe('Offbeat declared without melody object', () => {
 
@@ -53,5 +52,5 @@ describe('Offbeat declared without melody object', () => {
 })
 
 describe('Offbeat declared with melody object', () => {
-  
+
 })
