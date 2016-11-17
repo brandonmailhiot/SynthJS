@@ -59,16 +59,42 @@ Create an instance of Offbeat. Object properties are set to default if a melody 
 __Input:__ no parameters  
 __Return:__ no return value  
 
-Output audio through a single hardware audio context, which closes after the last oscillator node ends.  
+Output audio through a single audio context, which closes after the last oscillator node ends.
+
+### layerInstance.playReverse()  
+__Input:__ no parameters  
+__Return:__ no return value  
+
+Output audio in reverse.
+
+### layerInstance.playLoop()
+__Input:__ no parameters
+__Return:__ no return value
+
+Loop audio until .stop() is called.
+
+### layerInstance.playLoop()
+__Input:__ no parameters
+__Return:__ no return value
+
+Repeat audio in reverse until .stop() is called.
 
 ### layerInstance.stop()  
 __Input:__ no parameters  
 __Return:__ no return value  
 
-Stop playback of audio after the end of the current oscillator node.
+Close current audio context and end looping.
 
 ### layerInstance.time()  
 __Input:__ no parameters  
 __Return:__ float  
 
 Calculate the duration of audio in seconds.
+
+### layerInstance.ended()
+__Input:__ no parameters  
+__Return:__ no return value 
+
+Ends current audio loop.
+
+
