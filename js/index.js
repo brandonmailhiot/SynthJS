@@ -76,36 +76,33 @@ $('#starwars .time').html('<strong>Time:</strong> ' + starwars.time().toFixed(2)
 $('#ghostbusters .time').html('<strong>Time:</strong> ' + ghostbusters.time().toFixed(2) + ' seconds')
 $('#harrypotter .time').html('<strong>Time:</strong> ' + harrypotter.time().toFixed(2) + ' seconds')
 
-function customOffbeatLayer () {
-  const tempo = +$('#try-it .tempo').val()       || 60,
-  timeSig     = $('#try-it .timeSig').val()      || '4/4',
-  instrument  = $('#try-it .instrument').val()   || 'sine',
-  notes       = $('#try-it .composition').text() || '',
-  tryIt = Offbeat.layer({
-    tempo: tempo,
-    timeSig: timeSig,
-    instrument: instrument,
-    notes: notes
-  })
-  $('#try-it .stop-btn').click(() => { tryIt.stop() })
-  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
-
-  return tryIt
+const tryItOptions = () => {
+  return {
+    tempo: +$('#try-it .tempo').val() || 60,
+    timeSig: $('#try-it .timeSig').val() || '4/4',
+    instrument: $('#try-it .instrument').val() || 'sine',
+    notes: $('#try-it .composition').text() || ''
+  }
 }
 
+const tryIt = Offbeat.layer(tryItOptions())
+
 $('#try-it .play-btn').click(() => {
-  const tryIt = customOffbeatLayer()
-  tryIt.play()
-
-
+  tryIt.update(tryItOptions()).play()
+  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
 })
 
 $('#try-it .playLoop-btn').click(() => {
-  const tryIt = customOffbeatLayer()
-  tryIt.playLoop()
+  tryIt.update(tryItOptions()).playLoop()
+  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
 })
 
 $('#try-it .reverse-btn').click(() => {
-  const tryIt = customOffbeatLayer()
-  tryIt.playReverse()
+  tryIt.update(tryItOptions()).playReverse()
+  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
+})
+
+$('#try-it .stop-btn').click(() => {
+  tryIt.stop()
+  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
 })
