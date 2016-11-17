@@ -55,7 +55,7 @@ __Return:__ instance of Offbeat
 
 Create an instance of Offbeat. Object properties are set to default if a melody object is not provided.  
 
-### layerInstance.layer(melody)  
+### layerInstance.update(melody)  
 __Input:__ melody object  
 __Return:__ updated instance 
 
