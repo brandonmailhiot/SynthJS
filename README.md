@@ -50,10 +50,16 @@ const melody = {
 const layer = Offbeat.layer(melody) 
 ~~~
 ### Offbeat.layer(melody)  
-__Input:__ melody object (optional)  
+__Input:__ melody object   
 __Return:__ instance of Offbeat  
 
 Create an instance of Offbeat. Object properties are set to default if a melody object is not provided.  
+
+### layerInstance.layer(melody)  
+__Input:__ melody object  
+__Return:__ updated instance 
+
+Update current instance of Offbeat.
 
 ### layerInstance.play()  
 __Input:__ no parameters  
