@@ -42,14 +42,24 @@ describe('Offbeat declared with melody object', () => {
   })
 
   describe('#time()', () => {
-    it('should return the default time', () => {
+    it('should return time of audio in seconds', () => {
       let time = Offbeat.layer({
         tempo: 120,
         timeSig: '12/8',
         notes: 't a1, t a1, t a1'
-      }).time()
-      assert.equal(time, 0)
+      }).time().toFixed(2)
+      assert.equal(time, 1.50)
     })
   })
 
+  describe('#calculate_time(1)', () => {
+    it('should return 6 seconds', () => {
+      let time = Offbeat.layer({
+        tempo: 120,
+        timeSig: '12/8',
+        notes: 't a1, t a1, t a1'
+      }).calculate_time(1)
+      assert.equal(time, 6)
+    })
+  })
 })
