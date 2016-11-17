@@ -86,20 +86,20 @@ function customOffbeatLayer () {
   })
   $('#try-it .stop-btn').click(() => { tryIt.stop() })
   $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
+
+  return tryIt
 }
 
 $('#try-it .play-btn').click(() => {
-  customOffbeatLayer()
+  const tryIt = customOffbeatLayer()
   tryIt.play()
 
 
 })
 
 $('#try-it .reverse-btn').click(() => {
-  customOffbeatLayer()
+  const tryIt = customOffbeatLayer()
   tryIt.playReverse()
-
-
 })
 
 },{"../lib/Offbeat.js":2}],2:[function(require,module,exports){
@@ -311,20 +311,20 @@ Offbeat = {
 				if (layer.hasOwnProperty(key) && typeof layer[key] === typeof options[key]) {
 					layer[key] = options[key]
 				}
-				else throw 'Property "' + key + '" is invalid'
+				else throw new Error('Property "' + key + '" is invalid')
 			}
 		}
 
 		const instanceLayer = Object.assign(Object.create(this), layer)
 		instanceLayer.beatsPerMeasure = parseInt(instanceLayer.timeSig, 10)
 		instanceLayer.notesParsed = this.parse_notes(instanceLayer.notes)
+		instanceLayer.isStopped = false
 		return instanceLayer
 	},
 
 	play() {
-		if (this.notes === '') throw 'Property "notes" is invalid'
+		if (this.notes === '') throw new Error('Property "notes" is invalid')
 		const context = new (window.AudioContext || window.webkitAudioContext)()
-		this.isStopped = false
 		this.generate_audio(context, 0)
 	},
 
@@ -332,6 +332,20 @@ Offbeat = {
 		this.notesParsed.reverse()
 		this.play()
 		setTimeout(() => { this.notesParsed.reverse() }, this.time() * 1000)
+	},
+
+	playRepeat() {
+		const playing = setInterval(() => {
+			if (this.isStopped) clearInterval(playing)
+			else this.play()
+		}, this.time() * 1000)
+	},
+
+	playReverseRepeat() {
+		const playing = setInterval(() => {
+			if (this.isStopped) clearInterval(playing)
+			else this.playReverse()
+		}, this.time() * 1000)
 	},
 
 	stop() {

@@ -85,16 +85,18 @@ function customOffbeatLayer () {
   })
   $('#try-it .stop-btn').click(() => { tryIt.stop() })
   $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
+
+  return tryIt
 }
 
 $('#try-it .play-btn').click(() => {
-  customOffbeatLayer()
+  const tryIt = customOffbeatLayer()
   tryIt.play()
 
 
 })
 
 $('#try-it .reverse-btn').click(() => {
-  customOffbeatLayer()
+  const tryIt = customOffbeatLayer()
   tryIt.playReverse()
 })

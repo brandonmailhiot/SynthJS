@@ -27,31 +27,29 @@ describe('Offbeat declared without melody object', () => {
       assert.equal(time, 4)
     })
   })
+})
 
-  describe('#parse_notes()', () => {
+describe('Offbeat declared with melody object', () => {
+
+  describe('#parse_notes(notes)', () => {
     it('should return array of notes', () => {
       let layer = Offbeat.layer({
-        notes: `
-        a b,
-        c d,
-        e f
-        `
+        notes: `a b, c d, e f`
       }),
-      notes = layer.parse_notes()
+      notes = layer.parse_notes(layer.notes)
       assert.deepEqual(notes, [['a','b'],['c','d'],['e','f']])
     })
   })
 
-  /* NOT PASSING
-  describe('#play()', () => {
-    it('should throw error', () => {
-      let layer = Offbeat.layer()
-      assert.throws(layer.play(), 'Property "notes" is invalid')
+  describe('#time()', () => {
+    it('should return the default time', () => {
+      let time = Offbeat.layer({
+        tempo: 120,
+        timeSig: '12/8',
+        notes: 't a1, t a1, t a1'
+      }).time()
+      assert.equal(time, 0)
     })
   })
-  */
-})
-
-describe('Offbeat declared with melody object', () => {
 
 })
