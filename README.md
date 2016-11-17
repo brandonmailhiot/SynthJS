@@ -68,16 +68,16 @@ __Return:__ no return value
 Output audio in reverse.
 
 ### layerInstance.playLoop()
-__Input:__ no parameters
-__Return:__ no return value
+__Input:__ no parameters  
+__Return:__ no return value  
 
 Loop audio until .stop() is called.
 
-### layerInstance.playLoop()
-__Input:__ no parameters
-__Return:__ no return value
+### layerInstance.playReverseLoop()
+__Input:__ no parameters  
+__Return:__ no return value  
 
-Repeat audio in reverse until .stop() is called.
+Loop audio in reverse until .stop() is called.
 
 ### layerInstance.stop()  
 __Input:__ no parameters  
