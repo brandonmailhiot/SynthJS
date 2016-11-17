@@ -295,12 +295,12 @@ Offbeat = {
 		oscillator.stop(this.context.currentTime + stopTime)
 
 		oscillator.onended = () => {
-			if (index < this.notesParsed.length - 1 && !this.isStopped) {
+			if (index < this.notesParsed.length - 1) {
 				index += 1
 				this.generate_audio(index)
 			}
 			else {
-				this.normalize()
+				this.ended()
 			}
 		}
 	},
@@ -330,7 +330,6 @@ Offbeat = {
 		instanceLayer.beatsPerMeasure = parseInt(instanceLayer.timeSig, 10)
 		instanceLayer.notesParsed = this.parse_notes(instanceLayer.notes)
 		instanceLayer.context = new (window.AudioContext || window.webkitAudioContext)()
-		instanceLayer.isStopped = false
 		instanceLayer.isLoop = false
 		return instanceLayer
 	},
@@ -356,8 +355,8 @@ Offbeat = {
 	},
 
 	stop() {
-		this.isStopped = true
 		this.isLoop = false
+		this.ended()
 	},
 
 	time() {
@@ -369,19 +368,12 @@ Offbeat = {
 		return time
 	},
 
-	normalize() {
+	ended() {
 		this.context.close().then(() => {
-			if (this.isLoop) {
-				this.context = new (window.AudioContext || window.webkitAudioContext)()
-				this.isStopped = false
-				this.play()
-			} else {
-				this.context = new (window.AudioContext || window.webkitAudioContext)()
-				this.isStopped = false
-				this.notesParsed = this.parse_notes(this.notes)
-			}
+			this.context = new (window.AudioContext || window.webkitAudioContext)()
+			if (this.isLoop) this.play()
+			else this.notesParsed = this.parse_notes(this.notes)
 		})
-
 	}
 }
 
