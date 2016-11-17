@@ -101,7 +101,7 @@ $('#try-it .play-btn').click(() => {
 
 })
 
-$('#try-it .playLoo-btn').click(() => {
+$('#try-it .playLoop-btn').click(() => {
   const tryIt = customOffbeatLayer()
   tryIt.playLoop()
 })
