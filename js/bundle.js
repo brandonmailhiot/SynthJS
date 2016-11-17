@@ -57,6 +57,10 @@ $('#starwars .play-btn').click(() => { starwars.play() })
 $('#ghostbusters .play-btn').click(() => { ghostbusters.play() })
 $('#harrypotter .play-btn').click(() => { harrypotter.play() })
 
+$('#starwars .playLoop-btn').click(() => { starwars.playLoop() })
+$('#ghostbusters .playLoop-btn').click(() => { ghostbusters.playLoop() })
+$('#harrypotter .playLoop-btn').click(() => { harrypotter.playLoop() })
+
 $('#starwars .reverse-btn').click(() => { starwars.playReverse() })
 $('#ghostbusters .reverse-btn').click(() => { ghostbusters.playReverse() })
 $('#harrypotter .reverse-btn').click(() => { harrypotter.playReverse() })
@@ -95,6 +99,11 @@ $('#try-it .play-btn').click(() => {
   tryIt.play()
 
 
+})
+
+$('#try-it .playLoo-btn').click(() => {
+  const tryIt = customOffbeatLayer()
+  tryIt.playLoop()
 })
 
 $('#try-it .reverse-btn').click(() => {
@@ -274,23 +283,25 @@ Offbeat = {
 		return notes.split(',').map(note => note.trim().split(' '))
 	},
 
-	generate_audio(context, index) {
-		const oscillator = context.createOscillator(),
+	generate_audio(index) {
+		const oscillator = this.context.createOscillator(),
 		stopTime = this.calculate_time( duration[this.notesParsed[index][0]] ),
 		pitch = frequency[this.notesParsed[index][1]]
 
-		oscillator.connect(context.destination)
+		oscillator.connect(this.context.destination)
 		oscillator.type = this.instrument
 		oscillator.frequency.value = pitch
 		oscillator.start(0)
-		oscillator.stop(context.currentTime + stopTime)
+		oscillator.stop(this.context.currentTime + stopTime)
 
 		oscillator.onended = () => {
 			if (index < this.notesParsed.length - 1 && !this.isStopped) {
 				index += 1
-				this.generate_audio(context, index)
+				this.generate_audio(index)
 			}
-			else context.close()
+			else {
+				this.normalize()
+			}
 		}
 	},
 
@@ -318,38 +329,35 @@ Offbeat = {
 		const instanceLayer = Object.assign(Object.create(this), layer)
 		instanceLayer.beatsPerMeasure = parseInt(instanceLayer.timeSig, 10)
 		instanceLayer.notesParsed = this.parse_notes(instanceLayer.notes)
+		instanceLayer.context = new (window.AudioContext || window.webkitAudioContext)()
 		instanceLayer.isStopped = false
+		instanceLayer.isLoop = false
 		return instanceLayer
 	},
 
 	play() {
 		if (this.notes === '') throw new Error('Property "notes" is invalid')
-		const context = new (window.AudioContext || window.webkitAudioContext)()
-		this.generate_audio(context, 0)
+		this.generate_audio(0)
 	},
 
 	playReverse() {
 		this.notesParsed.reverse()
 		this.play()
-		setTimeout(() => { this.notesParsed.reverse() }, this.time() * 1000)
 	},
 
-	playRepeat() {
-		const playing = setInterval(() => {
-			if (this.isStopped) clearInterval(playing)
-			else this.play()
-		}, this.time() * 1000)
+	playLoop() {
+		this.isLoop = true
+		this.play()
 	},
 
-	playReverseRepeat() {
-		const playing = setInterval(() => {
-			if (this.isStopped) clearInterval(playing)
-			else this.playReverse()
-		}, this.time() * 1000)
+	playReverseLoop() {
+		this.isLoop = true
+		this.playReverse()
 	},
 
 	stop() {
 		this.isStopped = true
+		this.isLoop = false
 	},
 
 	time() {
@@ -359,6 +367,21 @@ Offbeat = {
 			time += this.calculate_time(duration[note[0]])
 		})
 		return time
+	},
+
+	normalize() {
+		this.context.close().then(() => {
+			if (this.isLoop) {
+				this.context = new (window.AudioContext || window.webkitAudioContext)()
+				this.isStopped = false
+				this.play()
+			} else {
+				this.context = new (window.AudioContext || window.webkitAudioContext)()
+				this.isStopped = false
+				this.notesParsed = this.parse_notes(this.notes)
+			}
+		})
+
 	}
 }
 

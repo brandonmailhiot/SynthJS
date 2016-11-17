@@ -35,7 +35,7 @@ html, body {
   margin-bottom: 200px;
 }
 
-.play-btn, .stop-btn, .reverse-btn {
+.play-btn, .playLoop-btn, .stop-btn, .reverse-btn {
   font-family: 'Kaushan Script', cursive;
   font-size: 16px;
 }

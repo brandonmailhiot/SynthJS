@@ -56,6 +56,10 @@ $('#starwars .play-btn').click(() => { starwars.play() })
 $('#ghostbusters .play-btn').click(() => { ghostbusters.play() })
 $('#harrypotter .play-btn').click(() => { harrypotter.play() })
 
+$('#starwars .playLoop-btn').click(() => { starwars.playLoop() })
+$('#ghostbusters .playLoop-btn').click(() => { ghostbusters.playLoop() })
+$('#harrypotter .playLoop-btn').click(() => { harrypotter.playLoop() })
+
 $('#starwars .reverse-btn').click(() => { starwars.playReverse() })
 $('#ghostbusters .reverse-btn').click(() => { ghostbusters.playReverse() })
 $('#harrypotter .reverse-btn').click(() => { harrypotter.playReverse() })
@@ -94,6 +98,11 @@ $('#try-it .play-btn').click(() => {
   tryIt.play()
 
 
+})
+
+$('#try-it .playLoo-btn').click(() => {
+  const tryIt = customOffbeatLayer()
+  tryIt.playLoop()
 })
 
 $('#try-it .reverse-btn').click(() => {
