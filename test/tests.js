@@ -1,5 +1,6 @@
+'use strict'
 const assert = require('chai').assert,
-Offbeat = require('../lib/Offbeat.min.js')
+Offbeat = require('../lib/Offbeat.js')
 
 describe('Offbeat declared without melody object', () => {
 
@@ -8,7 +9,7 @@ describe('Offbeat declared without melody object', () => {
       let layer = Offbeat.layer()
       assert.propertyVal(layer, 'tempo', 60)
       assert.propertyVal(layer, 'instrument', 'sine')
-      assert.propertyVal(layer, 'timeSig', 4/4)
+      assert.propertyVal(layer, 'timeSig', '4/4')
       assert.propertyVal(layer, 'notes', '')
     })
   })
@@ -20,9 +21,9 @@ describe('Offbeat declared without melody object', () => {
     })
   })
 
-  describe('#get_time(1)', () => {
+  describe('#calculate_time(1)', () => {
     it('should return 4 seconds', () => {
-      let time = Offbeat.layer().get_time(1)
+      let time = Offbeat.layer().calculate_time(1)
       assert.equal(time, 4)
     })
   })

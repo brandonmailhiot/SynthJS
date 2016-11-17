@@ -1,39 +1,109 @@
 <!DOCTYPE html>
 <html>
-  <head lang='en-US'>
-    <meta charset='utf-8'>
-    <meta name='viewport' content='initial-scale=1'>
-    <title>Offbeat Examples</title>
-    <link href='styles/index.min.css' rel='stylesheet'>
-  </head>
+<head lang='en-US'>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='initial-scale=1'>
+  <title>Offbeat</title>
+  <link href="https://fonts.googleapis.com/css?family=Kaushan+Script" rel="stylesheet">
+  <link href='https://bootswatch.com/journal/bootstrap.min.css' rel='stylesheet'>
+  <link href='styles/index.min.css' rel='stylesheet'>
+</head>
 
-  <body>
-    <main class='flex-container'>
+<body data-spy="scroll" data-target=".navbar" data-offset="50">
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand name" href="https://www.github.com/blmgeo/Offbeat">Offbeat</a>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#samples">Samples <span class="sr-only">(current)</span></a></li>
+          <li><a href="#try-it">Try it</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <section id='samples' class='container'>
+    <h2 class='section-heading'>< Samples /></h2>
+    <div class='row'>
       <!-- Starwars -->
-      <section id='starwars' class='container'>
-        <h1>Star Wars</h1>
-        <div class='composition' spellcheck='false'></div>
+      <div id='starwars' class='col-sm-4'>
+        <h3 class='sample-heading'>Star Wars</h3>
+        <div class='well composition'></div>
         <p class='time'></p>
-        <button class='play-btn'>PLAY</button>
-        <button class='stop-btn'>STOP</button>
-      </section>
+        <div class="btn-group controls">
+          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+          <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
+        </div>
+      </div>
       <!-- Ghostbusters -->
-      <section id='ghostbusters' class='container'>
-        <h1>Ghostbusters</h1>
-        <div class='composition' spellcheck='false'></div>
+      <div id='ghostbusters' class='col-sm-4'>
+        <h3 class='sample-heading'>Ghostbusters</h3>
+        <div class='well composition'></div>
         <p class='time'></p>
-        <button class='play-btn'>PLAY</button>
-        <button class='stop-btn'>STOP</button>
-      </section>
+        <div class="btn-group controls">
+          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+          <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
+        </div>
+      </div>
       <!-- Harry Potter -->
-      <section id='harrypotter' class='container'>
-        <h1>Harry Potter</h1>
-        <div class='composition' spellcheck='false'></div>
+      <div id='harrypotter' class='col-sm-4'>
+        <h3 class='sample-heading'>Harry Potter</h3>
+        <div class='well composition'></div>
         <p class='time'></p>
-        <button class='play-btn'>PLAY</button>
-        <button class='stop-btn'>STOP</button>
-      </section>
-    </main>
-    <script src='js/bundle.js'></script>
-  </body>
+        <div class="btn-group controls">
+          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+          <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section id='try-it' class='container'>
+    <h2 class='section-heading'>< Try it /></h2>
+    <div class='row'>
+      <div class="form-group col-sm-4">
+        <label>tempo:</label>
+        <input class='form-control tempo' type='text' placeholder='e.g. 128'>
+      </div>
+      <div class="form-group col-sm-4">
+        <label>timeSig:</label>
+        <input class='form-control timeSig' type='text' placeholder='e.g. 4/4'>
+      </div>
+      <div class="form-group col-sm-4">
+        <label>instrument:</label>
+        <input class='form-control instrument' type='text' placeholder='e.g. square'>
+      </div>
+    </div>
+    <div class='row'>
+      <div class='col-sm-12'>
+        <label>notes:</label>
+        <div class='well composition' contenteditable="true" spellcheck="false"></div>
+        <p class='time'><strong>Time: </strong> 0.00 seconds</p>
+        <div class="btn-group controls">
+          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+          <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+  crossorigin="anonymous"></script>
+  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+  <script src='js/bundle.js'></script>
+</body>
 </html>

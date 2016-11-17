@@ -4,100 +4,38 @@ html, body {
   font-family: sans-serif;
   padding: 0;
   margin: 0;
-  background-color: #e9e9ee;
+  overflow-x: hidden;
 }
 
-h1 {
-  margin: 0;
-}
-
-.flex-container {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-wrap: wrap;
-      flex-wrap: wrap;
-  max-width: 1024px;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
-      -ms-flex-direction: row;
-          flex-direction: row;
-  margin: 0 auto;
-}
-
-.container {
-  height: auto;
-  width: 300px;
-  margin: 20px;
+.sample-heading {
   text-align: center;
-  background: #fff;
-  padding: 10px;
-  border-radius: 3px;
 }
 
 .composition {
-  height: 200px;
-  width: 300px;
-  margin-top: 10px;
-  margin-left: -10px;
-  border: none;
-  padding: 10px;
-  background-color: #333;
-  color: #fff;
-  text-align: left;
-  font-family: monospace;
-  font-size: 14px;
   white-space: pre;
-  overflow-y: auto;
 }
 
-.play-btn {
-  display: inline-block;
-  float: left;
-  height: 30px;
-  width: 130px;
-  border: none;
-  outline: none;
-  background-color: #49d;
-  color: #fff;
-  border-radius: 3px;
-  margin: 10px auto;
-  cursor: pointer;
-  -webkit-transition-duration: 0.1s;
-          transition-duration: 0.1s;
+.section-heading {
+  margin-top: 150px;
+  margin-bottom: 50px;
+  text-align: center;
+  font-family: 'Kaushan Script', cursive;
 }
 
-.play-btn:hover {
-  background-color: #38c;
+.time {
+  text-align: center;
 }
 
-.play-btn:active {
-  -webkit-transform: scale(0.95);
-          transform: scale(0.95);
+.controls {
+  left: 50%;
+  transform: translate(-50%, 0%);
 }
 
-.stop-btn {
-  display: inline-block;
-  float: right;
-  height: 30px;
-  width: 130px;
-  border: none;
-  outline: none;
-  background-color: #fff;
-  border: 1px solid #bbb;
-  color: #000;
-  border-radius: 3px;
-  margin: 10px auto;
-  cursor: pointer;
-  -webkit-transition-duration: 0.1s;
-          transition-duration: 0.1s;
+#try-it {
+  margin-bottom: 200px;
 }
 
-.stop-btn:hover {
-  background-color: #eee;
-}
-
-.stop-btn:active {
-  -webkit-transform: scale(0.95);
-          transform: scale(0.95);
+.play-btn, .stop-btn, .reverse-btn {
+  font-family: 'Kaushan Script', cursive;
+  font-size: 16px;
 }
