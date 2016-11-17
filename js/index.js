@@ -1,15 +1,13 @@
-const Offbeat = require('../lib/Offbeat.min.js'),
+const Offbeat = require('../lib/Offbeat.js'),
 
 starwars_melody =
 `t g3, t g3, t g3,
 h c4, h g4,
-
 t f4, t e4, t d4,
 h c5, q g4,
 
 t f4, t e4, t d4,
 h c5, q g4,
-
 t f4, t e4, t f4,
 h d4`,
 
@@ -43,27 +41,60 @@ starwars = Offbeat.layer({
 
 ghostbusters = Offbeat.layer({
   tempo: 116,
+  instrument: 'triangle',
   notes: ghostbusters_melody
 })
 
 harrypotter = Offbeat.layer({
   tempo: 60,
   timeSig: '3/8',
+  instrument: 'square',
   notes: harrypotter_melody
 })
 
-document.querySelector('#starwars button.play-btn').addEventListener('click', () => { starwars.play() })
-document.querySelector('#ghostbusters button.play-btn').addEventListener('click', () => { ghostbusters.play() })
-document.querySelector('#harrypotter button.play-btn').addEventListener('click', () => { harrypotter.play() })
+$('#starwars .play-btn').click(() => { starwars.play() })
+$('#ghostbusters .play-btn').click(() => { ghostbusters.play() })
+$('#harrypotter .play-btn').click(() => { harrypotter.play() })
 
-document.querySelector('#starwars button.stop-btn').addEventListener('click', () => { starwars.stop() })
-document.querySelector('#ghostbusters button.stop-btn').addEventListener('click', () => { ghostbusters.stop() })
-document.querySelector('#harrypotter button.stop-btn').addEventListener('click', () => { harrypotter.stop() })
+$('#starwars .reverse-btn').click(() => { starwars.playReverse() })
+$('#ghostbusters .reverse-btn').click(() => { ghostbusters.playReverse() })
+$('#harrypotter .reverse-btn').click(() => { harrypotter.playReverse() })
 
-document.querySelector('#starwars .composition').innerHTML = starwars_melody
-document.querySelector('#ghostbusters .composition').innerHTML = ghostbusters_melody
-document.querySelector('#harrypotter .composition').innerHTML = harrypotter_melody
+$('#starwars .stop-btn').click(() => { starwars.stop() })
+$('#ghostbusters .stop-btn').click(() => { ghostbusters.stop() })
+$('#harrypotter .stop-btn').click(() => { harrypotter.stop() })
 
-document.querySelector('#starwars p.time').innerHTML = '<strong>Time:</strong> ' + starwars.time().toFixed(2) + ' seconds'
-document.querySelector('#ghostbusters p.time').innerHTML = '<strong>Time:</strong> ' + ghostbusters.time().toFixed(2) + ' seconds'
-document.querySelector('#harrypotter p.time').innerHTML = '<strong>Time:</strong> ' + harrypotter.time().toFixed(2) + ' seconds'
+$('#starwars .composition').text(starwars_melody)
+$('#ghostbusters .composition').text(ghostbusters_melody)
+$('#harrypotter .composition').text(harrypotter_melody)
+
+$('#starwars .time').html('<strong>Time:</strong> ' + starwars.time().toFixed(2) + ' seconds')
+$('#ghostbusters .time').html('<strong>Time:</strong> ' + ghostbusters.time().toFixed(2) + ' seconds')
+$('#harrypotter .time').html('<strong>Time:</strong> ' + harrypotter.time().toFixed(2) + ' seconds')
+
+function customOffbeatLayer () {
+  const tempo = +$('#try-it .tempo').val()       || 60,
+  timeSig     = $('#try-it .timeSig').val()      || '4/4',
+  instrument  = $('#try-it .instrument').val()   || 'sine',
+  notes       = $('#try-it .composition').text() || '',
+  tryIt = Offbeat.layer({
+    tempo: tempo,
+    timeSig: timeSig,
+    instrument: instrument,
+    notes: notes
+  })
+  $('#try-it .stop-btn').click(() => { tryIt.stop() })
+  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
+}
+
+$('#try-it .play-btn').click(() => {
+  customOffbeatLayer()
+  tryIt.play()
+
+
+})
+
+$('#try-it .reverse-btn').click(() => {
+  customOffbeatLayer()
+  tryIt.playReverse()
+})

@@ -1,16 +1,14 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-const Offbeat = require('../lib/Offbeat.min.js'),
+const Offbeat = require('../lib/Offbeat.js'),
 
 starwars_melody =
 `t g3, t g3, t g3,
 h c4, h g4,
-
 t f4, t e4, t d4,
 h c5, q g4,
 
 t f4, t e4, t d4,
 h c5, q g4,
-
 t f4, t e4, t f4,
 h d4`,
 
@@ -44,37 +42,312 @@ starwars = Offbeat.layer({
 
 ghostbusters = Offbeat.layer({
   tempo: 116,
+  instrument: 'triangle',
   notes: ghostbusters_melody
 })
 
 harrypotter = Offbeat.layer({
   tempo: 60,
   timeSig: '3/8',
+  instrument: 'square',
   notes: harrypotter_melody
 })
 
-document.querySelector('#starwars button.play-btn').addEventListener('click', () => { starwars.play() })
-document.querySelector('#ghostbusters button.play-btn').addEventListener('click', () => { ghostbusters.play() })
-document.querySelector('#harrypotter button.play-btn').addEventListener('click', () => { harrypotter.play() })
+$('#starwars .play-btn').click(() => { starwars.play() })
+$('#ghostbusters .play-btn').click(() => { ghostbusters.play() })
+$('#harrypotter .play-btn').click(() => { harrypotter.play() })
 
-document.querySelector('#starwars button.stop-btn').addEventListener('click', () => { starwars.stop() })
-document.querySelector('#ghostbusters button.stop-btn').addEventListener('click', () => { ghostbusters.stop() })
-document.querySelector('#harrypotter button.stop-btn').addEventListener('click', () => { harrypotter.stop() })
+$('#starwars .reverse-btn').click(() => { starwars.playReverse() })
+$('#ghostbusters .reverse-btn').click(() => { ghostbusters.playReverse() })
+$('#harrypotter .reverse-btn').click(() => { harrypotter.playReverse() })
 
-document.querySelector('#starwars .composition').innerHTML = starwars_melody
-document.querySelector('#ghostbusters .composition').innerHTML = ghostbusters_melody
-document.querySelector('#harrypotter .composition').innerHTML = harrypotter_melody
+$('#starwars .stop-btn').click(() => { starwars.stop() })
+$('#ghostbusters .stop-btn').click(() => { ghostbusters.stop() })
+$('#harrypotter .stop-btn').click(() => { harrypotter.stop() })
 
-document.querySelector('#starwars p.time').innerHTML = '<strong>Time:</strong> ' + starwars.time().toFixed(2) + ' seconds'
-document.querySelector('#ghostbusters p.time').innerHTML = '<strong>Time:</strong> ' + ghostbusters.time().toFixed(2) + ' seconds'
-document.querySelector('#harrypotter p.time').innerHTML = '<strong>Time:</strong> ' + harrypotter.time().toFixed(2) + ' seconds'
+$('#starwars .composition').text(starwars_melody)
+$('#ghostbusters .composition').text(ghostbusters_melody)
+$('#harrypotter .composition').text(harrypotter_melody)
 
-},{"../lib/Offbeat.min.js":2}],2:[function(require,module,exports){
-var a=27.5,asharp=29.1352,b=30.8677,bflat=asharp,c=32.7032,csharp=34.6478,d=36.7081,dflat=csharp,dsharp=38.8909,e=41.2034,eflat=dsharp,f=43.6535,fsharp=46.2493,g=48.9994,gflat=fsharp,gsharp=51.9131,aflat=gsharp,frequency={rest:0,a0:a,a1:2*a,a2:4*a,a3:8*a,a4:16*a,a5:32*a,a6:64*a,a7:128*a,b0:b,b1:2*b,b2:4*b,b3:8*b,b4:16*b,b5:32*b,b6:64*b,b7:128*b,c1:c,c2:2*c,c3:4*c,c4:8*c,c5:16*c,c6:32*c,c7:64*c,c8:128*c,d1:d,d2:2*d,d3:4*d,d4:8*d,d5:16*d,d6:32*d,d7:64*d,e1:e,e2:2*e,e3:4*e,e4:8*e,e5:16*e,e6:32*e,e7:64*
-e,f1:f,f2:2*f,f3:4*f,f4:8*f,f5:16*f,f6:32*f,f7:64*f,g1:g,g2:2*g,g3:4*g,g4:8*g,g5:16*g,g6:32*g,g7:64*g,"a#0":asharp,"a#1":2*asharp,"a#2":4*asharp,"a#3":8*asharp,"a#4":16*asharp,"a#5":32*asharp,"a#6":64*asharp,"a#7":128*asharp,"c#1":csharp,"c#2":2*csharp,"c#3":4*csharp,"c#4":8*csharp,"c#5":16*csharp,"c#6":32*csharp,"c#7":64*csharp,"d#1":dsharp,"d#2":2*dsharp,"d#3":4*dsharp,"d#4":8*dsharp,"d#5":16*dsharp,"d#6":32*dsharp,"d#7":64*dsharp,"f#1":fsharp,"f#2":2*fsharp,"f#3":4*fsharp,"f#4":8*fsharp,"f#5":16*
-fsharp,"f#6":32*fsharp,"f#7":64*fsharp,"g#1":gsharp,"g#2":2*gsharp,"g#3":4*gsharp,"g#4":8*gsharp,"g#5":16*gsharp,"g#6":32*gsharp,"g#7":64*gsharp,a_1:aflat,a_2:2*aflat,a_3:4*aflat,a_4:8*aflat,a_5:16*aflat,a_6:32*aflat,a_7:64*aflat,b_0:bflat,b_1:2*bflat,b_2:4*bflat,b_3:8*bflat,b_4:16*bflat,b_5:32*bflat,b_6:64*bflat,b_7:128*bflat,d_1:dflat,d_2:2*dflat,d_3:4*dflat,d_4:8*dflat,d_5:16*dflat,d_6:32*dflat,d_7:64*dflat,e_1:eflat,e_2:2*eflat,e_3:4*eflat,e_4:8*eflat,e_5:16*eflat,e_6:32*eflat,e_7:64*eflat,g_1:gflat,
-g_2:2*gflat,g_3:4*gflat,g_4:8*gflat,g_5:16*gflat,g_6:32*gflat,g_7:64*gflat},duration={ts:.03125,s:.0625,"s-dot":.09375,t:.08333,e:.125,"e-dot":.1875,q:.25,"q-dot":.375,h:.5,"h-dot":.75,w:1,"w-dot":1.5},Offbeat={parse_notes:function(){return this.notes.split(",").map(function(h){return h.trim().split(" ")})},get_time:function(h){return h*this.beatsPerMeasure/(this.tempo/60)},layer:function(h){var k={tempo:60,timeSig:"4/4",instrument:"sine",notes:""};if(h){for(var l in h)if(k.hasOwnProperty(l)&&typeof k[l]===
-typeof h[l])k[l]=h[l];else throw'Property "'+l+'" is invalid';k.beatsPerMeasure=parseInt(k.timeSig,10)}return Object.assign(Object.create(this),k)},generate_audio:function(h,k,l){var n=this,m=h.createOscillator(),p=this.get_time(duration[k[l][0]]),q=frequency[k[l][1]];m.connect(h.destination);m.type=this.instrument;m.frequency.value=q;m.start(0);m.stop(h.currentTime+p);m.onended=function(){l<k.length-1&&!n.isStopped?(l+=1,n.generate_audio(h,k,l)):h.close()}},play:function(){if(""===this.notes)throw'Property "notes" is invalid';
-var h=new (window.AudioContext||window.webkitAudioContext),k=this.parse_notes();this.isStopped=!1;this.generate_audio(h,k,0)},stop:function(){this.isStopped=!0},time:function(){var h=this;if(""===this.notes)return 0;var k=0;this.parse_notes().forEach(function(l){k+=h.get_time(duration[l[0]])});return k}};module.exports=Offbeat;
+$('#starwars .time').html('<strong>Time:</strong> ' + starwars.time().toFixed(2) + ' seconds')
+$('#ghostbusters .time').html('<strong>Time:</strong> ' + ghostbusters.time().toFixed(2) + ' seconds')
+$('#harrypotter .time').html('<strong>Time:</strong> ' + harrypotter.time().toFixed(2) + ' seconds')
+
+function customOffbeatLayer () {
+  const tempo = +$('#try-it .tempo').val()       || 60,
+  timeSig     = $('#try-it .timeSig').val()      || '4/4',
+  instrument  = $('#try-it .instrument').val()   || 'sine',
+  notes       = $('#try-it .composition').text() || '',
+  tryIt = Offbeat.layer({
+    tempo: tempo,
+    timeSig: timeSig,
+    instrument: instrument,
+    notes: notes
+  })
+  $('#try-it .stop-btn').click(() => { tryIt.stop() })
+  $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
+}
+
+$('#try-it .play-btn').click(() => {
+  customOffbeatLayer()
+  tryIt.play()
+
+
+})
+
+$('#try-it .reverse-btn').click(() => {
+  customOffbeatLayer()
+  tryIt.playReverse()
+
+
+})
+
+},{"../lib/Offbeat.js":2}],2:[function(require,module,exports){
+'use strict'
+const a = 27.5,
+asharp = 29.1352,
+b = 30.8677,
+bflat = asharp,
+c = 32.7032,
+csharp = 34.6478,
+d = 36.7081,
+dflat = csharp,
+dsharp = 38.8909,
+e = 41.2034,
+eflat = dsharp,
+f = 43.6535,
+fsharp = 46.2493,
+g = 48.9994,
+gflat = fsharp,
+gsharp = 51.9131,
+aflat = gsharp,
+
+frequency = {
+	'rest': 0.0,
+	//naturals
+	'a0': a,
+	'a1': a*2,
+	'a2': a*4,
+	'a3': a*8,
+	'a4': a*16,
+	'a5': a*32,
+	'a6': a*64,
+	'a7': a*128,
+	'b0': b,
+	'b1': b*2,
+	'b2': b*4,
+	'b3': b*8,
+	'b4': b*16,
+	'b5': b*32,
+	'b6': b*64,
+	'b7': b*128,
+	'c1': c,
+	'c2': c*2,
+	'c3': c*4,
+	'c4': c*8,
+	'c5': c*16,
+	'c6': c*32,
+	'c7': c*64,
+	'c8': c*128,
+	'd1': d,
+	'd2': d*2,
+	'd3': d*4,
+	'd4': d*8,
+	'd5': d*16,
+	'd6': d*32,
+	'd7': d*64,
+	'e1': e,
+	'e2': e*2,
+	'e3': e*4,
+	'e4': e*8,
+	'e5': e*16,
+	'e6': e*32,
+	'e7': e*64,
+	'f1': f,
+	'f2': f*2,
+	'f3': f*4,
+	'f4': f*8,
+	'f5': f*16,
+	'f6': f*32,
+	'f7': f*64,
+	'g1': g,
+	'g2': g*2,
+	'g3': g*4,
+	'g4': g*8,
+	'g5': g*16,
+	'g6': g*32,
+	'g7': g*64,
+	//sharps
+	'a#0': asharp,
+	'a#1': asharp*2,
+	'a#2': asharp*4,
+	'a#3': asharp*8,
+	'a#4': asharp*16,
+	'a#5': asharp*32,
+	'a#6': asharp*64,
+	'a#7': asharp*128,
+	'c#1': csharp,
+	'c#2': csharp*2,
+	'c#3': csharp*4,
+	'c#4': csharp*8,
+	'c#5': csharp*16,
+	'c#6': csharp*32,
+	'c#7': csharp*64,
+	'd#1': dsharp,
+	'd#2': dsharp*2,
+	'd#3': dsharp*4,
+	'd#4': dsharp*8,
+	'd#5': dsharp*16,
+	'd#6': dsharp*32,
+	'd#7': dsharp*64,
+	'f#1': fsharp,
+	'f#2': fsharp*2,
+	'f#3': fsharp*4,
+	'f#4': fsharp*8,
+	'f#5': fsharp*16,
+	'f#6': fsharp*32,
+	'f#7': fsharp*64,
+	'g#1': gsharp,
+	'g#2': gsharp*2,
+	'g#3': gsharp*4,
+	'g#4': gsharp*8,
+	'g#5': gsharp*16,
+	'g#6': gsharp*32,
+	'g#7': gsharp*64,
+	//flats
+	'a_1': aflat,
+	'a_2': aflat*2,
+	'a_3': aflat*4,
+	'a_4': aflat*8,
+	'a_5': aflat*16,
+	'a_6': aflat*32,
+	'a_7': aflat*64,
+	'b_0': bflat,
+	'b_1': bflat*2,
+	'b_2': bflat*4,
+	'b_3': bflat*8,
+	'b_4': bflat*16,
+	'b_5': bflat*32,
+	'b_6': bflat*64,
+	'b_7': bflat*128,
+	'd_1': dflat,
+	'd_2': dflat*2,
+	'd_3': dflat*4,
+	'd_4': dflat*8,
+	'd_5': dflat*16,
+	'd_6': dflat*32,
+	'd_7': dflat*64,
+	'e_1': eflat,
+	'e_2': eflat*2,
+	'e_3': eflat*4,
+	'e_4': eflat*8,
+	'e_5': eflat*16,
+	'e_6': eflat*32,
+	'e_7': eflat*64,
+	'g_1': gflat,
+	'g_2': gflat*2,
+	'g_3': gflat*4,
+	'g_4': gflat*8,
+	'g_5': gflat*16,
+	'g_6': gflat*32,
+	'g_7': gflat*64
+}, //end note_data object
+
+duration = {
+	'ts': 0.03125, //thirty-second
+	's': 0.0625, //sixteenth
+	's-dot': 0.0625 + 0.03125, //dotted sixteenth
+	't': 0.08333,  //eighth-note triplet
+	'e': 0.125, //eighth
+	'e-dot': 0.125 + 0.0625, //dotted eighth
+	'q': 0.25, //quarter
+	'q-dot': 0.25 + 0.125, //dotted quarter
+	'h': 0.5, //half
+	'h-dot': 0.5 + 0.25, //dotted half
+	'w': 1, //whole
+	'w-dot': 1 + 0.5 //dotted whole
+},
+
+Offbeat = {
+
+	parse_notes(notes) {
+		return notes.split(',').map(note => note.trim().split(' '))
+	},
+
+	generate_audio(context, index) {
+		const oscillator = context.createOscillator(),
+		stopTime = this.calculate_time( duration[this.notesParsed[index][0]] ),
+		pitch = frequency[this.notesParsed[index][1]]
+
+		oscillator.connect(context.destination)
+		oscillator.type = this.instrument
+		oscillator.frequency.value = pitch
+		oscillator.start(0)
+		oscillator.stop(context.currentTime + stopTime)
+
+		oscillator.onended = () => {
+			if (index < this.notesParsed.length - 1 && !this.isStopped) {
+				index += 1
+				this.generate_audio(context, index)
+			}
+			else context.close()
+		}
+	},
+
+	calculate_time(duration) {
+		return (duration * this.beatsPerMeasure) / (this.tempo / 60)
+	},
+
+	layer(options) {
+		const layer = {
+			tempo: 60,
+			timeSig: '4/4',
+			instrument: 'sine',
+			notes: ''
+		}
+
+		if (options && typeof options === 'object') {
+			for (let key in options) {
+				if (layer.hasOwnProperty(key) && typeof layer[key] === typeof options[key]) {
+					layer[key] = options[key]
+				}
+				else throw 'Property "' + key + '" is invalid'
+			}
+		}
+
+		const instanceLayer = Object.assign(Object.create(this), layer)
+		instanceLayer.beatsPerMeasure = parseInt(instanceLayer.timeSig, 10)
+		instanceLayer.notesParsed = this.parse_notes(instanceLayer.notes)
+		return instanceLayer
+	},
+
+	play() {
+		if (this.notes === '') throw 'Property "notes" is invalid'
+		const context = new (window.AudioContext || window.webkitAudioContext)()
+		this.isStopped = false
+		this.generate_audio(context, 0)
+	},
+
+	playReverse() {
+		this.notesParsed.reverse()
+		this.play()
+		setTimeout(() => { this.notesParsed.reverse() }, this.time() * 1000)
+	},
+
+	stop() {
+		this.isStopped = true
+	},
+
+	time() {
+		if (this.notes === '') return 0
+		let time = 0
+		this.notesParsed.forEach(note => {
+			time += this.calculate_time(duration[note[0]])
+		})
+		return time
+	}
+}
+
+module.exports = Offbeat
 
 },{}]},{},[1]);
