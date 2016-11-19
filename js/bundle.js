@@ -292,18 +292,14 @@ Offbeat = {
 		oscillator.stop(this.context.currentTime + stopTime)
 
 		oscillator.onended = () => {
-			if (index < this.notesParsed.length - 1) {
-				index += 1
-				this.generate_audio(index)
-			}
-			else {
-				this.ended()
-			}
+			(index < this.notesParsed.length - 1) ?
+			this.generate_audio(++index) :
+			this.ended()
 		}
 	},
 
 	calculate_time(duration) {
-		return (duration * this.beatsPerMeasure) / (this.tempo / 60)
+		return (duration * this.beatsPerMeasure * 60) / this.tempo
 	},
 
 	layer(options) {
@@ -314,12 +310,11 @@ Offbeat = {
 			notes: ''
 		}
 
-		if (options && typeof options === 'object') {
+		if (typeof options === 'object') {
 			for (let key in options) {
-				if (layer.hasOwnProperty(key) && typeof layer[key] === typeof options[key]) {
+				if (typeof layer[key] === typeof options[key]) {
 					layer[key] = options[key]
-				}
-				else throw new Error('Property "' + key + '" is invalid')
+				} else throw new Error('Property "' + key + '" is undefined')
 			}
 		}
 
@@ -332,12 +327,11 @@ Offbeat = {
 	},
 
 	update(options) {
-		if (options && typeof options === 'object') {
+		if (typeof options === 'object') {
 			for (let key in options) {
-				if (this.hasOwnProperty(key) && typeof this[key] === typeof options[key]) {
+				if (typeof this[key] === typeof options[key]) {
 					this[key] = options[key]
-				}
-				else throw new Error('Property "' + key + '" is invalid')
+				} else throw new Error('Property "' + key + '" is undefined')
 			}
 		}
 		this.beatsPerMeasure = parseInt(this.timeSig, 10)
@@ -346,8 +340,8 @@ Offbeat = {
 	},
 
 	play() {
-		if (this.notes === '') throw new Error('Property "notes" is invalid')
-		this.generate_audio(0)
+		if (this.notes) this.generate_audio(0)
+		else throw new Error('Property "notes" is invalid')
 	},
 
 	playReverse() {
@@ -371,7 +365,7 @@ Offbeat = {
 	},
 
 	time() {
-		if (this.notes === '') return 0
+		if (!this.notes) return 0
 		let time = 0
 		this.notesParsed.forEach(note => {
 			time += this.calculate_time(duration[note[0]])
@@ -382,8 +376,9 @@ Offbeat = {
 	ended() {
 		this.context.close().then(() => {
 			this.context = new (window.AudioContext || window.webkitAudioContext)()
-			if (this.isLoop) this.play()
-			else this.notesParsed = this.parse_notes(this.notes)
+			this.isLoop ?
+			this.play() :
+			this.notesParsed = this.parse_notes(this.notes)
 		})
 	}
 }
