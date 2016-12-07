@@ -58,51 +58,27 @@ __Return:__ instance of Offbeat
 Create an instance of Offbeat. Object properties are set to default if a melody object is not provided.  
 
 __layerInstance.update(melody)__  
-__Input:__ melody object  
-__Return:__ updated instance 
-
 Update current instance of Offbeat.
 
 __layerInstance.play()__    
-__Input:__ no parameters  
-__Return:__ no return value  
-
 Output audio through a single audio context, which closes after the last oscillator node ends.
 
 __layerInstance.playReverse()__  
-__Input:__ no parameters  
-__Return:__ no return value  
-
 Output audio in reverse.
 
 __layerInstance.playLoop()__  
-__Input:__ no parameters  
-__Return:__ no return value  
-
 Loop audio until .stop() is called.
 
 __layerInstance.playReverseLoop()__  
-__Input:__ no parameters  
-__Return:__ no return value  
-
 Loop audio in reverse until .stop() is called.
 
 __layerInstance.stop()__
-__Input:__ no parameters  
-__Return:__ no return value  
-
 Close current audio context and end looping.
 
 __layerInstance.time()__  
-__Input:__ no parameters  
-__Return:__ float  
-
 Calculate the duration of audio in seconds.
 
 __layerInstance.ended()__  
-__Input:__ no parameters  
-__Return:__ no return value 
-
 Ends current audio loop.
 
 
