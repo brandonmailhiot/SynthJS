@@ -69,7 +69,7 @@ Loop audio until .stop() is called.
 __layerInstance.playReverseLoop()__  
 Loop audio in reverse until .stop() is called.
 
-__layerInstance.stop()__
+__layerInstance.stop()__  
 Close current audio context and end looping.
 
 __layerInstance.time()__  
