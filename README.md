@@ -49,55 +49,57 @@ const melody = {
 ~~~
 const layer = Offbeat.layer(melody) 
 ~~~
-### Offbeat.layer(melody)  
+
+### Methods
+__Offbeat.layer(melody)__  
 __Input:__ melody object   
 __Return:__ instance of Offbeat  
 
 Create an instance of Offbeat. Object properties are set to default if a melody object is not provided.  
 
-### layerInstance.update(melody)  
+__layerInstance.update(melody)__  
 __Input:__ melody object  
 __Return:__ updated instance 
 
 Update current instance of Offbeat.
 
-### layerInstance.play()  
+__layerInstance.play()__    
 __Input:__ no parameters  
 __Return:__ no return value  
 
 Output audio through a single audio context, which closes after the last oscillator node ends.
 
-### layerInstance.playReverse()  
+__layerInstance.playReverse()__  
 __Input:__ no parameters  
 __Return:__ no return value  
 
 Output audio in reverse.
 
-### layerInstance.playLoop()
+__layerInstance.playLoop()__  
 __Input:__ no parameters  
 __Return:__ no return value  
 
 Loop audio until .stop() is called.
 
-### layerInstance.playReverseLoop()
+__layerInstance.playReverseLoop()__  
 __Input:__ no parameters  
 __Return:__ no return value  
 
 Loop audio in reverse until .stop() is called.
 
-### layerInstance.stop()  
+__layerInstance.stop()__
 __Input:__ no parameters  
 __Return:__ no return value  
 
 Close current audio context and end looping.
 
-### layerInstance.time()  
+__layerInstance.time()__  
 __Input:__ no parameters  
 __Return:__ float  
 
 Calculate the duration of audio in seconds.
 
-### layerInstance.ended()
+__layerInstance.ended()__  
 __Input:__ no parameters  
 __Return:__ no return value 
 
