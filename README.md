@@ -1,5 +1,5 @@
 # Offbeat
-Create melodies concisely with the Web Audio API. Try it here: https://blmgeo.github.io/Offbeat/
+Create melodies, then understand them. Try it here: https://blmgeo.github.io/Offbeat/
 
 ## Introduction  
 ### Note duration
