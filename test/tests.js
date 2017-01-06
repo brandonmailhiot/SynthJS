@@ -62,4 +62,13 @@ describe('Offbeat declared with melody object', () => {
       assert.equal(time, 6)
     })
   })
+
+  describe('#getKey()', () => {
+    it('should return C Major', () => {
+      let layer = Offbeat.layer({
+        notes: 'q c3, q d3, q e3, q f3, q g3, q a3, q b3'
+      })
+      assert.equal(layer.getKey(), 'c major')
+    })
+  })
 })
