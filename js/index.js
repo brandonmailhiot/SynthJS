@@ -34,18 +34,18 @@ q d#4, e f4,
 q-dot b3
 `,
 
-starwars = Offbeat.layer({
+starwars = new Offbeat({
   tempo: 120,
   notes: starwars_melody
 }),
 
-ghostbusters = Offbeat.layer({
+ghostbusters = new Offbeat({
   tempo: 116,
   instrument: 'triangle',
   notes: ghostbusters_melody
 })
 
-harrypotter = Offbeat.layer({
+harrypotter = new Offbeat({
   tempo: 60,
   timeSig: '3/8',
   instrument: 'square',
@@ -81,24 +81,27 @@ const tryItOptions = () => {
     tempo: +$('#try-it .tempo').val() || 60,
     timeSig: $('#try-it .timeSig').val() || '4/4',
     instrument: $('#try-it .instrument').val() || 'sine',
-    notes: $('#try-it .composition').text() || ''
+    notes: $('#try-it .composition').text()
   }
 }
 
-const tryIt = Offbeat.layer(tryItOptions())
+const tryIt = new Offbeat(tryItOptions())
 
 $('#try-it .play-btn').click(() => {
-  tryIt.update(tryItOptions()).play()
+  tryIt.update(tryItOptions())
+  tryIt.play()
   $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
 })
 
 $('#try-it .playLoop-btn').click(() => {
-  tryIt.update(tryItOptions()).playLoop()
+  tryIt.update(tryItOptions())
+  tryIt.playLoop()
   $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
 })
 
 $('#try-it .reverse-btn').click(() => {
-  tryIt.update(tryItOptions()).playReverse()
+  tryIt.update(tryItOptions())
+  tryIt.playReverse()
   $('#try-it .time').html('<strong>Time:</strong> ' + tryIt.time().toFixed(2) + ' seconds')
 })
 
