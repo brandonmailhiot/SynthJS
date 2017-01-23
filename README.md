@@ -1,5 +1,5 @@
 # Offbeat
-Create melodies quickly with an efficient syntax. Try it here: https://blmgeo.github.io/Offbeat/
+Compose melodies with an efficient syntax. Try it here: https://blmgeo.github.io/Offbeat/
 
 ## Introduction  
 ### Note duration
