@@ -1,5 +1,5 @@
 ## Introduction  
-Offbeat is a new format for music composition. Rather than c graphically or programmatically, but not textually. A text format includes only the relevant information: note durations and pitches. In turn, the music may be mined for characteristics not previously possible, such as the genre or popularity of a melody. Combined with techniques from machine learning, it is possible to generate music categorically, e.g. genre, popularity, etc. And that is the aspiration of Offbeat, to be an intelligent library for music generation and analysis.
+Offbeat is a new format for music composition. Rather than staves, tabs, GUIs, or APIs, only the pitch and duration of notes are required to represent a composition. This won't produce high quality sound, but it will structure a composition as data. Combined with techniques from machine learning, it is possible to generate music categorically, e.g. genre, popularity, etc. And that is the aspiration of Offbeat, to be an intelligent library for music generation and analysis.
 
 The documentation below explains how to get started.
 
