@@ -5,7 +5,7 @@ The documentation below explains how to get started.
 
 ### Note duration
 A note's duration is the relative amount of time it is played, known as a subdivision. 
-The names of common subdivisions are abbreviated in Offbeat as follows:
+The names of common subdivisions are abbreviated as follows:
 
 * ts = thirty-second  
 * s = sixteenth  
@@ -23,7 +23,7 @@ The names of common subdivisions are abbreviated in Offbeat as follows:
 _Note: 3 triplets = 2 eighths_
 
 ### Note pitch
-In Offbeat, D natural in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, 
+D natural in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, 
 and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
 
 ### Putting duration and pitch together
@@ -50,7 +50,7 @@ const melody = new Offbeat({
 
 ### Methods
 __melody.update(obj)__  
-Update current properties of the Offbeat instance.
+Update current properties of an Offbeat instance.
 
 __melody.play()__    
 Output audio through a single audio context, which closes after the last oscillator node ends, or on stop().
