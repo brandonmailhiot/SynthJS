@@ -33,7 +33,7 @@ In practice: `h d5, q g_3, q c#6` etc.
 _Note: any amount of tabs, newlines, or whitespace can appear after the comma, but not between the duration and pitch_  
 
 ## Usage  
-1) Import the Offbeat library:
+1) Import:
 ~~~
 const Offbeat = require('Offbeat')
 ~~~
@@ -47,6 +47,7 @@ const melody = new Offbeat({
    loop: true                                             //optional; default is false  
 })
 ~~~
+3) Repeat step 2 up to six times in a single window, because only six audio contexts can be active simultaneously.
 
 ### Methods
 __melody.update(obj)__  
