@@ -1,7 +1,8 @@
-# Offbeat
-Compose melodies with an efficient syntax. Try it here: https://blmgeo.github.io/Offbeat/
-
 ## Introduction  
+Offbeat is a new format for music composition. Many tools exist to compose music graphically or programmatically, but not textually. Why is this important? Because pure text includes only the relevant information: note durations and pitches. In turn, this text may be mined for characteristics not previously possible. And when combined with techniques from machine learning, it is possible to generate music categorically, e.g. genre, popularity, etc. And that is the ultimate goal of Offbeat, to be an intelligent library for music generation and analysis.
+
+The documentation below explains how to get started.
+
 ### Note duration
 A note's duration is the relative amount of time it is played, known as a subdivision. 
 The names of common subdivisions are abbreviated in Offbeat as follows:
@@ -36,46 +37,42 @@ _Note: any amount of tabs, newlines, or whitespace can appear after the comma, b
 ~~~
 const Offbeat = require('Offbeat')
 ~~~
-2) Create a melody object:  
+2) Pass in a melody object:  
 ~~~
-const melody = {  
+const melody = new Offbeat({  
    tempo: 128,                                            //optional; default is 60
    instrument: 'square',                                  //optional; default is 'sine'
    timeSig: '3/4',                                        //optional; default is '4/4'
-   notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4'  //not optional; default is an empty string
-}
-~~~
-3) Pass the melody object to Offbeat's .layer() method to create an instance of the library:
-~~~
-const layer = Offbeat.layer(melody) 
+   notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4', //not optional; default is an empty string
+   loop: true                                             //optional; default is false  
+})
 ~~~
 
 ### Methods
-__Offbeat.layer(melody)__  
-Create an instance of Offbeat. Object properties are set to default if a melody object is not provided.  
+__melody.update(obj)__  
+Update current properties of the Offbeat instance.
 
-__layerInstance.update(melody)__  
-Update current instance of Offbeat.
+__melody.play()__    
+Output audio through a single audio context, which closes after the last oscillator node ends, or on stop().
 
-__layerInstance.play()__    
-Output audio through a single audio context, which closes after the last oscillator node ends.
-
-__layerInstance.playReverse()__  
+__melody.playReverse()__  
 Output audio in reverse.
 
-__layerInstance.playLoop()__  
+__melody.playLoop()__  
 Loop audio until .stop() is called.
 
-__layerInstance.playReverseLoop()__  
+__melody.playReverseLoop()__  
 Loop audio in reverse until .stop() is called.
 
-__layerInstance.stop()__  
-Close current audio context and end looping.
+__melody.stop()__  
+Close current audio context and ends looping.
 
-__layerInstance.time()__  
+__melody.time()__  
 Calculate the duration of audio in seconds.
 
-__layerInstance.ended()__  
-Ends current audio loop.
+__melody.ended()__  
+Closes current audio context and generates a new context.
+
+
 
 
