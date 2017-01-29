@@ -47,7 +47,7 @@ const melody = new Offbeat({
    loop: true                                             //optional; default is false  
 })
 ~~~
-3) Repeat step 2 up to six times in a single window, because only six audio contexts can be active simultaneously.
+_Note: Up to six audio contexts can be active on the window object._
 
 ### Methods
 __melody.update(obj)__  
