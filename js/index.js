@@ -41,14 +41,12 @@ starwars = new Offbeat({
 
 ghostbusters = new Offbeat({
   tempo: 116,
-  instrument: 'triangle',
   notes: ghostbusters_melody
 })
 
 harrypotter = new Offbeat({
   tempo: 60,
   timeSig: '3/8',
-  instrument: 'square',
   notes: harrypotter_melody
 })
 

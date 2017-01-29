@@ -3,47 +3,33 @@ const assert = require('chai').assert,
 Offbeat = require('../lib/Offbeat.js')
 
 describe('Offbeat declared without melody object', () => {
-
-  describe('#layer()', () => {
-    it('should return the default melody object', () => {
-      let layer = Offbeat.layer()
-      assert.propertyVal(layer, 'tempo', 60)
-      assert.propertyVal(layer, 'instrument', 'sine')
-      assert.propertyVal(layer, 'timeSig', '4/4')
-      assert.propertyVal(layer, 'notes', '')
-    })
-  })
-
   describe('#time()', () => {
     it('should return the default time', () => {
-      let time = Offbeat.layer().time()
+      const time = new Offbeat().time()
       assert.equal(time, 0)
     })
   })
-
-  describe('#calculate_time(1)', () => {
+  describe('#to_time(1)', () => {
     it('should return 4 seconds', () => {
-      let time = Offbeat.layer().calculate_time(1)
+      const time = new Offbeat().to_time(1)
       assert.equal(time, 4)
     })
   })
 })
 
 describe('Offbeat declared with melody object', () => {
-
   describe('#parse_notes(notes)', () => {
     it('should return array of notes', () => {
-      let layer = Offbeat.layer({
+      const layer = new Offbeat({
         notes: `a b, c d, e f`
       }),
       notes = layer.parse_notes(layer.notes)
       assert.deepEqual(notes, [['a','b'],['c','d'],['e','f']])
     })
   })
-
   describe('#time()', () => {
     it('should return time of audio in seconds', () => {
-      let time = Offbeat.layer({
+      const time = new Offbeat({
         tempo: 120,
         timeSig: '12/8',
         notes: 't a1, t a1, t a1'
@@ -51,24 +37,22 @@ describe('Offbeat declared with melody object', () => {
       assert.equal(time, 1.50)
     })
   })
-
-  describe('#calculate_time(1)', () => {
+  describe('#to_time(1)', () => {
     it('should return 6 seconds', () => {
-      let time = Offbeat.layer({
+      const time = new Offbeat({
         tempo: 120,
         timeSig: '12/8',
         notes: 't a1, t a1, t a1'
-      }).calculate_time(1)
+    }).to_time(1)
       assert.equal(time, 6)
     })
   })
-
-  describe('#getKey()', () => {
+  describe('#queryKey()', () => {
     it('should return C Major', () => {
-      let layer = Offbeat.layer({
+      const melody = new Offbeat({
         notes: 'q c3, q d3, q e3, q f3, q g3, q a3, q b3'
       })
-      assert.equal(layer.getKey(), 'c major')
+      assert.equal(melody.queryKey(), 'c major')
     })
   })
 })
