@@ -40,11 +40,11 @@ const Offbeat = require('Offbeat')
 2) Pass in a melody object:  
 ~~~
 const melody = new Offbeat({  
-   tempo: 128,                                            //optional; default is 60
-   instrument: 'square',                                  //optional; default is 'sine'
-   timeSig: '3/4',                                        //optional; default is '4/4'
-   notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4', //not optional; default is an empty string
-   loop: true                                             //optional; default is false  
+   tempo: 128,                                            //default is 60
+   instrument: 'square',                                  //default is 'sine'
+   timeSig: '3/4',                                        //default is '4/4'
+   notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4', //default is an empty string
+   loop: true                                             //default is false  
 })
 ~~~
 _Note: Up to six audio contexts can be active on the window object. Each instance of Offbeat creates a new context._
