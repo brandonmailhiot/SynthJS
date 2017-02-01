@@ -111,70 +111,105 @@ $('#try-it .stop-btn').click(() => {
 
 },{"../lib/Offbeat.js":2}],2:[function(require,module,exports){
 'use strict'
-const frequency = require('./frequency'),
-duration = require('./duration')
+const Frequency = require('./frequency'),
+Duration = require('./duration')
 
-module.exports = class Offbeat {
+class Offbeat {
+	/**
+	* Creates an instance of Offbeat.
+	* @constructor
+	* @param {Object} props - Initialize with tempo, timeSig, instrument, notes, and loop properties.
+	*/
 	constructor(props) {
 		this.tempo      = props.tempo || 60
 		this.timeSig    = props.timeSig || '4/4'
 		this.instrument = props.instrument || 'sine'
 		this.notes      = props.notes || ''
-		this.isLoop     = props.loop || false
+		this.willLoop     = props.loop || false
     	this.create_context()
 		this.parse_notes()
 		this.get_bpm()
-		this.reset_play_index()
-		this.frequency = frequency
-		this.duration = duration
+		this.set_play_index(0)
 	}
 
-	//HELPER METHODS
+	/**
+     * Update current properties.
+	 * @param {Object} props - Update the tempo, timeSig, instrument, notes, and/or loop properties.
+     */
 	update(props) {
 		Object.keys(props).forEach(key => {
 			this[key] = props[key]
 		})
-		this.reset_play_index()
+		this.set_play_index(0)
 		this.parse_notes()
 		this.get_bpm()
 	}
 
+	/**
+	* Calculate duration in seconds.
+	* @param {number} duration - Note duration relative to one measure.
+	* @return {number} Time of duration in seconds.
+	*/
 	to_time(duration) {
 		return (duration * this.beatsPerMeasure * 60) / this.tempo
 	}
 
+	/**
+	* Get the number of beats per measure based on the timeSig property numerator.
+	* Called on initialization or update().
+	*/
 	get_bpm() {
 		this.beatsPerMeasure = parseInt(this.timeSig, 10)
 	}
 
-	get_frequency(note) {
-		return this.frequency[note[1]]
+	/**
+	* Set the position to begin at on play(), etc.
+	* @param {number} index - Current play index.
+	*/
+	set_play_index(index) {
+		this.playIndex = index
 	}
 
-	get_duration(note) {
-		return this.duration[note[0]]
-	}
-
-	reset_play_index() {
-		this.currentNote = 0
-	}
-
+	/**
+	* Open an audio context.
+	*/
 	create_context() {
 		this.context = new (window.AudioContext || window.webkitAudioContext)()
 	}
 
+	/**
+	* Given the name of a note pitch (e.g. f#4), get its equivalent frequency in Hertz.
+	* @param {string} name - Pitch name.
+	*/
+	get_frequency(name) {
+		return Frequency[name]
+	}
+
+	/**
+	* Given the name of a note duration (e.g. h-dot), get its equivalent length relative to one measure.
+	* @param {string} name - Duration name.
+	*/
+	get_duration(name) {
+		return Duration[name]
+	}
+
+	/**
+	* Transform the 'notes' property into a two-dimensional array of notes, e.g. [['h', 'f3'], ['q', 'e3']].
+	*/
 	parse_notes() {
 		const parse = n => { return n.trim().split(' ') },
 		notesArray = this.notes.split(',')
 		this.notesParsed = notesArray.map(note => parse(note))
 	}
 
-	//METHODS FOR PLAYING AUDIO
+	/**
+	* Output audio through an audio context, which closes after the last oscillator node ends, or on stop().
+	*/
 	play() {
 		const oscillator = this.context.createOscillator(),
-		note = this.notesParsed[this.currentNote],
-		stopTime = this.to_time(this.get_duration(note)),
-		pitch = this.get_frequency(note)
+		note = this.notesParsed[this.playIndex],
+		stopTime = this.to_time(this.get_duration(note[0])),
+		pitch = this.get_frequency(note[1])
 
 		oscillator.connect(this.context.destination)
 		oscillator.type = this.instrument
@@ -183,70 +218,97 @@ module.exports = class Offbeat {
 		oscillator.stop(this.context.currentTime + stopTime)
 
 		oscillator.onended = () => {
-			this.currentNote < this.notesParsed.length - 1 ?
-			(this.currentNote++, this.play()) :
-			this.ended()
+			if (this.playIndex < this.notesParsed.length - 1) {
+				this.playIndex += 1
+				this.play()
+			} else this.ended()
 		}
 	}
 
+	/**
+	* Play through a composition in reverse.
+	*/
 	playReverse() {
 		this.notesParsed.reverse()
 		this.play()
 	}
 
+	/**
+	* Repeat audio until stop() is called.
+	*/
 	playLoop() {
-		this.isLoop = true
+		this.willLoop = true
 		this.play()
 	}
 
+	/**
+	* Repeat audio in reverse until stop() is called.
+	*/
 	playReverseLoop() {
-		this.isLoop = true
+		this.willLoop = true
 		this.playReverse()
 	}
 
+	/**
+	* End looping and call ended().
+	*/
 	stop() {
-		this.isLoop = false
+		this.willLoop = false
 		this.ended()
 	}
 
+	/**
+	* End current audio loop.
+	*/
 	ended() {
 		this.context.close().then(() => {
-			this.reset_play_index()
+			this.set_play_index(0)
 			this.create_context()
-			this.isLoop ?
-			this.play() :
-			this.parse_notes()
+			this.willLoop ?
+				this.play() :
+				this.parse_notes()
 		})
 	}
 
-	//METHODS FOR ANALYSIS
-	sumKey() {
-		//get array of notes as frequencies
-		let freq = this.notesParsed.map(note => this.get_frequency(note)),
-		//find the first octave of each note
-		origin = freq.map(f => this.getOriginFrequency(f)),
-		//eliminate duplicate notes
+	/**
+	* Get a summary of note pitch names from the composition.
+	* @return {Array} Sorted note names at first octave.
+	*/
+	brief() {
+		//array of notes to frequencies
+		let freq = this.notesParsed.map(note => this.get_frequency(note[1])),
+		//find first octave of each note
+		origin = freq.map(f => this.originFrequency(f)),
+		//eliminate duplicates
 		notes = origin.filter((note, i) => i === origin.indexOf(note))
-		//order from lowest to highest frequency
+		//lowest to highest by frequency
 	  	notes.sort()
-		//transform note frequencies into names without octave
-		let names = notes.map(note => this.getNoteName(note))
-		//return an array of all note names that appear in the melody
+		//frequencies to names
+		let names = notes.map(note => this.noteName(note))
+		//return an array of all note pitch names that appear in the melody
 		return names.filter(name => name && name !== 'rest')
 	}
 
+	/**
+	* Get the length of the composition.
+	* @return {number} Total time of composition in seconds.
+	*/
 	time() {
 		let time = 0
 		if (this.notes) {
 			this.notesParsed.forEach(note => {
-				time += this.to_time(this.get_duration(note))
+				time += this.to_time(this.get_duration(note[0]))
 			})
 		}
 		return time
 	}
 
-	//Origin refers to the same note in the lowest possible octave
-	getOriginFrequency(freq) {
+	/**
+	* Get the same note in the first octave.
+	* @param {number} frequency - Frequency of a note.
+	* @return {number} Frequency of the same note in the first octave.
+	*/
+	originFrequency(freq) {
 		let i = 0
 		//notes in the first octave fall below 56Hz
 		while (freq >= 56) {
@@ -256,14 +318,23 @@ module.exports = class Offbeat {
 		return freq
 	}
 
-	getNoteName(freq) {
-		for (var key in this.frequency) {
-		    if (this.frequency[key] === freq) {
+	/**
+	* Get the name of a note from its frequency.
+	* @param {number} frequency - Frequency of a note.
+	* @return {number} Name of the note.
+	*/
+	noteName(freq) {
+		for (var key in Frequency) {
+		    if (Frequency[key] === freq) {
 				return key
 		    }
 		}
 	}
 
+	/**
+	* Get the number of times each note appears in the composition.
+	* @return {Object} Total count of each note.
+	*/
 	countNotes() {
 		let notes = this.notesParsed,
 		count = {}
@@ -275,26 +346,9 @@ module.exports = class Offbeat {
 		}
 		return count
 	}
-/*
-	//METHODS INVOLVING DATA
-	keyData() {
-		return ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-	}
-
-	queryKey() {
-		let compNotes = this.sumKey(),
-		data = this.keyData(),
-		isKey = false
-		for (let note in compNotes) {
-			isKey = data.indexOf(note) ? true : false
-		}
-		if(isKey) {
-			return 'c major'
-		}
-		else return false
-	}
-*/
 }
+
+module.exports = Offbeat
 
 },{"./duration":3,"./frequency":4}],3:[function(require,module,exports){
 //base duration of 1/32
