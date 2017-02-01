@@ -1,5 +1,5 @@
 ## Introduction  
-Offbeat is a new format for music composition. Rather than staves, tabs, GUIs, or APIs, only the pitch and duration of notes are required to represent a composition. This won't produce high quality sound, but it will structure a composition as data. Combined with techniques from machine learning, it is possible to generate music categorically, e.g. genre, popularity, etc. And that is the aspiration of Offbeat, to be an intelligent tool for music generation and analysis.
+Offbeat is a new format for music composition. Rather than staves, tabs, GUIs, or APIs to represent music, only the pitch and duration of notes are needed. This won't produce high quality sound, but it will structure a composition as data. Combined with techniques from machine learning, it is possible to generate music categorically, e.g. genre, popularity, etc. And that is the aspiration of Offbeat, to be an intelligent tool for music generation and analysis.
 
 The documentation below explains how it works.
 
@@ -23,8 +23,7 @@ The names of common subdivisions are abbreviated as follows:
 _Note: 3 triplets = 2 eighths_
 
 ### Note pitch
-D natural in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, 
-and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
+A note's pitch is the name for its frequency in Hertz. D natural in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
 
 ### Putting duration and pitch together
 General format: `[note_duration][space][note_pitch][comma]`   
