@@ -23,7 +23,7 @@ The names of common subdivisions are abbreviated as follows:
 _Note: 3 triplets = 2 eighths_
 
 ### Note pitch
-A note's pitch is the name for its frequency in Hertz. D natural in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
+A note's pitch is the name for its frequency in Hertz. D in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
 
 ### Putting duration and pitch together
 General format: `[note_duration][space][note_pitch][comma]`   
