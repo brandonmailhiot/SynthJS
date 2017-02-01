@@ -49,31 +49,6 @@ const melody = new Offbeat({
 ~~~
 _Note: Up to six audio contexts can be active on the window object. Each instance of Offbeat creates a new context._
 
-### Methods
-__melody.update(obj)__  
-Update current properties of an Offbeat instance.
-
-__melody.play()__    
-Output audio through a single audio context, which closes after the last oscillator node ends, or on stop().
-
-__melody.playReverse()__  
-Output audio in reverse.
-
-__melody.playLoop()__  
-Loop audio until .stop() is called.
-
-__melody.playReverseLoop()__  
-Loop audio in reverse until .stop() is called.
-
-__melody.stop()__  
-Close current audio context and ends looping.
-
-__melody.time()__  
-Calculate the duration of audio in seconds.
-
-__melody.ended()__  
-Closes current audio context and generates a new context.
-
-
+3) Read the rest of the documentation here: https://blmgeo.github.io/Offbeat/out/Offbeat.html
 
 
