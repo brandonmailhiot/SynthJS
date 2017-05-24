@@ -2,37 +2,39 @@
 const Offbeat = require('../lib/Offbeat.js'),
 
 starwars_melody =
-`t g3, t g3, t g3,
-h c4, h g4,
-t f4, t e4, t d4,
-h c5, q g4,
+`first = h c4, h g4;
+second = t f4, t e4, t d4;
+third = h c5, q g4, t f4, t e4, t f4;
 
-t f4, t e4, t d4,
+t g3 * 3,
+first, second,
 h c5, q g4,
-t f4, t e4, t f4,
-h d4`,
+second, third,
+h d4
+`,
 
 ghostbusters_melody =
-`s c4, s c4, e e4, e c4, e d4, e b_3,
-q rest, q rest,
-s c4, s c4, s c4, s c4,
-e b_3, e c4, q rest,
+`first = s c4 * 2, e e4, e c4, e d4, e b_3;
+second = q rest * 2, s c4 * 4, e b_3;
 
-s c4, s c4, e e4, e c4, e d4, e b_3,
-q rest, q rest,
-s c4, s c4, s c4, s c4,
-e b_3, e d4, q c4`,
+first, second,
+e c4, q rest,
+
+first, second,
+e d4, q c4`,
 
 harrypotter_melody =
-`e b3,
-e-dot e4, s g4, e f#4,
-q e4, e b4,
-q-dot a4,
+`first = e. e4, s g4, e f#4;
 
-q-dot f#4,
-e-dot e4, s g4, e f#4,
+e b3,
+first,
+q e4, e b4,
+q. a4,
+
+q. f#4,
+first,
 q d#4, e f4,
-q-dot b3
+q. b3
 `,
 
 starwars = new Offbeat({
@@ -116,7 +118,7 @@ Duration = require('./duration')
 
 class Offbeat {
 	/**
-	* Creates an instance of Offbeat.
+	* Create an instance of Offbeat.
 	* @constructor
 	* @param {Object} props - Initialize with tempo, timeSig, instrument, notes, and loop properties.
 	*/
@@ -125,11 +127,10 @@ class Offbeat {
 		this.timeSig    = props.timeSig || '4/4'
 		this.instrument = props.instrument || 'sine'
 		this.notes      = props.notes || ''
-		this.willLoop     = props.loop || false
-    	this.create_context()
+		this.loop       = props.loop || false
+		this.context    = new (props.context || window.AudioContext || window.webkitAudioContext)()
 		this.parse_notes()
 		this.get_bpm()
-		this.set_play_index(0)
 	}
 
 	/**
@@ -140,7 +141,6 @@ class Offbeat {
 		Object.keys(props).forEach(key => {
 			this[key] = props[key]
 		})
-		this.set_play_index(0)
 		this.parse_notes()
 		this.get_bpm()
 	}
@@ -163,70 +163,108 @@ class Offbeat {
 	}
 
 	/**
-	* Set the position to begin at on play(), etc.
-	* @param {number} index - Current play index.
-	*/
-	set_play_index(index) {
-		this.playIndex = index
-	}
-
-	/**
 	* Open an audio context.
+	* @param {string} nodeContext - Required for node web audio API (used for testing).
 	*/
-	create_context() {
-		this.context = new (window.AudioContext || window.webkitAudioContext)()
+	create_context(nodeContext) {
+		this.context = new (nodeContext || window.AudioContext || window.webkitAudioContext)()
 	}
 
 	/**
-	* Given the name of a note pitch (e.g. f#4), get its equivalent frequency in Hertz.
-	* @param {string} name - Pitch name.
-	*/
-	get_frequency(name) {
-		return Frequency[name]
-	}
-
-	/**
-	* Given the name of a note duration (e.g. h-dot), get its equivalent length relative to one measure.
-	* @param {string} name - Duration name.
-	*/
-	get_duration(name) {
-		return Duration[name]
-	}
-
-	/**
-	* Transform the 'notes' property into a two-dimensional array of notes, e.g. [['h', 'f3'], ['q', 'e3']].
+	* Parse this.notes into an array of note objects.
 	*/
 	parse_notes() {
 		const parse = n => { return n.trim().split(' ') },
-		notesArray = this.notes.split(',')
-		this.notesParsed = notesArray.map(note => parse(note))
+		multiply = {
+			occursAt: [],
+			augment: 0
+		},
+		motifs = {}
+
+		let notes = this.notes,
+		notesArray = (function () {
+			let delimiter = ';'
+
+			if (notes.includes(delimiter)) {
+				notes = notes.split(delimiter)
+				let motifOccursAt = [],
+				operator = '='
+
+				notes.forEach((n, i) => {
+					if (n.includes(operator)) {
+						let motif = n
+							.split(operator)
+							.map(m => m.trim())
+
+						motifs[motif[0]] = motif[1]
+						motifOccursAt.push(i)
+					}
+				})
+
+				notes = notes
+					.filter((n, i) => !motifOccursAt.includes(i))
+					.reduce((a,b) => a.concat(',' + b))
+					.split(',')
+					.map(n => n.trim())
+					.map((n, i) => motifs.hasOwnProperty(n) ? motifs[n] : n)
+					.join(',')
+			}
+
+			return notes.split(',')
+		}())
+
+		notesArray = notesArray.map(note => parse(note))
+
+		notesArray.forEach((n, i) => {
+			if (n.includes('*')) {
+				multiply.occursAt.push(i)
+			}
+		})
+
+		for (let index of multiply.occursAt) {
+			index += multiply.augment
+			let note = notesArray[index]
+			for (let i = 1; i < note[3]; i++) {
+				notesArray.splice(index + 1, 0, [note[0], note[1]])
+				multiply.augment++
+			}
+		}
+
+		this.notesParsed = notesArray.map((note, i, self) => {
+			return {
+				inputDuration: note[0],
+				outputDuration: Duration[note[0]],
+				time: () => this.to_time(Duration[note[0]]),
+				inputFrequency: note[1],
+				outputFrequency: Frequency[note[1]],
+				index: i
+			}
+		})
 	}
 
 	/**
 	* Output audio through an audio context, which closes after the last oscillator node ends, or on stop().
 	*/
-	play() {
-		const oscillator = this.context.createOscillator(),
-		note = this.notesParsed[this.playIndex],
-		stopTime = this.to_time(this.get_duration(note[0])),
-		pitch = this.get_frequency(note[1])
+	play(n = 0) {
+			const note = this.notesParsed[n]
+			const stopTime = note.time(),
+			oscillator = this.context.createOscillator()
 
-		oscillator.connect(this.context.destination)
-		oscillator.type = this.instrument
-		oscillator.frequency.value = pitch
-		oscillator.start(0)
-		oscillator.stop(this.context.currentTime + stopTime)
+			oscillator.connect(this.context.destination)
+			oscillator.type = this.instrument
+			oscillator.frequency.value = note.outputFrequency
+			oscillator.start(0)
+			oscillator.stop(this.context.currentTime + stopTime)
 
-		oscillator.onended = () => {
-			if (this.playIndex < this.notesParsed.length - 1) {
-				this.playIndex += 1
-				this.play()
-			} else this.ended()
-		}
+			oscillator.onended = () => {
+				this.notesParsed[++n]
+					? this.play(n)
+					: this.ended()
+			}
 	}
 
 	/**
-	* Play through a composition in reverse.
+	* Play through the composition in reverse.
 	*/
 	playReverse() {
 		this.notesParsed.reverse()
@@ -237,7 +275,7 @@ class Offbeat {
 	* Repeat audio until stop() is called.
 	*/
 	playLoop() {
-		this.willLoop = true
+		this.loop = true
 		this.play()
 	}
 
@@ -245,7 +283,7 @@ class Offbeat {
 	* Repeat audio in reverse until stop() is called.
 	*/
 	playReverseLoop() {
-		this.willLoop = true
+		this.loop = true
 		this.playReverse()
 	}
 
@@ -253,7 +291,7 @@ class Offbeat {
 	* End looping and call ended().
 	*/
 	stop() {
-		this.willLoop = false
+		this.loop = false
 		this.ended()
 	}
 
@@ -262,11 +300,10 @@ class Offbeat {
 	*/
 	ended() {
 		this.context.close().then(() => {
-			this.set_play_index(0)
 			this.create_context()
-			this.willLoop ?
-				this.play() :
-				this.parse_notes()
+			this.loop
+				? this.play()
+				: this.parse_notes()
 		})
 	}
 
@@ -275,16 +312,14 @@ class Offbeat {
 	* @return {Array} Sorted note names at first octave.
 	*/
 	brief() {
-		//array of notes to frequencies
-		let freq = this.notesParsed.map(note => this.get_frequency(note[1])),
 		//find first octave of each note
-		origin = freq.map(f => this.originFrequency(f)),
+		let origin = this.notesParsed.map(f => this.originFrequency(f.outputFrequency)),
 		//eliminate duplicates
 		notes = origin.filter((note, i) => i === origin.indexOf(note))
 		//lowest to highest by frequency
 	  	notes.sort()
 		//frequencies to names
-		let names = notes.map(note => this.noteName(note))
+		let names = notes.map(note => note.inputFrequency)
 		//return an array of all note pitch names that appear in the melody
 		return names.filter(name => name && name !== 'rest')
 	}
@@ -295,11 +330,9 @@ class Offbeat {
 	*/
 	time() {
 		let time = 0
-		if (this.notes) {
-			this.notesParsed.forEach(note => {
-				time += this.to_time(this.get_duration(note[0]))
-			})
-		}
+		this.notesParsed.forEach(note => {
+			time += note.time()
+		})
 		return time
 	}
 
@@ -309,13 +342,13 @@ class Offbeat {
 	* @return {number} Frequency of the same note in the first octave.
 	*/
 	originFrequency(freq) {
-		let i = 0
-		//notes in the first octave fall below 56Hz
-		while (freq >= 56) {
+		let i = 1
+		//notes in the first octave fall below 55Hz
+		while (freq >= 55) {
 			freq /= Math.pow(2, i)
 			i += 1
 		}
-		return freq
+		return freq * 2
 	}
 
 	/**
@@ -324,7 +357,7 @@ class Offbeat {
 	* @return {number} Name of the note.
 	*/
 	noteName(freq) {
-		for (var key in Frequency) {
+		for (let key in Frequency) {
 		    if (Frequency[key] === freq) {
 				return key
 		    }
@@ -336,14 +369,14 @@ class Offbeat {
 	* @return {Object} Total count of each note.
 	*/
 	countNotes() {
-		let notes = this.notesParsed,
-		count = {}
-		for(let note of notes) {
-			if(!count[note[1]]) {
-				count[note[1]] = 0
-			}
-			count[note[1]] += 1
-		}
+		const count = {}
+
+		this.notesParsed.forEach(note => {
+			count[note.inputFrequency]
+				? count[note.inputFrequency] = 0
+				: count[note.inputFrequency] += 1
+		})
+
 		return count
 	}
 }

@@ -1,37 +1,39 @@
 const Offbeat = require('../lib/Offbeat.js'),
 
 starwars_melody =
-`t g3, t g3, t g3,
-h c4, h g4,
-t f4, t e4, t d4,
-h c5, q g4,
+`first = h c4, h g4;
+second = t f4, t e4, t d4;
+third = h c5, q g4, t f4, t e4, t f4;
 
-t f4, t e4, t d4,
+t g3 * 3,
+first, second,
 h c5, q g4,
-t f4, t e4, t f4,
-h d4`,
+second, third,
+h d4
+`,
 
 ghostbusters_melody =
-`s c4, s c4, e e4, e c4, e d4, e b_3,
-q rest, q rest,
-s c4, s c4, s c4, s c4,
-e b_3, e c4, q rest,
+`first = s c4 * 2, e e4, e c4, e d4, e b_3;
+second = q rest * 2, s c4 * 4, e b_3;
 
-s c4, s c4, e e4, e c4, e d4, e b_3,
-q rest, q rest,
-s c4, s c4, s c4, s c4,
-e b_3, e d4, q c4`,
+first, second,
+e c4, q rest,
+
+first, second,
+e d4, q c4`,
 
 harrypotter_melody =
-`e b3,
-e-dot e4, s g4, e f#4,
-q e4, e b4,
-q-dot a4,
+`first = e. e4, s g4, e f#4;
 
-q-dot f#4,
-e-dot e4, s g4, e f#4,
+e b3,
+first,
+q e4, e b4,
+q. a4,
+
+q. f#4,
+first,
 q d#4, e f4,
-q-dot b3
+q. b3
 `,
 
 starwars = new Offbeat({

@@ -1,12 +1,12 @@
 'use strict'
 const assert = require('chai').assert,
 Offbeat = require('../lib/Offbeat.js'),
-AudioContext = require('web-audio-api').AudioContext
+nodeContext = require('web-audio-api').AudioContext
 
 describe('Offbeat declared with defaults', () => {
   describe('#time()', () => {
     it('should return the default time', () => {
-      const melody = new Offbeat({ context: AudioContext })
+      const melody = new Offbeat({ context: nodeContext })
       let time = melody.time()
       assert.equal(time, 0)
     })
@@ -14,7 +14,7 @@ describe('Offbeat declared with defaults', () => {
 
   describe('#to_time(1)', () => {
     it('should return 4 seconds', () => {
-      const melody = new Offbeat({ context: AudioContext })
+      const melody = new Offbeat({ context: nodeContext })
       let time = melody.to_time(1)
       assert.equal(time, 4)
     })
@@ -27,7 +27,7 @@ describe('Offbeat declared with custom object', () => {
     it('should return array of notes', () => {
         const melody = new Offbeat({
           notes: `a b, c d, e f`,
-          context: AudioContext
+          context: nodeContext
         })
         let notes = melody.notesParsed
         assert.deepEqual(notes, [['a','b'],['c','d'],['e','f']])
@@ -40,7 +40,7 @@ describe('Offbeat declared with custom object', () => {
         tempo: 120,
         timeSig: '12/8',
         notes: 't a1, t a1, t a1',
-        context: AudioContext
+        context: nodeContext
       })
       let time = melody.time().toFixed(2)
       assert.equal(time, 1.50)
@@ -53,7 +53,7 @@ describe('Offbeat declared with custom object', () => {
             tempo: 120,
             timeSig: '12/8',
             notes: 't a1, t a1, t a1',
-            context: AudioContext
+            context: nodeContext
         })
         let time = melody.to_time(1)
         assert.equal(time, 6)
@@ -64,7 +64,7 @@ describe('Offbeat declared with custom object', () => {
     it('should return unique, sorted, origin notes', () => {
       const melody = new Offbeat({
         notes: 'q c3, q d3, q e3, q f3, q g3, q a3, q b3',
-        context: AudioContext
+        context: nodeContext
       })
       let brief = melody.brief()
       assert.deepEqual(brief, ['c1', 'd1', 'e1', 'f1', 'g1', 'a1', 'b1'])
@@ -75,7 +75,7 @@ describe('Offbeat declared with custom object', () => {
     it('should return count of all notes', () => {
       const melody = new Offbeat({
         notes: 'q c3, q d3, q e3, q f3, q g3, q a3, q b3',
-        context: AudioContext
+        context: nodeContext
       })
       let count = melody.countNotes()
       assert.deepEqual(count, {'a3' : 1, 'b3' : 1, 'c3' : 1, 'd3' : 1, 'e3' : 1, 'f3' : 1, 'g3' : 1})
