@@ -1,5 +1,5 @@
 {
-  "name": "offbeat",
+  "name": "Offbeat",
   "version": "1.0.0",
   "description": "Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.github.io/Offbeat/",
   "main": "lib/Offbeat.js",
@@ -7,11 +7,12 @@
     "test": "test"
   },
   "scripts": {
+    "watch": "watchify src/index.js -o dist/bundle.js -v",
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/blmgeo/Offbeat.git"
+    "url": "https://github.com/blmgeo/Offbeat.git"
   },
   "author": "Brandon Mailhiot",
   "license": "ISC",
@@ -20,7 +21,13 @@
   },
   "homepage": "https://github.com/blmgeo/Offbeat#readme",
   "devDependencies": {
-    "chai": "^3.5.0",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.7.0",
     "mocha": "^3.1.2"
+  },
+  "dependencies": {
+    "chai": "^3.5.0",
+    "web-audio-api": "^0.2.2"
   }
 }

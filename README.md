@@ -1,10 +1,8 @@
 ## Introduction  
-Offbeat is a new format for music composition. Rather than staves, tabs, GUIs, or APIs to represent music, only the pitch and duration of notes are needed. This yields a data-like structure for any composition. Combined with techniques from machine learning, it is then possible to generate music categorically, e.g. genre, popularity, etc. And that is the aspiration of Offbeat, to be an intelligent tool for music generation and analysis.
-
-The documentation below explains how it works.
+Offbeat is a javascript library that provides a simple language for music composition.
 
 ### Note duration
-A note's duration is the relative amount of time it is played, known as a subdivision. 
+A note's duration is the relative amount of time it is played, known as a subdivision.
 The names of common subdivisions are abbreviated as follows:
 
 * ts = thirty-second  
@@ -31,6 +29,20 @@ In practice: `h d5, q g_3, q c#6` etc.
 
 _Note: any amount of tabs, newlines, or whitespace can appear after the comma, but not between the duration and pitch_  
 
+### Handling repetition
+To simplify the writing process, groups of notes may be assigned to variables (separated with a semicolon) and repeated notes may be multiplied by an integer value.
+
+1) Variable assignment
+~~~
+motif = h d5, q g_3, q c#6;
+t d4, motif,
+t a4, motif
+~~~
+2) Repeat single notes
+~~~
+h c4 * 8, t b_3 * 3
+~~~
+
 ## Usage  
 1) Import:
 ~~~
@@ -46,8 +58,7 @@ const melody = new Offbeat({
    loop: true                                             //default is false  
 })
 ~~~
+
 _Note: Up to six audio contexts can be active on the window object. Each instance of Offbeat creates a new context._
 
-3) Read the rest of the documentation here: https://blmgeo.github.io/Offbeat/out/Offbeat.html
-
-
+3) Read more about available methods here: https://blmgeo.github.io/Offbeat/out/Offbeat.html
