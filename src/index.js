@@ -16,7 +16,7 @@ const ghostbustersMelody =
 second = q rest * 2, s c4 * 4, e b_3;
 
 first, second,
-e c4, q rest,
+e c4, h rest,
 
 first, second,
 e d4, q c4`;
