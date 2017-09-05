@@ -1,9 +1,9 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 
-class Offbeat {
+class Codebeat {
   /**
-  * Create an instance of Offbeat.
+  * Create an instance of Codebeat.
   * @constructor
   * @param {Object} props - Initialize with tempo, timeSig, instrument, notes, and loop properties.
   */
@@ -226,7 +226,7 @@ class Offbeat {
     let i = 1;
     // notes in the first octave fall below 55Hz
     while (frequency >= 55) {
-      frequency /= 2 ** i;
+      frequency /= Math.pow(2, i);
       i += 1;
     }
     return frequency * 2;
@@ -260,4 +260,4 @@ class Offbeat {
   }
 }
 
-module.exports = Offbeat;
+module.exports = Codebeat;

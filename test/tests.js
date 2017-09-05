@@ -1,11 +1,11 @@
 const assert = require('chai').assert;
-const Offbeat = require('../src/Offbeat.js');
+const Codebeat = require('../src/Codebeat.js');
 const nodeContext = require('web-audio-api').AudioContext;
 
-describe('Offbeat declared with defaults', () => {
+describe('Codebeat declared with defaults', () => {
   describe('#time()', () => {
     it('should return the default time', () => {
-      const melody = new Offbeat({ context: nodeContext });
+      const melody = new Codebeat({ context: nodeContext });
       const time = melody.time();
       assert.equal(time, 0);
     });
@@ -13,7 +13,7 @@ describe('Offbeat declared with defaults', () => {
 
   describe('#to_time(1)', () => {
     it('should return 4 seconds', () => {
-      const melody = new Offbeat({ context: nodeContext });
+      const melody = new Codebeat({ context: nodeContext });
       const time = melody.to_time(1);
       assert.equal(time, 4);
     });
@@ -21,10 +21,10 @@ describe('Offbeat declared with defaults', () => {
 });
 
 
-describe('Offbeat declared with custom object', () => {
+describe('Codebeat declared with custom object', () => {
   describe('#parse_notes()', () => {
     it('should return array of notes', () => {
-      const melody = new Offbeat({
+      const melody = new Codebeat({
         notes: 'a b, c d, e f',
         context: nodeContext,
       });
@@ -35,7 +35,7 @@ describe('Offbeat declared with custom object', () => {
 
   describe('#time()', () => {
     it('should return time of audio in seconds', () => {
-      const melody = new Offbeat({
+      const melody = new Codebeat({
         tempo: 120,
         timeSig: '12/8',
         notes: 't a1, t a1, t a1',
@@ -48,7 +48,7 @@ describe('Offbeat declared with custom object', () => {
 
   describe('#to_time(1)', () => {
     it('should return 6 seconds', () => {
-        const melody = new Offbeat({
+        const melody = new Codebeat({
             tempo: 120,
             timeSig: '12/8',
             notes: 't a1, t a1, t a1',
@@ -61,7 +61,7 @@ describe('Offbeat declared with custom object', () => {
 
   describe('#brief()', () => {
     it('should return unique, sorted, origin notes', () => {
-      const melody = new Offbeat({
+      const melody = new Codebeat({
         notes: 'q c3, q d3, q e3, q f3, q g3, q a3, q b3',
         context: nodeContext,
       });
@@ -72,7 +72,7 @@ describe('Offbeat declared with custom object', () => {
 
   describe('#countNotes()', () => {
     it('should return count of all notes', () => {
-      const melody = new Offbeat({
+      const melody = new Codebeat({
         notes: 'q c3, q d3, q e3, q f3, q g3, q a3, q b3',
         context: nodeContext,
       });

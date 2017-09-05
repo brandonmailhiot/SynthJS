@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css?family=Josefin+Sans|Lato:100");
 * { box-sizing: border-box; }
 
 html, body {
@@ -5,21 +6,40 @@ html, body {
   padding: 0;
   margin: 0;
   overflow-x: hidden;
+  background-color: #FBFAEF;
+}
+
+a {
+  color: #48F971;
+}
+
+a:hover {
+  text-decoration: none;
+  color: #48F971;
 }
 
 .sample-heading {
   text-align: center;
+  margin-bottom: 20px;
+  font-size: 2.5vw;
+  color: #000;
+  font-family: 'Josefin Sans', sans-serif;
 }
 
 .composition {
   white-space: pre;
+  color: #fff;
+  font-size: 14px;
 }
 
 .section-heading {
   margin-top: 150px;
-  margin-bottom: 50px;
+  margin-bottom: 0px;
   text-align: center;
-  font-family: 'Kaushan Script', cursive;
+  font-family: 'Lato', sans-serif;
+  margin: 40px auto 40px auto;
+  font-size: 6vw;
+  color: #000;
 }
 
 .time {
@@ -27,15 +47,81 @@ html, body {
 }
 
 .controls {
-  left: 50%;
-  transform: translate(-50%, 0%);
+  border-bottom: 1px solid;
+  border-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+  border-image-slice: 1;
+  padding-bottom: 100px;
+  margin: 20px auto;
+  width: 380px;
+}
+
+#starwars, #ghostbusters, #harrypotter {
+  margin-bottom: 40px;
 }
 
 #try-it {
-  margin-bottom: 200px;
+  top: 40px;
+  margin-bottom: 150px;
+  padding: 0 10px;
 }
 
-.play-btn, .playLoop-btn, .stop-btn, .reverse-btn {
-  font-family: 'Kaushan Script', cursive;
-  font-size: 16px;
+#try-it .section-heading {
+  width: 400px;
+}
+
+#try-it label {
+  font-size: 14px;
+  text-align: center;
+}
+
+#try-it .description {
+  text-align: center;
+}
+
+
+.title-container {
+  width: 100vw;
+  margin-bottom: 70px;
+  background-image: radial-gradient(#25252D 0%, #16161D 70%, #101016 100%);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid;
+  -webkit-border-image: -webkit-linear-gradient(to right, #FFCA4F, #48F971);
+  border-image: linear-gradient(to right, #FFCA4F, #48F971);
+  border-image-slice: 1;
+}
+
+.title {
+  text-align: center;
+  font-size: 12vw;
+  color: #f9f9fa;
+  margin: 20px auto;
+  width: 100%;
+  background: -webkit-linear-gradient(45deg, #FFCA4F, #4DFDB7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Lato', serif;
+}
+
+.description {
+  max-width: 700px;
+  padding: 0 10px;
+  margin: 40px auto 100px auto;
+  font-size: 14px;
+  text-align: justify;
+  line-height: 36px;
+}
+
+.well {
+  background-color: #191921;
+  border: 2px solid transparent;
+  -webkit-border-image: -webkit-linear-gradient(to top right, #FFCA4F, #48F971);
+  border-image: linear-gradient(to top right, #FFCA4F, #48F971);
+  border-image-slice: 1;
+}
+
+.github {
+  display: block;
+  margin: 0 auto;
+  margin-top: 50px;
 }

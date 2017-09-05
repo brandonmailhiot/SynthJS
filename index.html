@@ -4,111 +4,108 @@
   <meta charset='utf-8'>
   <meta name='viewport' content='initial-scale=1'>
   <title>Offbeat</title>
-  <link href="https://fonts.googleapis.com/css?family=Kaushan+Script" rel="stylesheet">
-  <link href='https://bootswatch.com/journal/bootstrap.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="https://bootswatch.com/paper/bootstrap.min.css">
   <link href='styles/index.css' rel='stylesheet'>
 </head>
 
 <body data-spy="scroll" data-target=".navbar" data-offset="50">
-
-  <nav class="navbar navbar-inverse navbar-fixed-top">
-    <div class="container-fluid">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand name" href="https://www.github.com/blmgeo/Offbeat">Offbeat</a>
-      </div>
-      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-        <ul class="nav navbar-nav">
-          <li class="active"><a href="#samples">Samples <span class="sr-only">(current)</span></a></li>
-          <li><a href="#try-it">Try it</a></li>
-          <li><a href="out/Offbeat.html">Documentation</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
+  <div class="title-container">
+    <h1 class="title">CODEBEAT</h1>
+  </div>
+  <h2 class='section-heading'>Introduction</h2>
+  <p class="description">
+      Codebeat is an audio programming library designed for music composition and deconstruction. 
+      A combination of efficient syntax and data-driven analysis, Codebeat has an answer
+      for every musical quandry. Because Codebeat is built on JavaScript, it can be integrated
+      painlessly on the client-side or server-side of any web application. Take a look at the
+      <a href='#samples'>samples</a> below or <a href="#write-your-own">write you own</a>. More 
+      documentation is available on the project's GitHub page.
+    <a href='https://www.github.com/blmgeo/offbeat' ><button class='btn btn-success btn-lg github'>Find on GitHub</button></a>
+  </p>
   <section id='samples' class='container'>
-    <h2 class='section-heading'>< Samples /></h2>
+    <h2 class='section-heading'>Samples</h2>
+    <p class="description">
+        These sample melodies are intended to demonstrate the ease and power of the Codebeat syntax.
+        You can <a>find more</a> extensive compositions accompanied by interesting data visualizations.
+        Remember to <a href="#write-your-own">try it</a> for yourself.
+    </p>
     <div class='row'>
       <!-- Starwars -->
-      <div id='starwars' class='col-sm-4'>
+      <div id='starwars' class='col-sm-6 col-sm-offset-3'>
         <h3 class='sample-heading'>Star Wars</h3>
         <div class='well composition'></div>
         <p class='time'></p>
-        <div class="btn-group controls">
-          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
-          <button class='btn btn-warning playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
-          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+        <div class="controls">
+          <button class='btn btn-success play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-default playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
+          <button class='btn btn-default reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
           <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
         </div>
       </div>
       <!-- Ghostbusters -->
-      <div id='ghostbusters' class='col-sm-4'>
+      <div id='ghostbusters' class='col-sm-6 col-sm-offset-3'>
         <h3 class='sample-heading'>Ghostbusters</h3>
         <div class='well composition'></div>
         <p class='time'></p>
-        <div class="btn-group controls">
-          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
-          <button class='btn btn-warning playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
-          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+        <div class="controls">
+          <button class='btn btn-success play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-default playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
+          <button class='btn btn-default reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
           <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
         </div>
       </div>
       <!-- Harry Potter -->
-      <div id='harrypotter' class='col-sm-4'>
+      <div id='harrypotter' class='col-sm-6 col-sm-offset-3'>
         <h3 class='sample-heading'>Harry Potter</h3>
         <div class='well composition'></div>
         <p class='time'></p>
-        <div class="btn-group controls">
-          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
-          <button class='btn btn-warning playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
-          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+        <div class="controls">
+          <button class='btn btn-success play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+          <button class='btn btn-default playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
+          <button class='btn btn-default reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
           <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
         </div>
       </div>
-    </div>
-  </section>
-
-
-  <section id='try-it' class='container'>
-    <h2 class='section-heading'>< Try it /></h2>
-    <div class='row'>
-      <div class="form-group col-sm-4">
-        <label>tempo:</label>
-        <input class='form-control tempo' type='text' placeholder='e.g. 128'>
-      </div>
-      <div class="form-group col-sm-4">
-        <label>timeSig:</label>
-        <input class='form-control timeSig' type='text' placeholder='e.g. 4/4'>
-      </div>
-      <div class="form-group col-sm-4">
-        <label>instrument:</label>
-        <input class='form-control instrument' type='text' placeholder='e.g. square'>
-      </div>
-    </div>
-    <div class='row'>
-      <div class='col-sm-12'>
-        <label>notes:</label>
-        <div class='well composition' contenteditable="true" spellcheck="false"></div>
-        <p class='time'><strong>Time: </strong> 0.00 seconds</p>
-        <div class="btn-group controls">
-          <button class='btn btn-primary play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
-          <button class='btn btn-warning playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
-          <button class='btn btn-info reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
-          <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
-        </div>
-      </div>
+      <section id='try-it'>
+          <h2 class='section-heading'>Try it</h2>
+          <p class="description">
+              Write a melody, turn up the volume, and hit play. 
+          </p>
+          <div class='row'>
+            <div class="form-group col-sm-4">
+              <label>TEMPO:</label>
+              <input class='form-control tempo' type='text' placeholder='e.g. 128'>
+            </div>
+            <div class="form-group col-sm-4">
+              <label>TIME SIGNATURE:</label>
+              <input class='form-control timeSig' type='text' placeholder='e.g. 4/4'>
+            </div>
+            <div class="form-group col-sm-4">
+              <label>INSTRUMENTS:</label>
+              <input class='form-control instrument' type='text' placeholder='e.g. square'>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-sm-12'>
+              <div class='well composition' contenteditable="true" spellcheck="false"></div>
+              <p class='time'><strong>Time: </strong> 0.00 seconds</p>
+              <div id="write-your-own" class="controls">
+                <button class='btn btn-success play-btn'><i class='glyphicon glyphicon-play'> </i> Play</button>
+                <button class='btn btn-default playLoop-btn'><i class='glyphicon glyphicon-refresh'> </i> Loop</button>
+                <button class='btn btn-default reverse-btn'><i class='glyphicon glyphicon-backward'> </i> Reverse</button>
+                <button class='btn btn-default stop-btn'><i class='glyphicon glyphicon-stop'> </i> Stop</button>
+              </div>
+            </div>
+          </div>
+        </section>
     </div>
   </section>
 
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"
   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
   crossorigin="anonymous"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/ScrollMagic/2.0.5/ScrollMagic.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ScrollMagic/2.0.5/plugins/debug.addIndicators.min.js"></script>
   <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
   <script src='dist/bundle.js'></script>
 </body>

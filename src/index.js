@@ -1,4 +1,4 @@
-const Offbeat = require('./Offbeat.js');
+const Codebeat = require('./Codebeat.js');
 
 const starwarsMelody =
 `first = h c4, h g4;
@@ -34,17 +34,17 @@ first,
 q d#4, e f4,
 q. b3`;
 
-const starwars = new Offbeat({
+const starwars = new Codebeat({
   tempo: 120,
   notes: starwarsMelody,
 });
 
-const ghostbusters = new Offbeat({
+const ghostbusters = new Codebeat({
   tempo: 116,
   notes: ghostbustersMelody,
 });
 
-const harrypotter = new Offbeat({
+const harrypotter = new Codebeat({
   tempo: 60,
   timeSig: '3/8',
   notes: harrypotterMelody,
@@ -83,7 +83,7 @@ const tryItOptions = () => {
   };
 };
 
-const tryIt = new Offbeat(tryItOptions());
+const tryIt = new Codebeat(tryItOptions());
 
 $('#try-it .play-btn').click(() => {
   tryIt.update(tryItOptions());

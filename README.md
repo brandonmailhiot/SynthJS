@@ -1,5 +1,5 @@
 ## Introduction  
-Offbeat is a javascript library that provides a simple language for music composition.
+Codebeat is a javascript library that provides a simple language for music composition.
 
 ### Note duration
 A note's duration is the relative amount of time it is played, known as a subdivision.
@@ -46,11 +46,11 @@ h c4 * 8, t b_3 * 3
 ## Usage  
 1) Import:
 ~~~
-const Offbeat = require('Offbeat')
+const Codebeat = require('Codebeat')
 ~~~
 2) Pass in a melody object:  
 ~~~
-const melody = new Offbeat({  
+const melody = new Codebeat({  
    tempo: 128,                                            //default is 60
    instrument: 'square',                                  //default is 'sine'
    timeSig: '3/4',                                        //default is '4/4'
@@ -59,6 +59,6 @@ const melody = new Offbeat({
 })
 ~~~
 
-_Note: Up to six audio contexts can be active on the window object. Each instance of Offbeat creates a new context._
+_Note: Up to six audio contexts can be active on the window object. Each instance of Codebeat creates a new context._
 
-3) Read more about available methods here: https://blmgeo.github.io/Offbeat/out/Offbeat.html
+3) Read more about available methods here: https://blmgeo.github.io/Codebeat/out/Codebeat.html

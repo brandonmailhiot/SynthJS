@@ -1,8 +1,8 @@
 {
-  "name": "Offbeat",
+  "name": "Codebeat",
   "version": "1.0.0",
-  "description": "Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.github.io/Offbeat/",
-  "main": "lib/Offbeat.js",
+  "description": "Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.github.io/Codebeat/",
+  "main": "lib/Codebeat.js",
   "directories": {
     "test": "test"
   },
@@ -12,14 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/blmgeo/Offbeat.git"
+    "url": "https://github.com/blmgeo/Codebeat.git"
   },
   "author": "Brandon Mailhiot",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/blmgeo/Offbeat/issues"
+    "url": "https://github.com/blmgeo/Codebeat/issues"
   },
-  "homepage": "https://github.com/blmgeo/Offbeat#readme",
+  "homepage": "https://github.com/blmgeo/Codebeat#readme",
   "devDependencies": {
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.2.0",

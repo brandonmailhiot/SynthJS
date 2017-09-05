@@ -3,9 +3,9 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 
-class Offbeat {
+class Codebeat {
   /**
-  * Create an instance of Offbeat.
+  * Create an instance of Codebeat.
   * @constructor
   * @param {Object} props - Initialize with tempo, timeSig, instrument, notes, and loop properties.
   */
@@ -228,7 +228,7 @@ class Offbeat {
     let i = 1;
     // notes in the first octave fall below 55Hz
     while (frequency >= 55) {
-      frequency /= 2 ** i;
+      frequency /= Math.pow(2, i);
       i += 1;
     }
     return frequency * 2;
@@ -262,7 +262,7 @@ class Offbeat {
   }
 }
 
-module.exports = Offbeat;
+module.exports = Codebeat;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./duration":2,"./frequency":3}],2:[function(require,module,exports){
@@ -437,7 +437,7 @@ module.exports = {
 // end note_data object
 
 },{}],4:[function(require,module,exports){
-const Offbeat = require('./Offbeat.js');
+const Codebeat = require('./Codebeat.js');
 
 const starwarsMelody =
 `first = h c4, h g4;
@@ -473,17 +473,17 @@ first,
 q d#4, e f4,
 q. b3`;
 
-const starwars = new Offbeat({
+const starwars = new Codebeat({
   tempo: 120,
   notes: starwarsMelody,
 });
 
-const ghostbusters = new Offbeat({
+const ghostbusters = new Codebeat({
   tempo: 116,
   notes: ghostbustersMelody,
 });
 
-const harrypotter = new Offbeat({
+const harrypotter = new Codebeat({
   tempo: 60,
   timeSig: '3/8',
   notes: harrypotterMelody,
@@ -522,7 +522,7 @@ const tryItOptions = () => {
   };
 };
 
-const tryIt = new Offbeat(tryItOptions());
+const tryIt = new Codebeat(tryItOptions());
 
 $('#try-it .play-btn').click(() => {
   tryIt.update(tryItOptions());
@@ -547,4 +547,4 @@ $('#try-it .stop-btn').click(() => {
   $('#try-it .time').html(`<strong>Time:</strong> ${tryIt.time().toFixed(2)} seconds`);
 })
 
-},{"./Offbeat.js":1}]},{},[4]);
+},{"./Codebeat.js":1}]},{},[4]);
