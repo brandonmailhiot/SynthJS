@@ -37,6 +37,7 @@ a:hover {
   margin-bottom: 0px;
   text-align: center;
   font-family: 'Lato', sans-serif;
+  font-weight: 100;
   margin: 40px auto 40px auto;
   font-size: 6vw;
   color: #000;
@@ -101,6 +102,7 @@ a:hover {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   font-family: 'Lato', serif;
+  font-weight: 100;
 }
 
 .description {
