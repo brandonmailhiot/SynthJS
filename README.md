@@ -7,16 +7,16 @@ The names of common subdivisions are abbreviated as follows:
 
 * ts = thirty-second  
 * s = sixteenth  
-* s-dot = dotted-sixteenth  
+* s. = dotted-sixteenth  
 * t = triplet  
 * e = eighth  
-* e-dot = dotted-eighth    
+* e. = dotted-eighth    
 * q = quarter  
-* q-dot = dotted-quarter  
+* q. = dotted-quarter  
 * h = half  
-* h-dot = dotted-half   
+* h. = dotted-half   
 * w = whole
-* w-dot = dotted-whole   
+* w. = dotted-whole   
 
 _Note: 3 triplets = 2 eighths_
 
