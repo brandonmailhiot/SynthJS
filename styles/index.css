@@ -48,7 +48,8 @@ a:hover {
 }
 
 .controls {
-  border-bottom: 1px solid;
+  border: 0px solid transparent;
+  border-bottom: 1px solid transparent;
   border-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
   border-image-slice: 1;
   padding-bottom: 100px;
@@ -84,6 +85,7 @@ a:hover {
   width: 100vw;
   margin-bottom: 70px;
   background-image: radial-gradient(#25252D 0%, #16161D 70%, #101016 100%);
+  border: 0px solid transparent;
   border-top: 3px solid transparent;
   border-bottom: 3px solid;
   -webkit-border-image: -webkit-linear-gradient(to right, #FFCA4F, #48F971);
