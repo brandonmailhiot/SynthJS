@@ -1,4 +1,4 @@
-const Codebeat = require('./Codebeat.js');
+const Codebeat = require('./Codebeat');
 
 const starwarsMelody =
 `first = h c4, h g4;

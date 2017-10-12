@@ -29,7 +29,7 @@ class Codebeat {
       this[key] = props[key];
     });
     this.parseNotes();
-    this.getBPM();
+    if (props.timeSig) this.getBPM();
   }
 
   /**
@@ -60,72 +60,10 @@ class Codebeat {
   /**
   * Parse this.notes into an array of note objects.
   */
-  parseNotes() {
-    const parse = n => n.trim().split(' ');
-    const multiply = {
-      occursAt: [],
-      augment: 0,
-    };
-    const motifs = {};
-
-    let notes = this.notes;
-    let notesArray = (function notesArray() {
-      const delimiter = ';';
-
-      if (notes.includes(delimiter)) {
-        notes = notes.split(delimiter);
-        const motifOccursAt = [];
-        const operator = '=';
-
-        notes.forEach((n, i) => {
-          if (n.includes(operator)) {
-            const motif = n.split(operator).map(m => m.trim());
-            motifs[motif[0]] = motif[1];
-            motifOccursAt.push(i);
-          }
-        });
-
-        notes = notes
-          .filter((n, i) => !motifOccursAt.includes(i))
-          .reduce((a, b) => a.concat(`, ${b}`))
-          .split(',')
-          .map(n => n.trim())
-          .map(n => (Object.prototype.hasOwnProperty.call(motifs, n) ? motifs[n] : n))
-          .join(',');
-      }
-
-      return notes.split(',');
-    }());
-
-    notesArray = notesArray.map(note => parse(note));
-
-    notesArray.forEach((n, i) => {
-      if (n.includes('*')) {
-        multiply.occursAt.push(i);
-      }
-    });
-
-    multiply.occursAt.forEach((i) => {
-      const index = i + multiply.augment;
-      const note = notesArray[index];
-      for (let j = 1; j < note[3]; j += 1) {
-        notesArray.splice(index + 1, 0, [note[0], note[1]]);
-        multiply.augment += 1;
-      }
-    });
-
-    this.notesParsed = notesArray.map((note, i) => {
-      const inputDuration = note[0];
-      const inputFrequency = note[1];
-      return {
-        inputDuration,
-        inputFrequency,
-        outputDuration: Duration[inputDuration],
-        time: () => this.toTime(Duration[inputDuration]),
-        outputFrequency: Frequency[inputFrequency],
-        index: i,
-      };
-    });
+  parseNotes(notes = this.notes) {
+    notes = Codebeat._expandMotifs(notes);
+    notes = Codebeat._expandMultiples(notes);
+    this.notesParsed = Codebeat._expandNotes(notes);
   }
 
   /**
@@ -133,9 +71,8 @@ class Codebeat {
   * the last oscillator node ends, or on stop().
   */
   play(n = 0) {
-    let index = n;
-    const note = this.notesParsed[index];
-    const stopTime = note.time();
+    const note = this.notesParsed[n];
+    const stopTime = this.toTime(note.outputDuration);
     const oscillator = this.context.createOscillator();
 
     oscillator.connect(this.context.destination);
@@ -145,9 +82,9 @@ class Codebeat {
     oscillator.stop(this.context.currentTime + stopTime);
 
     oscillator.onended = () => {
-      index += 1;
-      if (this.notesParsed[index]) this.play(index);
-      else this.ended();
+      this.notesParsed[n + 1] 
+      ? this.play(n += 1)
+      : this.ended();
     };
   }
 
@@ -199,10 +136,10 @@ class Codebeat {
   * @return {Array} Sorted note names at first octave.
   */
   brief() {
-    const origin = this.notesParsed.map(f => this.originFrequency(f.outputFrequency));
+    const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
     notes.sort();
-    const names = notes.map(note => note.inputFrequency);
+    const names = notes.map(note => Codebeat._noteName(note));
     return names.filter(name => name && name !== 'rest');
   }
 
@@ -213,17 +150,34 @@ class Codebeat {
   time() {
     let time = 0;
     this.notesParsed.forEach((note) => {
-      time += note.time();
+      time += this.toTime(note.outputDuration) || 0;
     });
     return time;
   }
 
   /**
+  * Get the number of times each note appears in the composition.
+  * @return {Object} Total count of each note.
+  */
+  countNotes() {
+    const count = {};
+    this.notesParsed.forEach((note) => {
+      if (!count[note.inputFrequency]) {
+        count[note.inputFrequency] = 0;
+      }
+      if (count[note.inputFrequency] >= 0) {
+        count[note.inputFrequency] += 1;
+      }
+    });
+    return count;
+  }
+
+  /**
   * Get the same note in the first octave.
-  * @param {number} frequency - Frequency of a note.
+  * @param {number} frequency - Frequency of a note in Hz.
   * @return {number} Frequency of the same note in the first octave.
   */
-  static originFrequency(f) {
+  static _originFrequency(f) {
     let frequency = f;
     let i = 1;
     // notes in the first octave fall below 55Hz
@@ -239,27 +193,79 @@ class Codebeat {
   * @param {number} frequency - Frequency of a note.
   * @return {number} Name of the note.
   */
-  static noteName(freq) {
+  static _noteName(freq) {
     let note = '';
     Object.keys(Frequency).forEach((key) => {
       if (Frequency[key] === freq) note = key;
     });
-    return note || Error('Note does not exist');
+    return note || new Error('Note does not exist');
   }
 
-  /**
-  * Get the number of times each note appears in the composition.
-  * @return {Object} Total count of each note.
-  */
-  countNotes() {
-    const count = {};
-    this.notesParsed.forEach((note) => {
-      if (count[note.inputFrequency]) {
-        count[note.inputFrequency] = 0;
-      } else count[note.inputFrequency] += 1;
-    });
-    return count;
-  }
+  static _expandMotifs(notes, delimiter = ';') {
+      const motifs = {};
+
+      if (notes.includes(delimiter)) {
+        notes = notes.split(delimiter);
+        const motifOccursAt = [];
+        const operator = '=';
+
+        notes.forEach((n, i) => {
+          if (n.includes(operator)) {
+            const motif = n.split(operator).map(m => m.trim());
+            motifs[motif[0]] = motif[1];
+            motifOccursAt.push(i);
+          }
+        });
+
+        notes = notes
+          .filter((n, i) => !motifOccursAt.includes(i))
+          .reduce((a, b) => a.concat(`,${b}`))
+          .split(',')
+          .map(n => n.trim())
+          .map(n => (Object.prototype.hasOwnProperty.call(motifs, n) ? motifs[n] : n))
+          .join(',');
+      }
+
+      return notes.split(',').map(n => n.trim().split(' '));
+    }
+
+    static _expandMultiples(notes, delimiter = '*') {
+      const multiply = {
+        occursAt: [],
+        augment: 0,
+      };
+
+      notes.forEach((n, i) => {
+        if (n.includes(delimiter)) {
+          multiply.occursAt.push(i);
+        }
+      });
+
+      multiply.occursAt.forEach((i) => {
+        const index = i + multiply.augment;
+        const note = notes[index];
+        for (let j = 1; j < note[3]; j += 1) {
+          notes.splice(index + 1, 0, [note[0], note[1]]);
+          multiply.augment += 1;
+        }
+      });
+
+      return notes;
+    }
+
+    static _expandNotes(notes) {
+      return notes.map((note, i) => {
+        const inputDuration = note[0];
+        const inputFrequency = note[1];
+        return {
+          inputDuration,
+          inputFrequency,
+          outputDuration: Duration[inputDuration],
+          outputFrequency: Frequency[inputFrequency],
+          index: i,
+        };
+      });
+    }
 }
 
 module.exports = Codebeat;
@@ -437,7 +443,7 @@ module.exports = {
 // end note_data object
 
 },{}],4:[function(require,module,exports){
-const Codebeat = require('./Codebeat.js');
+const Codebeat = require('./Codebeat');
 
 const starwarsMelody =
 `first = h c4, h g4;
@@ -547,4 +553,4 @@ $('#try-it .stop-btn').click(() => {
   $('#try-it .time').html(`<strong>Time:</strong> ${tryIt.time().toFixed(2)} seconds`);
 })
 
-},{"./Codebeat.js":1}]},{},[4]);
+},{"./Codebeat":1}]},{},[4]);
