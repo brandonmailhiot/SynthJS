@@ -310,7 +310,7 @@ class Codebeat {
       let output = note.outputFrequency;
       const nextNote = this.notesParsed[n + 1];
       const nextOutput = nextNote.outputFrequency;
-      const timeInterval =  note.outputDuration / (nextOutput - output);
+      const timeInterval = this.toTime(note.outputDuration) / Math.abs(nextOutput - output) * 1000;
       let slide = setInterval(() => {
         oscillator.frequency.value = output;
         if (output < nextOutput) {
@@ -330,6 +330,7 @@ module.exports = Codebeat;
 const ts = 0.03125;
 
 module.exports = {
+  z: 0,
   ts, // thirty-second
   s: ts * 2, // sixteenth
   's.': ts * 3, // dotted sixteenth

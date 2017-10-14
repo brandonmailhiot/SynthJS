@@ -2,6 +2,7 @@
 const ts = 0.03125;
 
 module.exports = {
+  z: 0,
   ts, // thirty-second
   s: ts * 2, // sixteenth
   's.': ts * 3, // dotted sixteenth
