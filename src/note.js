@@ -5,16 +5,22 @@ module.exports = (note) => {
 	const inputDuration = note[0];
     const inputFrequency = note[1];
     const fx = note[2] || [];
+    const slide = fx.includes('slide')
+    const poly = fx.includes('poly')
 
     const noteSchema = {
 	    inputDuration,
 	    inputFrequency,
 	    outputDuration: Duration[inputDuration],
-	    outputFrequency: Frequency[inputFrequency],
+	    outputFrequency: (() => {
+	    	return poly 
+	    		? inputFrequency.split(' ').map(f => Frequency[f])
+	    		: [Frequency[inputFrequency]]
+	    })(),
 	    fx: {
 	        all: fx,
-	        slide: fx.includes('slide'),
-
+	        slide,
+	        poly
 	    }
     }
     

@@ -64,6 +64,7 @@ class Codebeat {
     notes = Codebeat._expandMotifs(notes);
     notes = Codebeat._expandMultiples(notes);
     notes = Codebeat._expandSlides(notes);
+    notes = Codebeat._expandPoly(notes);
     notes = Codebeat._expandNotes(notes);
     this.notesParsed = notes;
     return this.notesParsed
@@ -75,23 +76,26 @@ class Codebeat {
   */
   play(n = 0) {
     const note = this.notesParsed[n];
+    const nextNote = this.notesParsed[n + 1];
     const stopTime = this.toTime(note.outputDuration);
-    const oscillator = this.context.createOscillator();
-    let output = note.outputFrequency;
+    const oscillators = [];
 
-    oscillator.connect(this.context.destination);
-    oscillator.type = this.instrument;
-    oscillator.frequency.value = output;
+    note.outputFrequency.forEach(f => {
+      let o = this.context.createOscillator();
+      o.connect(this.context.destination);
+      o.type = this.instrument;
+      o.frequency.value = f;
+      oscillators.push(o)
+    })
 
-    if (note.fx.slide) {
-      this.slideNote(oscillator, n)
-    } 
+    oscillators.forEach(o => {
+      o.start(0);
+      if (nextNote && note.fx.slide) this.slideNote(o, n)
+      o.stop(this.context.currentTime + stopTime);
+    })
 
-    oscillator.start(0);
-    oscillator.stop(this.context.currentTime + stopTime);
-
-    oscillator.onended = () => {
-      this.notesParsed[n + 1] 
+    oscillators.shift().onended = () => {
+      n < this.notesParsed.length - 1
       ? this.play(n += 1)
       : this.ended();
     };
@@ -277,8 +281,29 @@ class Codebeat {
       slide.occursAt.forEach((i) => {
         const index = i + slide.augment;
         let s = notes.splice(index, 1);
-        notes.splice(index, 0, [s[0][0], s[0][1], ['slide']], [s[0][3], s[0][4], []])
+        notes.splice(index, 0, [s[0][0], s[0][1], ['slide']], [s[0][3], s[0][4], ['slide']])
         slide.augment += 1;
+      });
+
+      return notes;
+    }
+
+    static _expandPoly(notes, delimiter = '+') {
+      notes = notes.map((n, i) => {
+        if (n.includes(delimiter)) {
+          const duration = n.shift()
+          const pitch = n.filter(p => p != delimiter)
+                         .reduce((a,b) => a.concat(' ').concat(b))
+
+          const poly = [
+            duration,
+            pitch,
+            ['poly']
+          ];
+
+          n = poly;
+        }
+        return n;
       });
 
       return notes;
@@ -291,11 +316,14 @@ class Codebeat {
     }
 
     slideNote(oscillator, n) {
-      const note = this.notesParsed[n];
-      let output = note.outputFrequency;
       const nextNote = this.notesParsed[n + 1];
-      const nextOutput = nextNote.outputFrequency;
+      if (!nextNote.fx.slide) return
+
+      const note = this.notesParsed[n];
+      let output = note.outputFrequency[0];
+      const nextOutput = nextNote.outputFrequency[0];
       const timeInterval = this.toTime(note.outputDuration) / Math.abs(nextOutput - output) * 1000;
+      
       let slide = setInterval(() => {
         oscillator.frequency.value = output;
         if (output < nextOutput) {
