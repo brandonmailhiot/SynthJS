@@ -2,7 +2,8 @@
 (function (global){
 const Frequency = require('./frequency');
 const Duration = require('./duration');
-const Note = require('./Note')
+const Note = require('./note');
+
 class Codebeat {
   /**
   * Create an instance of Codebeat.
@@ -286,8 +287,8 @@ class Codebeat {
     }
 
     static _expandNotes(notes) {
-      return notes.map((note, i) => {
-        return Note(note)
+      return notes.map((n, i) => {
+        return Note(n)
       });
     }
 
@@ -311,29 +312,7 @@ class Codebeat {
 module.exports = Codebeat;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Note":2,"./duration":3,"./frequency":4}],2:[function(require,module,exports){
-const Frequency = require('./frequency');
-const Duration = require('./duration');
-
-module.exports = (note) => {
-	const inputDuration = note[0];
-    const inputFrequency = note[1];
-    const fx = note[2];
-
-    const noteSchema = {
-	    inputDuration,
-	    inputFrequency,
-	    outputDuration: Duration[inputDuration],
-	    outputFrequency: Frequency[inputFrequency],
-	    fx: {
-	        exist: fx,
-	        slide: fx ? fx.includes('slide') : false
-	    }
-    }
-    
-	return noteSchema
-}
-},{"./duration":3,"./frequency":4}],3:[function(require,module,exports){
+},{"./duration":2,"./frequency":3,"./note":5}],2:[function(require,module,exports){
 // base duration of 1/32
 const ts = 0.03125;
 
@@ -353,7 +332,7 @@ module.exports = {
   'w.': ts * 48, // dotted whole
 };
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 // base frequency for each note
 const a = 27.5;
 const asharp = 29.1352;
@@ -505,7 +484,7 @@ module.exports = {
 };
 // end note_data object
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 const Codebeat = require('./Codebeat');
 
 const starwarsMelody =
@@ -616,4 +595,27 @@ $('#try-it .stop-btn').click(() => {
   $('#try-it .time').html(`<strong>Time:</strong> ${tryIt.time().toFixed(2)} seconds`);
 })
 
-},{"./Codebeat":1}]},{},[5]);
+},{"./Codebeat":1}],5:[function(require,module,exports){
+const Frequency = require('./frequency');
+const Duration = require('./duration');
+
+module.exports = (note) => {
+	const inputDuration = note[0];
+    const inputFrequency = note[1];
+    const fx = note[2] || [];
+
+    const noteSchema = {
+	    inputDuration,
+	    inputFrequency,
+	    outputDuration: Duration[inputDuration],
+	    outputFrequency: Frequency[inputFrequency],
+	    fx: {
+	        all: fx,
+	        slide: fx.includes('slide'),
+
+	    }
+    }
+    
+	return noteSchema
+}
+},{"./duration":2,"./frequency":3}]},{},[4]);

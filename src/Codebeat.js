@@ -285,8 +285,8 @@ class Codebeat {
     }
 
     static _expandNotes(notes) {
-      return notes.map((note, i) => {
-        return Note(note)
+      return notes.map((n, i) => {
+        return Note(n)
       });
     }
 
