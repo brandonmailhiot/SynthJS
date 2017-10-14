@@ -1,6 +1,7 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
-const Note = require('./Note')
+const Note = require('./note');
+
 class Codebeat {
   /**
   * Create an instance of Codebeat.
