@@ -45,6 +45,7 @@ class Codebeat {
   */
   getBPM() {
     this.beatsPerMeasure = parseInt(this.timeSig, 10);
+    return this.beatsPerMeasure;
   }
 
   /**
@@ -61,7 +62,10 @@ class Codebeat {
   parseNotes(notes = this.notes) {
     notes = Codebeat._expandMotifs(notes);
     notes = Codebeat._expandMultiples(notes);
-    this.notesParsed = Codebeat._expandNotes(notes);
+    notes = Codebeat._expandSlides(notes);
+    notes = Codebeat._expandNotes(notes);
+    this.notesParsed = notes;
+    return this.notesParsed
   }
 
   /**
@@ -72,10 +76,16 @@ class Codebeat {
     const note = this.notesParsed[n];
     const stopTime = this.toTime(note.outputDuration);
     const oscillator = this.context.createOscillator();
+    let output = note.outputFrequency;
 
     oscillator.connect(this.context.destination);
     oscillator.type = this.instrument;
-    oscillator.frequency.value = note.outputFrequency;
+    oscillator.frequency.value = output;
+
+    if (note.fx.slide) {
+      this.slideNote(oscillator, n)
+    } 
+
     oscillator.start(0);
     oscillator.stop(this.context.currentTime + stopTime);
 
@@ -248,6 +258,28 @@ class Codebeat {
         }
       });
 
+      return notes
+    }
+
+    static _expandSlides(notes, delimiter = '-') {
+      const slide = {
+        occursAt: [],
+        augment: 0,
+      };
+
+      notes.forEach((n, i) => {
+        if (n.includes(delimiter)) {
+          slide.occursAt.push(i);
+        }
+      });
+
+      slide.occursAt.forEach((i) => {
+        const index = i + slide.augment;
+        let s = notes.splice(index, 1);
+        notes.splice(index, 0, [s[0][0], s[0][1], ['slide']], [s[0][3], s[0][4], []])
+        slide.augment += 1;
+      });
+
       return notes;
     }
 
@@ -255,14 +287,36 @@ class Codebeat {
       return notes.map((note, i) => {
         const inputDuration = note[0];
         const inputFrequency = note[1];
+
+        const fxArray = note[2];
         return {
           inputDuration,
           inputFrequency,
           outputDuration: Duration[inputDuration],
           outputFrequency: Frequency[inputFrequency],
           index: i,
+          fx: {
+            exist: fxArray,
+            slide: fxArray ? fxArray.includes('slide') : false
+          }
         };
       });
+    }
+
+    slideNote(oscillator, n) {
+      const note = this.notesParsed[n];
+      let output = note.outputFrequency;
+      const nextNote = this.notesParsed[n + 1];
+      const nextOutput = nextNote.outputFrequency;
+      const timeInterval =  note.outputDuration / (nextOutput - output);
+      let slide = setInterval(() => {
+        oscillator.frequency.value = output;
+        if (output < nextOutput) {
+          output += 1;
+        }  else if (output > nextOutput) {
+          output -= 1;
+        } else clearInterval(slide);
+      }, timeInterval)
     }
 }
 

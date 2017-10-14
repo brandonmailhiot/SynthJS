@@ -22,11 +22,11 @@ first, second,
 e d4, q c4`;
 
 const harrypotterMelody =
-`first = e. e4, s g4, e f#4;
+`first = e. e4, s g4 - e f#4;
 
 e b3,
 first,
-q e4, e b4,
+e. e4, s e4 - e b4,
 q. a4,
 
 q. f#4,

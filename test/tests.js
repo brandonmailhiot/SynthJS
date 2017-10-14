@@ -25,10 +25,8 @@ describe('Codebeat', () => {
         notes: 'a b, c d, e f',
         context: AudioContext,
       });
-      const notes = []
-      melody.notesParsed.forEach(note => {
-        notes.push([note.inputDuration, note.inputFrequency])
-      });
+      notes = melody.parseNotes()
+      notes = notes.map(n => [n.inputDuration, n.inputFrequency])
       assert.deepEqual(notes, [['a', 'b'], ['c', 'd'], ['e', 'f']]);
     });
   });
@@ -97,5 +95,13 @@ describe('Codebeat', () => {
       const motifs = Codebeat._expandMotifs('motif = a b, c d, e f; motif');
       assert.deepEqual(motifs, [['a', 'b'], ['c', 'd'], ['e', 'f']]);
     });
-  })
+  });
+
+  describe('#_expandSlides()', () => {
+    it('should add slide to fx array', () => {
+      const motifs = Codebeat._expandMotifs('a b - c d, e f - g h');
+      const slides = Codebeat._expandSlides(motifs);
+      assert.deepEqual(slides, [['a', 'b', ['slide']], ['c', 'd', []], ['e', 'f', ['slide']], ['g', 'h', []]]);
+    });
+  });
 });
