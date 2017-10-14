@@ -1,6 +1,6 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
-
+const Note = require('./Note')
 class Codebeat {
   /**
   * Create an instance of Codebeat.
@@ -285,21 +285,7 @@ class Codebeat {
 
     static _expandNotes(notes) {
       return notes.map((note, i) => {
-        const inputDuration = note[0];
-        const inputFrequency = note[1];
-
-        const fxArray = note[2];
-        return {
-          inputDuration,
-          inputFrequency,
-          outputDuration: Duration[inputDuration],
-          outputFrequency: Frequency[inputFrequency],
-          index: i,
-          fx: {
-            exist: fxArray,
-            slide: fxArray ? fxArray.includes('slide') : false
-          }
-        };
+        return Note(note)
       });
     }
 

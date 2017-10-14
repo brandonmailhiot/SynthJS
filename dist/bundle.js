@@ -2,7 +2,7 @@
 (function (global){
 const Frequency = require('./frequency');
 const Duration = require('./duration');
-
+const Note = require('./Note')
 class Codebeat {
   /**
   * Create an instance of Codebeat.
@@ -287,21 +287,7 @@ class Codebeat {
 
     static _expandNotes(notes) {
       return notes.map((note, i) => {
-        const inputDuration = note[0];
-        const inputFrequency = note[1];
-
-        const fxArray = note[2];
-        return {
-          inputDuration,
-          inputFrequency,
-          outputDuration: Duration[inputDuration],
-          outputFrequency: Frequency[inputFrequency],
-          index: i,
-          fx: {
-            exist: fxArray,
-            slide: fxArray ? fxArray.includes('slide') : false
-          }
-        };
+        return Note(note)
       });
     }
 
@@ -325,7 +311,29 @@ class Codebeat {
 module.exports = Codebeat;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./duration":2,"./frequency":3}],2:[function(require,module,exports){
+},{"./Note":2,"./duration":3,"./frequency":4}],2:[function(require,module,exports){
+const Frequency = require('./frequency');
+const Duration = require('./duration');
+
+module.exports = (note) => {
+	const inputDuration = note[0];
+    const inputFrequency = note[1];
+    const fx = note[2];
+
+    const noteSchema = {
+	    inputDuration,
+	    inputFrequency,
+	    outputDuration: Duration[inputDuration],
+	    outputFrequency: Frequency[inputFrequency],
+	    fx: {
+	        exist: fx,
+	        slide: fx ? fx.includes('slide') : false
+	    }
+    }
+    
+	return noteSchema
+}
+},{"./duration":3,"./frequency":4}],3:[function(require,module,exports){
 // base duration of 1/32
 const ts = 0.03125;
 
@@ -345,7 +353,7 @@ module.exports = {
   'w.': ts * 48, // dotted whole
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 // base frequency for each note
 const a = 27.5;
 const asharp = 29.1352;
@@ -497,7 +505,7 @@ module.exports = {
 };
 // end note_data object
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 const Codebeat = require('./Codebeat');
 
 const starwarsMelody =
@@ -608,4 +616,4 @@ $('#try-it .stop-btn').click(() => {
   $('#try-it .time').html(`<strong>Time:</strong> ${tryIt.time().toFixed(2)} seconds`);
 })
 
-},{"./Codebeat":1}]},{},[4]);
+},{"./Codebeat":1}]},{},[5]);
