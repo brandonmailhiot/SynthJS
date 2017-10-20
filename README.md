@@ -63,6 +63,11 @@ e f3, slide,
 h b3, slide
 ~~~
 
+However, slides **cannot** be chained as in the below example.
+~~~
+h e2 - z c3 - e f4 - h d3
+~~~
+
 ## Usage  
 1) Import:
 ~~~
