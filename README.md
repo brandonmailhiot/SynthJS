@@ -47,10 +47,20 @@ h c4 * 8, t b_3 * 3
 To play multiple notes simultaneously, Codebeat provides the `+` operator. Doing so produces a chord constituted of the pitches provided for the specified duration. The notes within a chord must be played for the same duration.
 
 ~~~
-chord = h d3 + a3 + g6;
+chord = h d3 + a3 + g3;
 
 h d3, chord,
 h a3, chord
+~~~
+
+### Slides
+Like physical instruments, Codebeat can alter the pitch of a note over time until it reaches a second pitch. This is done with the `-` operator. Both notes are independent of each other, which means they may be any of the allowed durations and pitches.
+
+~~~
+slide = h e2 - z c3;
+
+e f3, slide,
+h b3, slide
 ~~~
 
 ## Usage  
