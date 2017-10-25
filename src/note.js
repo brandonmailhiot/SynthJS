@@ -5,8 +5,8 @@ module.exports = (note) => {
 	const inputDuration = note[0];
     const inputFrequency = note[1];
     const fx = note[2] || [];
-    const slide = fx.includes('slide')
-    const poly = fx.includes('poly')
+    const slide = fx.includes('slide');
+    const poly = fx.includes('poly');
 
     const noteSchema = {
 	    inputDuration,

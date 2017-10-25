@@ -18,7 +18,10 @@ const gsharp = 51.9131;
 const aflat = gsharp;
 
 module.exports = {
-  rest: 0.0,
+  range: [0, 8],
+  lowest: a,
+  heighest: gsharp * 64,
+  rest: 0,
   // naturals
   a0: a,
   a1: a * 2,

@@ -29,7 +29,7 @@ class Codebeat {
     Object.keys(props).forEach((key) => {
       this[key] = props[key];
     });
-    this.parseNotes();
+    if (props.notes) this.parseNotes();
     if (props.timeSig) this.getBPM();
   }
 
@@ -151,7 +151,8 @@ class Codebeat {
   * @return {Array} Sorted note names at first octave.
   */
   brief() {
-    const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency));
+    const singleNotes = this.notesParsed.filter(n => !n.fx.poly)
+    const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency[0]));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
     notes.sort();
     const names = notes.map(note => Codebeat._noteName(note));
@@ -187,20 +188,40 @@ class Codebeat {
     return count;
   }
 
+  squeeze(octave) {
+    if (octave < Frequency.range[0] || octave > Frequency.range[1]) {
+      return new Error("Error: octave out of range.")
+    }
+
+    this.notesParsed = this.notesParsed.map(n => {
+      n.outputFrequency = n.outputFrequency.map(f => {
+        let o = octave
+        const origin = Codebeat._originFrequency(f)
+
+        if (Codebeat._noteName(origin).match(/g|f|e|c|d/)) {
+          o -= 1
+        }
+
+        return origin * Math.pow(2, o)
+      })
+
+      return n
+    })
+    console.log(this.notesParsed)
+  }
+
   /**
   * Get the same note in the first octave.
   * @param {number} frequency - Frequency of a note in Hz.
   * @return {number} Frequency of the same note in the first octave.
   */
   static _originFrequency(f) {
-    let frequency = f;
-    let i = 1;
-    // notes in the first octave fall below 55Hz
-    while (frequency >= 55) {
-      frequency /= Math.pow(2, i);
-      i += 1;
-    }
-    return frequency * 2;
+    const note = Codebeat._noteName(f)
+    const origin = note.slice(0, note.length - 1) + '1'
+    const originFrequency = Frequency[origin]
+    return originFrequency >= 55 
+           ? originFrequency / 2 
+           : originFrequency
   }
 
   /**
@@ -208,12 +229,14 @@ class Codebeat {
   * @param {number} frequency - Frequency of a note.
   * @return {number} Name of the note.
   */
-  static _noteName(freq) {
+  static _noteName(f) {
     let note = '';
     Object.keys(Frequency).forEach((key) => {
-      if (Frequency[key] === freq) note = key;
+      if (Frequency[key] == f) {
+        note = key
+      }
     });
-    return note || new Error('Note does not exist');
+    return note || new Error('Error: note does not exist');
   }
 
   static _expandMotifs(notes, delimiter = ';') {
@@ -320,11 +343,12 @@ class Codebeat {
     slideNote(oscillator, n) {
       const nextNote = this.notesParsed[n + 1];
       if (!nextNote.fx.slide) return
-        
+
       const note = this.notesParsed[n];
       let output = note.outputFrequency[0];
       const nextOutput = nextNote.outputFrequency[0];
       const timeInterval = this.toTime(note.outputDuration) / Math.abs(nextOutput - output) * 1000;
+      
       let slide = setInterval(() => {
         oscillator.frequency.value = output;
         if (output < nextOutput) {
@@ -380,7 +404,10 @@ const gsharp = 51.9131;
 const aflat = gsharp;
 
 module.exports = {
-  rest: 0.0,
+  range: [0, 8],
+  lowest: a,
+  heighest: gsharp * 64,
+  rest: 0,
   // naturals
   a0: a,
   a1: a * 2,
@@ -566,7 +593,7 @@ const harrypotter = new Codebeat({
 
 $('#starwars .play-btn').click(() => { starwars.play() });
 $('#ghostbusters .play-btn').click(() => { ghostbusters.play() });
-$('#harrypotter .play-btn').click(() => { harrypotter.play() });
+$('#harrypotter .play-btn').click(() => { harrypotter.squeeze(3); harrypotter.play() });
 
 $('#starwars .playLoop-btn').click(() => { starwars.playLoop() });
 $('#ghostbusters .playLoop-btn').click(() => { ghostbusters.playLoop() });
@@ -630,8 +657,8 @@ module.exports = (note) => {
 	const inputDuration = note[0];
     const inputFrequency = note[1];
     const fx = note[2] || [];
-    const slide = fx.includes('slide')
-    const poly = fx.includes('poly')
+    const slide = fx.includes('slide');
+    const poly = fx.includes('poly');
 
     const noteSchema = {
 	    inputDuration,
