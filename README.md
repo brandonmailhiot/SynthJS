@@ -23,13 +23,13 @@ _Note: 3 triplets = 2 eighths_
 ### Note pitch
 A note's pitch is the name for its frequency in Hertz. D in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
 
-### Putting duration and pitch together
+### Basic notation
 General format: `[note_duration][space][note_pitch][comma]`   
 In practice: `h d5, q g_3, q c#6` etc.
 
 _Note: any amount of tabs, newlines, or whitespace can appear after the comma, but not between the duration and pitch_  
 
-### Handling repetition
+### Repetition
 To simplify the writing process, groups of notes may be assigned to variables (separated with a semicolon) and repeated notes may be multiplied by an integer value.
 
 1) Variable assignment
@@ -41,6 +41,31 @@ t a4, motif
 2) Repeat single notes
 ~~~
 h c4 * 8, t b_3 * 3
+~~~
+
+### Chords
+To play multiple notes simultaneously, Codebeat provides the `+` operator. Doing so produces a chord constituted of the pitches provided for the specified duration. The notes within a chord must be played for the same duration.
+
+~~~
+chord = h d3 + a3 + g3;
+
+h d3, chord,
+h a3, chord
+~~~
+
+### Slides
+Like physical instruments, Codebeat can alter the pitch of a note over time until it reaches a second pitch. This is done with the `-` operator. Both notes are independent of each other, which means they may be any of the allowed durations and pitches.
+
+~~~
+slide = h e2 - z c3;
+
+e f3, slide,
+h b3, slide
+~~~
+
+However, slides **cannot** be chained as in the below example.
+~~~
+h e2 - z c3 - e f4 - h d3
 ~~~
 
 ## Usage  
