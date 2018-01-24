@@ -19,7 +19,7 @@ module.exports = {
 
   // eighth
   e: ts * 4,
-   
+
   // dotted eighth
   'e.': ts * 6,
 
@@ -42,5 +42,5 @@ module.exports = {
   'w.': ts * 48,
 
   // indefinite
-  i: Number.MAX_VALUE
+  i: 1000.00000,
 };
