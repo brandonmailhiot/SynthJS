@@ -2,17 +2,45 @@
 const ts = 0.03125;
 
 module.exports = {
+  // zero
   z: 0,
-  ts, // thirty-second
-  s: ts * 2, // sixteenth
-  's.': ts * 3, // dotted sixteenth
-  t: ts * (8 / 3),  // eighth-note triplet
-  e: ts * 4, // eighth
-  'e.': ts * 6, // dotted eighth
-  q: ts * 8, // quarter
-  'q.': ts * 12, // dotted quarter
-  h: ts * 16, // half
-  'h.': ts * 24, // dotted half
-  w: ts * 32, // whole
-  'w.': ts * 48, // dotted whole
+
+  // thirty-second
+  ts,
+
+  // sixteenth
+  s: ts * 2,
+
+  // dotted sixteenth
+  's.': ts * 3,
+
+  // eighth-note triplet
+  t: ts * (8 / 3),
+
+  // eighth
+  e: ts * 4,
+   
+  // dotted eighth
+  'e.': ts * 6,
+
+  // quarter
+  q: ts * 8,
+
+  // dotted quarter
+  'q.': ts * 12,
+
+  // half
+  h: ts * 16,
+
+  // dotted half
+  'h.': ts * 24,
+
+  // whole
+  w: ts * 32,
+
+  // dotted whole
+  'w.': ts * 48,
+
+  // indefinite
+  i: Number.MAX_VALUE
 };
