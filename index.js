@@ -1,1 +1,1 @@
-exports = require('src/Codebeat');
+exports = require('./src/Codebeat');

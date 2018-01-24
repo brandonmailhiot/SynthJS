@@ -4,3 +4,4 @@ out/
 styles/
 test/
 src/index.js
+.gitattributes
