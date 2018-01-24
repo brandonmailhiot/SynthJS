@@ -1,13 +1,13 @@
 ## Recommended Usage  
-0) Install:
+0. Install:
 ~~~
 npm install codebeat
 ~~~
-1) Import:
+1. Import:
 ~~~
 const Codebeat = require('codebeat')
 ~~~
-2) Instantiate with voice config:  
+2. Instantiate with voice config:  
 ~~~
 const melody = new Codebeat({  
    tempo: 128,                                            //default is 60
@@ -16,7 +16,7 @@ const melody = new Codebeat({
    loop: true                                             //default is false  
 })
 ~~~
-3) Write and play music:
+3. Write and play music:
 ~~~
 melody.update({notes: `
   t d4, t d_4,
