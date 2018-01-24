@@ -149,6 +149,7 @@ class Codebeat {
   * @return {Array} Sorted note names at first octave.
   */
   brief() {
+    //TODO: Brief chords as well
     const singleNotes = this.notesParsed.filter(n => !n.fx.poly)
     const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency[0]));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
@@ -205,7 +206,14 @@ class Codebeat {
 
       return n
     })
-    console.log(this.notesParsed)
+  }
+
+  findKey() {
+    //train model with .brief() data and classifier
+  }
+
+  generate() {
+    
   }
 
   /**

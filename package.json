@@ -1,8 +1,8 @@
 {
-  "name": "Codebeat",
+  "name": "codebeat",
   "version": "1.0.0",
-  "description": "Create melodies quickly with the Web Audio API. Try it here: https://blmgeo.github.io/Codebeat/",
-  "main": "lib/Codebeat.js",
+  "description": "",
+  "main": "index.js",
   "directories": {
     "test": "test"
   },
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/blmgeo/Codebeat.git"
+    "url": "https://github.com/lefthandhacker/Codebeat.git"
   },
   "author": "Brandon Mailhiot",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/blmgeo/Codebeat/issues"
+    "url": "https://github.com/lefthandhacker/Codebeat/issues"
   },
-  "homepage": "https://github.com/blmgeo/Codebeat#readme",
+  "homepage": "https://github.com/lefthandhacker/Codebeat#readme",
   "devDependencies": {
     "browserify": "^14.4.0",
     "chai": "^3.5.0",

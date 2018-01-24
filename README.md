@@ -1,3 +1,36 @@
+## Recommended Usage  
+0) Install:
+~~~
+npm install codebeat
+~~~
+1) Import:
+~~~
+const Codebeat = require('codebeat')
+~~~
+2) Instantiate with voice config:  
+~~~
+const melody = new Codebeat({  
+   tempo: 128,                                            //default is 60
+   instrument: 'square',                                  //default is 'sine'
+   timeSig: '3/4',                                        //default is '4/4'
+   loop: true                                             //default is false  
+})
+~~~
+3) Write and play music:
+~~~
+melody.update({notes: `
+  t d4, t d_4,
+  t d4, q a#5,
+  q b5, q rest
+`})
+
+melody.play()
+~~~
+
+_Note: Up to six audio contexts (voices) can be active on the window object. Each instance of Codebeat creates a new context._
+
+Continue reading below to learn more about writting music in Codebeat.
+
 ## Introduction  
 Codebeat is a javascript library that provides a simple language for music composition.
 
@@ -67,23 +100,3 @@ However, slides **cannot** be chained as in the below example.
 ~~~
 h e2 - z c3 - e f4 - h d3
 ~~~
-
-## Usage  
-1) Import:
-~~~
-const Codebeat = require('Codebeat')
-~~~
-2) Pass in a melody object:  
-~~~
-const melody = new Codebeat({  
-   tempo: 128,                                            //default is 60
-   instrument: 'square',                                  //default is 'sine'
-   timeSig: '3/4',                                        //default is '4/4'
-   notes: 't d4, t d_4, t d4, q a#5, q b5, q rest, w e4', //default is an empty string
-   loop: true                                             //default is false  
-})
-~~~
-
-_Note: Up to six audio contexts can be active on the window object. Each instance of Codebeat creates a new context._
-
-3) Read more about available methods here: https://blmgeo.github.io/Codebeat/out/Codebeat.html
