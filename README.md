@@ -1,11 +1,11 @@
-# Recommended Usage  
+# Usage  
 Install:
 ~~~
 npm install codebeat
 ~~~
 Import and instantiate with voice config:  
 ~~~
-const Codebeat = require('codebeat')
+import Codebeat from 'codebeat'
 
 const melody = new Codebeat({  
    tempo: 128,                //default is 60
@@ -27,14 +27,12 @@ melody.play()
 
 _Note: Up to six audio contexts (voices) can be active on the window object. Each instance of Codebeat creates a new context._
 
-Continue reading below to learn more about writting music in Codebeat.
-
 # Introduction  
-Codebeat is a javascript library that provides a simple language for music composition.
+Codebeat provides a simple language for music composition and audio synthesis.
 
 ## Note duration
-A note's duration is the relative amount of time it is played, known as a subdivision.
-The names of common subdivisions are abbreviated as follows:
+A note's duration is the amount of time it is played relative to the tempo, known as a subdivision.
+Common subdivisions are abbreviated as follows:
 
 * ts = thirty-second  
 * s = sixteenth  
@@ -51,8 +49,8 @@ The names of common subdivisions are abbreviated as follows:
 
 _Note: 3 triplets = 2 eighths_
 
-## Note pitch
-A note's pitch is the name for its frequency in Hertz. D in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`. A pitch can be between `a0` and `g#7`, inclusive.
+## Note names
+A note's name is mapped to its frequency in hertz. D in the 5th octave is written as `d5`. Similarly, G-flat in the 3rd octave is `g_3`, and C-sharp in the 6th octave is `c#6`. A note may be between `a0` and `g#7`, inclusive.
 
 ## Basic notation
 General format: `[note_duration][space][note_pitch][comma]`   
@@ -60,7 +58,7 @@ In practice: `h d5, q g_3, q c#6` etc.
 
 _Note: any amount of tabs, newlines, or whitespace can appear after the comma, but not between the duration and pitch_  
 
-## Repetition
+### Repetition
 To simplify the writing process, groups of notes may be assigned to variables (separated with a semicolon) and repeated notes may be multiplied by an integer value.
 
 1) Variable assignment
@@ -74,7 +72,7 @@ t a4, motif
 h c4 * 8, t b_3 * 3
 ~~~
 
-## Chords
+### Chords
 To play multiple notes simultaneously, Codebeat provides the `+` operator. Doing so produces a chord constituted of the pitches provided for the specified duration. The notes within a chord must be played for the same duration.
 
 ~~~
@@ -84,7 +82,7 @@ h d3, chord,
 h a3, chord
 ~~~
 
-## Slides
+### Slides
 Like physical instruments, Codebeat can alter the pitch of a note over time until it reaches a second pitch. This is done with the `-` operator. Both notes are independent of each other, which means they may be any of the allowed durations and pitches.
 
 ~~~
