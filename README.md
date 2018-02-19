@@ -104,7 +104,7 @@ e f3, slide,
 h b3, slide
 ~~~
 
-To chain slides, use the `z` duration for the destination note and following source note:
+To chain slides, use the `z` duration for the destination note:
 
 ~~~
 h e2 - z c3, h c3 - z f4, e f4 - z d3
