@@ -1,6 +1,6 @@
 
 # Introduction
-Codebeat is a browser-based audio programming language for music composition and audio synthesis. [This](https://kebo.herokuapp.com) is a example application using the codebeat module.
+Codebeat is a browser-based audio programming language for music composition and audio synthesis. [This](https://kebo.herokuapp.com) is an example application using the codebeat module.
 
 # Usage  
 Install:
