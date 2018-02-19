@@ -1,7 +1,7 @@
 {
   "name": "codebeat",
   "version": "1.0.9",
-  "description": "",
+  "description": "A browser-based audio programming language for music composition and audio synthesis.",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -16,7 +16,7 @@
     "url": "https://github.com/lefthandhacker/Codebeat.git"
   },
   "author": "Brandon Mailhiot",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/lefthandhacker/Codebeat/issues"
   },
