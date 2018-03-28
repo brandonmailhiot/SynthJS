@@ -44,7 +44,8 @@ a:hover {
 }
 
 .time {
-  text-align: center;
+  text-align: left;
+  margin: 10px 0px;
 }
 
 .controls {
@@ -53,8 +54,7 @@ a:hover {
   border-image: linear-gradient(to left, transparent 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
   border-image-slice: 1;
   padding-bottom: 100px;
-  margin: 20px auto;
-  width: 380px;
+  margin: 10px 0px;
 }
 
 #starwars, #ghostbusters, #harrypotter {
