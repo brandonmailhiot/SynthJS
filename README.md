@@ -111,3 +111,37 @@ h e2 - z c3, h c3 - z f4, e f4 - z d3
 ~~~
 
 This ensures that the entire duration of the slide is dictated by the duration of the source note.
+
+## Advanced features
+
+### Effects
+
+Dynamics like gain, reverb, detuning, instrument, and distortion can be easily altered in a composition using the '@' tag.
+
+~~~
+@reverb 2/1.1/0.7,
+@gain 75,
+@instrument square,
+h g3, w a5,
+
+@instrument sine,
+h g3, w a4
+~~~
+
+In the above example, the instrument is set to square and later changed to sine. Reverb and gain are set for the entire piece. 
+
+#### Reverb
+
+@reverb accepts 3 optional parameters delimited with '/': channel #, reverb length as a function of the sample rate, and decay rate. 
+
+#### Gain
+
+@gain accepts 1 parameter: the amount of gain from 0 (mute) to 100 (maximum volume).
+
+#### Detune
+
+@detune accepts 1 parameter: the value in cents to detune a frequency.
+
+#### Instrument
+
+@instrument accepts 1 parameter: the instrument name.

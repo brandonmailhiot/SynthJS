@@ -5,10 +5,14 @@ const starwarsMelody =
 second = t f4, t e4, t d4;
 third = h c5, q g4, t f4, t e4, t f4;
 
+@reverb 4/1.5/1.5,
+@instrument sine,
 t g3 * 3,
 first, second,
 h c5, q g4,
-second, third,
+@reverb 1:1:20,
+second, 
+third,
 h d4`;
 
 const ghostbustersMelody =

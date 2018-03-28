@@ -3,6 +3,7 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 const Note = require('./note');
+const FX = require('./fx');
 
 class Codebeat {
   /**
@@ -16,7 +17,13 @@ class Codebeat {
     this.instrument = props.instrument || 'sine';
     this.notes = props.notes || '';
     this.loop = props.loop || false;
+
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
+    this.convolverNode = this.context.createConvolver();
+    this.gainNode = this.context.createGain();
+    this.convolverNode.connect(this.gainNode);
+    this.gainNode.connect(this.context.destination);
+
     this.parseNotes();
     this.getBPM();
   }
@@ -57,18 +64,34 @@ class Codebeat {
   */
   createContext(nodeContext) {
     this.context = new (nodeContext || global.AudioContext || global.webkitAudioContext)();
+    this.convolverNode = this.context.createConvolver();
+    this.gainNode = this.context.createGain();
+    this.convolverNode.connect(this.gainNode);
+    this.gainNode.connect(this.context.destination);
   }
 
   /**
   * Parse this.notes into an array of note objects.
   */
   parseNotes(notes = this.notes) {
+    // prepare variable names for notes delimiter=;
     notes = Codebeat._expandMotifs(notes);
+
+    // prepare note multiples delimiter=*
     notes = Codebeat._expandMultiples(notes);
+
+    // prepare note slides delimiter=-
     notes = Codebeat._expandSlides(notes);
+
+    // prepare chords delimiter=+
     notes = Codebeat._expandPoly(notes);
+
+    // translate data to Note object delimiter=,
     notes = Codebeat._expandNotes(notes);
+
+    // update or reset notesParsed
     this.notesParsed = notes;
+
     return this.notesParsed
   }
 
@@ -81,25 +104,40 @@ class Codebeat {
     const nextNote = this.notesParsed[n + 1];
     const stopTime = this.toTime(note.outputDuration);
     const oscillators = [];
+    const playNext = () => {
+      n < this.notesParsed.length - 1
+        ? this.play(n += 1)
+        : this.ended();
+    }
 
+    if (note.fx[0]) {
+      if (note.fx[0].indexOf('@') === 0) {
+        FX[note.fx[0].slice(1)](this, note.value);
+        return playNext();
+      }
+    }
+
+    // create and configure oscillators
     note.outputFrequency.forEach(f => {
       let o = this.context.createOscillator();
-      o.connect(this.context.destination);
+      o.connect(this.convolverNode)
+      // set instrument
       o.type = this.instrument;
+      // set detune
+      o.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
+      // set note frequency
       o.frequency.value = f;
-      oscillators.push(o)
-    })
+      oscillators.push(o);
+    });
 
     oscillators.forEach(o => {
       o.start(0);
-      if (nextNote && note.fx.slide) this.slideNote(o, n)
+      if (nextNote && note.fx.includes('slide')) this.slideNote(o, n)
       o.stop(this.context.currentTime + stopTime);
     })
 
     oscillators.shift().onended = () => {
-      n < this.notesParsed.length - 1
-      ? this.play(n += 1)
-      : this.ended();
+      playNext()
     };
   }
 
@@ -151,7 +189,8 @@ class Codebeat {
   * @return {Array} Sorted note names at first octave.
   */
   brief() {
-    const singleNotes = this.notesParsed.filter(n => !n.fx.poly)
+    //TODO: Brief chords as well
+    const singleNotes = this.notesParsed.filter(n => !n.fx.includes('poly'))
     const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency[0]));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
     notes.sort();
@@ -207,7 +246,14 @@ class Codebeat {
 
       return n
     })
-    console.log(this.notesParsed)
+  }
+
+  findKey() {
+    //train model with .brief() data and classifier
+  }
+
+  generate() {
+    
   }
 
   /**
@@ -239,11 +285,11 @@ class Codebeat {
     return note || new Error('Error: note does not exist');
   }
 
-  static _expandMotifs(notes, delimiter = ';') {
+  static _expandMotifs(notes) {
       const motifs = {};
 
-      if (notes.includes(delimiter)) {
-        notes = notes.split(delimiter);
+      if (notes.includes(';')) {
+        notes = notes.split(';');
         const motifOccursAt = [];
         const operator = '=';
 
@@ -267,14 +313,14 @@ class Codebeat {
       return notes.split(',').map(n => n.trim().split(' '));
     }
 
-    static _expandMultiples(notes, delimiter = '*') {
+    static _expandMultiples(notes) {
       const multiply = {
         occursAt: [],
         augment: 0,
       };
 
       notes.forEach((n, i) => {
-        if (n.includes(delimiter)) {
+        if (n.includes('*')) {
           multiply.occursAt.push(i);
         }
       });
@@ -291,14 +337,14 @@ class Codebeat {
       return notes
     }
 
-    static _expandSlides(notes, delimiter = '-') {
+    static _expandSlides(notes) {
       const slide = {
         occursAt: [],
         augment: 0,
       };
 
       notes.forEach((n, i) => {
-        if (n.includes(delimiter)) {
+        if (n.includes('-')) {
           slide.occursAt.push(i);
         }
       });
@@ -313,11 +359,11 @@ class Codebeat {
       return notes;
     }
 
-    static _expandPoly(notes, delimiter = '+') {
+    static _expandPoly(notes) {
       notes = notes.map((n, i) => {
-        if (n.includes(delimiter)) {
+        if (n.includes('+')) {
           const duration = n.shift()
-          const pitch = n.filter(p => p != delimiter)
+          const pitch = n.filter(p => p != '+')
                          .reduce((a,b) => a.concat(' ').concat(b))
 
           const poly = [
@@ -342,7 +388,7 @@ class Codebeat {
 
     slideNote(oscillator, n) {
       const nextNote = this.notesParsed[n + 1];
-      if (!nextNote.fx.slide) return
+      if (!nextNote.fx.includes('slide')) return
 
       const note = this.notesParsed[n];
       let output = note.outputFrequency[0];
@@ -363,24 +409,52 @@ class Codebeat {
 module.exports = Codebeat;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./duration":2,"./frequency":3,"./note":5}],2:[function(require,module,exports){
+},{"./duration":2,"./frequency":3,"./fx":4,"./note":6}],2:[function(require,module,exports){
 // base duration of 1/32
 const ts = 0.03125;
 
 module.exports = {
+  // zero
   z: 0,
-  ts, // thirty-second
-  s: ts * 2, // sixteenth
-  's.': ts * 3, // dotted sixteenth
-  t: ts * (8 / 3),  // eighth-note triplet
-  e: ts * 4, // eighth
-  'e.': ts * 6, // dotted eighth
-  q: ts * 8, // quarter
-  'q.': ts * 12, // dotted quarter
-  h: ts * 16, // half
-  'h.': ts * 24, // dotted half
-  w: ts * 32, // whole
-  'w.': ts * 48, // dotted whole
+
+  // thirty-second
+  ts,
+
+  // sixteenth
+  s: ts * 2,
+
+  // dotted sixteenth
+  's.': ts * 3,
+
+  // eighth-note triplet
+  t: ts * (8 / 3),
+
+  // eighth
+  e: ts * 4,
+
+  // dotted eighth
+  'e.': ts * 6,
+
+  // quarter
+  q: ts * 8,
+
+  // dotted quarter
+  'q.': ts * 12,
+
+  // half
+  h: ts * 16,
+
+  // dotted half
+  'h.': ts * 24,
+
+  // whole
+  w: ts * 32,
+
+  // dotted whole
+  'w.': ts * 48,
+
+  // indefinite
+  i: 1000.00000,
 };
 
 },{}],3:[function(require,module,exports){
@@ -470,6 +544,14 @@ module.exports = {
   'a#5': asharp * 32,
   'a#6': asharp * 64,
   'a#7': asharp * 128,
+  'b#1': c,
+  'b#2': c * 2,
+  'b#3': c * 4,
+  'b#4': c * 8,
+  'b#5': c * 16,
+  'b#6': c * 32,
+  'b#7': c * 64,
+  'b#8': c * 128,
   'c#1': csharp,
   'c#2': csharp * 2,
   'c#3': csharp * 4,
@@ -484,6 +566,13 @@ module.exports = {
   'd#5': dsharp * 16,
   'd#6': dsharp * 32,
   'd#7': dsharp * 64,
+  'e#1': f,
+  'e#2': f * 2,
+  'e#3': f * 4,
+  'e#4': f * 8,
+  'e#5': f * 16,
+  'e#6': f * 32,
+  'e#7': f * 64,
   'f#1': fsharp,
   'f#2': fsharp * 2,
   'f#3': fsharp * 4,
@@ -514,6 +603,14 @@ module.exports = {
   b_5: bflat * 32,
   b_6: bflat * 64,
   b_7: bflat * 128,
+  c_0: b,
+  c_1: b * 2,
+  c_2: b * 4,
+  c_3: b * 8,
+  c_4: b * 16,
+  c_5: b * 32,
+  c_6: b * 64,
+  c_7: b * 128,
   d_1: dflat,
   d_2: dflat * 2,
   d_3: dflat * 4,
@@ -528,6 +625,13 @@ module.exports = {
   e_5: eflat * 16,
   e_6: eflat * 32,
   e_7: eflat * 64,
+  f_1: e,
+  f_2: e * 2,
+  f_3: e * 4,
+  f_4: e * 8,
+  f_5: e * 16,
+  f_6: e * 32,
+  f_7: e * 64,
   g_1: gflat,
   g_2: gflat * 2,
   g_3: gflat * 4,
@@ -539,6 +643,39 @@ module.exports = {
 // end note_data object
 
 },{}],4:[function(require,module,exports){
+module.exports = {
+  gain: (codebeat, val=100) => {
+    codebeat.gainNode.gain.value = +val/100;
+  },
+  instrument: (codebeat, val) => {
+    if (!val) return codebeat.instrument;
+    codebeat.instrument = val;
+  },
+  detune: (codebeat, val) => {
+    if (!val) return codebeat.detune;
+    codebeat.detune = +val;
+  },
+  reverb: (codebeat, val) => {   
+    function createReverbBuffer() {
+      val = val.split('/')
+      let rate = codebeat.context.sampleRate
+      let channels = val[0] || 2
+      let length = rate * (val[1] || 1)
+      let decay = val[2] || 0.5
+      let buffer = codebeat.context.createBuffer(channels, length, rate)
+      for (let c = 0; c < channels; c++) {
+        let channelData = buffer.getChannelData(c)
+        for (let i = 0; i < channelData.length; i++) {
+          channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+        }
+      }
+      return buffer
+    }
+
+    codebeat.convolverNode.buffer = createReverbBuffer();
+  }
+}
+},{}],5:[function(require,module,exports){
 const Codebeat = require('./Codebeat');
 
 const starwarsMelody =
@@ -546,10 +683,14 @@ const starwarsMelody =
 second = t f4, t e4, t d4;
 third = h c5, q g4, t f4, t e4, t f4;
 
+@reverb 4/1.5/1.5,
+@instrument sine,
 t g3 * 3,
 first, second,
 h c5, q g4,
-second, third,
+@reverb 1:1:20,
+second, 
+third,
 h d4`;
 
 const ghostbustersMelody =
@@ -593,7 +734,7 @@ const harrypotter = new Codebeat({
 
 $('#starwars .play-btn').click(() => { starwars.play() });
 $('#ghostbusters .play-btn').click(() => { ghostbusters.play() });
-$('#harrypotter .play-btn').click(() => { harrypotter.squeeze(3); harrypotter.play() });
+$('#harrypotter .play-btn').click(() => { harrypotter.play() });
 
 $('#starwars .playLoop-btn').click(() => { starwars.playLoop() });
 $('#ghostbusters .playLoop-btn').click(() => { ghostbusters.playLoop() });
@@ -649,33 +790,78 @@ $('#try-it .stop-btn').click(() => {
   $('#try-it .time').html(`<strong>Time:</strong> ${tryIt.time().toFixed(2)} seconds`);
 })
 
-},{"./Codebeat":1}],5:[function(require,module,exports){
+},{"./Codebeat":1}],6:[function(require,module,exports){
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 
 module.exports = (note) => {
-	const inputDuration = note[0];
-    const inputFrequency = note[1];
-    const fx = note[2] || [];
-    const slide = fx.includes('slide');
-    const poly = fx.includes('poly');
+	const firstParam = note[0];
+    const secondParam = note[1];
+	const fx = note[2] || [];
+	if (firstParam[0] === '@') fx.push(firstParam)
 
-    const noteSchema = {
-	    inputDuration,
-	    inputFrequency,
-	    outputDuration: Duration[inputDuration],
-	    outputFrequency: (() => {
-	    	return poly 
-	    		? inputFrequency.split(' ').map(f => Frequency[f])
-	    		: [Frequency[inputFrequency]]
-	    })(),
-	    fx: {
-	        all: fx,
-	        slide,
-	        poly
-	    }
-    }
-    
+	let noteSchema = {};
+
+	switch(fx[0]) {
+		case 'slide':
+			noteSchema = {
+				fx,
+				firstParam,
+				secondParam,
+				outputDuration: Duration[firstParam],
+				outputFrequency: [Frequency[secondParam]],
+			};
+			break;
+
+		case 'poly':
+			noteSchema = {
+				fx,
+				firstParam,
+				secondParam,
+				outputDuration: Duration[firstParam],
+				outputFrequency: secondParam.split(' ').map(f => Frequency[f]),
+			};
+			break;
+
+		case '@gain':
+			noteSchema = {
+				fx,
+				value: secondParam,
+			};
+			break;
+
+		case '@instrument':
+			noteSchema = {
+				fx,
+				value: secondParam,
+			};
+			break;
+
+		case '@detune':
+			noteSchema = {
+				fx,
+				value: secondParam,
+			};
+			break;
+		
+		case '@reverb':
+			noteSchema = {
+				fx,
+				value: secondParam,
+			};
+			break;
+
+		default:
+			noteSchema = {
+				fx,
+				firstParam,
+				secondParam,
+				outputDuration: Duration[firstParam],
+				outputFrequency: [Frequency[secondParam]],
+			};
+			break;
+	}
+	
 	return noteSchema
 }
-},{"./duration":2,"./frequency":3}]},{},[4]);
+},{"./duration":2,"./frequency":3}]},{},[5]);

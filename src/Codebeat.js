@@ -1,6 +1,7 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 const Note = require('./note');
+const FX = require('./fx');
 
 class Codebeat {
   /**
@@ -14,7 +15,13 @@ class Codebeat {
     this.instrument = props.instrument || 'sine';
     this.notes = props.notes || '';
     this.loop = props.loop || false;
+
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
+    this.convolverNode = this.context.createConvolver();
+    this.gainNode = this.context.createGain();
+    this.convolverNode.connect(this.gainNode);
+    this.gainNode.connect(this.context.destination);
+
     this.parseNotes();
     this.getBPM();
   }
@@ -55,18 +62,34 @@ class Codebeat {
   */
   createContext(nodeContext) {
     this.context = new (nodeContext || global.AudioContext || global.webkitAudioContext)();
+    this.convolverNode = this.context.createConvolver();
+    this.gainNode = this.context.createGain();
+    this.convolverNode.connect(this.gainNode);
+    this.gainNode.connect(this.context.destination);
   }
 
   /**
   * Parse this.notes into an array of note objects.
   */
   parseNotes(notes = this.notes) {
+    // prepare variable names for notes delimiter=;
     notes = Codebeat._expandMotifs(notes);
+
+    // prepare note multiples delimiter=*
     notes = Codebeat._expandMultiples(notes);
+
+    // prepare note slides delimiter=-
     notes = Codebeat._expandSlides(notes);
+
+    // prepare chords delimiter=+
     notes = Codebeat._expandPoly(notes);
+
+    // translate data to Note object delimiter=,
     notes = Codebeat._expandNotes(notes);
+
+    // update or reset notesParsed
     this.notesParsed = notes;
+
     return this.notesParsed
   }
 
@@ -79,25 +102,40 @@ class Codebeat {
     const nextNote = this.notesParsed[n + 1];
     const stopTime = this.toTime(note.outputDuration);
     const oscillators = [];
+    const playNext = () => {
+      n < this.notesParsed.length - 1
+        ? this.play(n += 1)
+        : this.ended();
+    }
 
+    if (note.fx[0]) {
+      if (note.fx[0].indexOf('@') === 0) {
+        FX[note.fx[0].slice(1)](this, note.value);
+        return playNext();
+      }
+    }
+
+    // create and configure oscillators
     note.outputFrequency.forEach(f => {
       let o = this.context.createOscillator();
-      o.connect(this.context.destination);
+      o.connect(this.convolverNode)
+      // set instrument
       o.type = this.instrument;
+      // set detune
+      o.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
+      // set note frequency
       o.frequency.value = f;
-      oscillators.push(o)
-    })
+      oscillators.push(o);
+    });
 
     oscillators.forEach(o => {
       o.start(0);
-      if (nextNote && note.fx.slide) this.slideNote(o, n)
+      if (nextNote && note.fx.includes('slide')) this.slideNote(o, n)
       o.stop(this.context.currentTime + stopTime);
     })
 
     oscillators.shift().onended = () => {
-      n < this.notesParsed.length - 1
-      ? this.play(n += 1)
-      : this.ended();
+      playNext()
     };
   }
 
@@ -150,7 +188,7 @@ class Codebeat {
   */
   brief() {
     //TODO: Brief chords as well
-    const singleNotes = this.notesParsed.filter(n => !n.fx.poly)
+    const singleNotes = this.notesParsed.filter(n => !n.fx.includes('poly'))
     const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency[0]));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
     notes.sort();
@@ -245,11 +283,11 @@ class Codebeat {
     return note || new Error('Error: note does not exist');
   }
 
-  static _expandMotifs(notes, delimiter = ';') {
+  static _expandMotifs(notes) {
       const motifs = {};
 
-      if (notes.includes(delimiter)) {
-        notes = notes.split(delimiter);
+      if (notes.includes(';')) {
+        notes = notes.split(';');
         const motifOccursAt = [];
         const operator = '=';
 
@@ -273,14 +311,14 @@ class Codebeat {
       return notes.split(',').map(n => n.trim().split(' '));
     }
 
-    static _expandMultiples(notes, delimiter = '*') {
+    static _expandMultiples(notes) {
       const multiply = {
         occursAt: [],
         augment: 0,
       };
 
       notes.forEach((n, i) => {
-        if (n.includes(delimiter)) {
+        if (n.includes('*')) {
           multiply.occursAt.push(i);
         }
       });
@@ -297,14 +335,14 @@ class Codebeat {
       return notes
     }
 
-    static _expandSlides(notes, delimiter = '-') {
+    static _expandSlides(notes) {
       const slide = {
         occursAt: [],
         augment: 0,
       };
 
       notes.forEach((n, i) => {
-        if (n.includes(delimiter)) {
+        if (n.includes('-')) {
           slide.occursAt.push(i);
         }
       });
@@ -319,11 +357,11 @@ class Codebeat {
       return notes;
     }
 
-    static _expandPoly(notes, delimiter = '+') {
+    static _expandPoly(notes) {
       notes = notes.map((n, i) => {
-        if (n.includes(delimiter)) {
+        if (n.includes('+')) {
           const duration = n.shift()
-          const pitch = n.filter(p => p != delimiter)
+          const pitch = n.filter(p => p != '+')
                          .reduce((a,b) => a.concat(' ').concat(b))
 
           const poly = [
@@ -348,7 +386,7 @@ class Codebeat {
 
     slideNote(oscillator, n) {
       const nextNote = this.notesParsed[n + 1];
-      if (!nextNote.fx.slide) return
+      if (!nextNote.fx.includes('slide')) return
 
       const note = this.notesParsed[n];
       let output = note.outputFrequency[0];
