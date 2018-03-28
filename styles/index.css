@@ -122,6 +122,7 @@ a:hover {
   -webkit-border-image: -webkit-linear-gradient(to top right, #FFCA4F, #48F971);
   border-image: linear-gradient(to top right, #FFCA4F, #48F971);
   border-image-slice: 1;
+  padding: 20px;
 }
 
 .github {

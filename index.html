@@ -4,7 +4,7 @@
   <meta charset='utf-8'>
   <meta name='viewport' content='initial-scale=1'>
   <title>Codebeat</title>
-  <link rel="stylesheet" href="https://bootswatch.com/paper/bootstrap.min.css">
+  <link rel="stylesheet" href="https://bootswatch.com/4/materia/bootstrap.min.css">
   <link href='styles/index.css' rel='stylesheet'>
 </head>
 
@@ -31,7 +31,7 @@
     </p>
     <div class='row'>
       <!-- Starwars -->
-      <div id='starwars' class='col-sm-6 col-sm-offset-3'>
+      <div id='starwars' class='col-md-8 mx-auto'>
         <h3 class='sample-heading'>Star Wars</h3>
         <div class='well composition'></div>
         <p class='time'></p>
@@ -43,7 +43,7 @@
         </div>
       </div>
       <!-- Ghostbusters -->
-      <div id='ghostbusters' class='col-sm-6 col-sm-offset-3'>
+      <div id='ghostbusters' class='col-md-8 mx-auto'>
         <h3 class='sample-heading'>Ghostbusters</h3>
         <div class='well composition'></div>
         <p class='time'></p>
@@ -55,7 +55,7 @@
         </div>
       </div>
       <!-- Harry Potter -->
-      <div id='harrypotter' class='col-sm-6 col-sm-offset-3'>
+      <div id='harrypotter' class='col-md-8 mx-auto'>
         <h3 class='sample-heading'>Harry Potter</h3>
         <div class='well composition'></div>
         <p class='time'></p>
@@ -72,21 +72,21 @@
               Write a melody, turn up the volume, and hit play. 
           </p>
           <div class='row'>
-            <div class="form-group col-sm-4">
+            <div class="form-group col-md-4">
               <label>TEMPO:</label>
               <input class='form-control tempo' type='text' placeholder='e.g. 128'>
             </div>
-            <div class="form-group col-sm-4">
+            <div class="form-group col-md-4">
               <label>TIME SIGNATURE:</label>
               <input class='form-control timeSig' type='text' placeholder='e.g. 4/4'>
             </div>
-            <div class="form-group col-sm-4">
+            <div class="form-group col-md-4">
               <label>INSTRUMENTS:</label>
               <input class='form-control instrument' type='text' placeholder='e.g. square'>
             </div>
           </div>
           <div class='row'>
-            <div class='col-sm-12'>
+            <div class='col-md-12'>
               <div class='well composition' contenteditable="true" spellcheck="false"></div>
               <p class='time'><strong>Time: </strong> 0.00 seconds</p>
               <div id="write-your-own" class="controls">
@@ -102,7 +102,7 @@
   </section>
 
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
   <script src='dist/bundle.js'></script>
 </body>
 </html>
