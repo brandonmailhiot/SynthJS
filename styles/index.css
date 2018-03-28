@@ -63,7 +63,7 @@ a:hover {
 
 #try-it {
   top: 40px;
-  margin-bottom: 150px;
+  margin: 0px auto 150px auto;
   padding: 0 10px;
 }
 
