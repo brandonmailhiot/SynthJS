@@ -18,6 +18,7 @@ class Codebeat {
 
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
     this.convolverNode = this.context.createConvolver();
+    this.convolverNode.buffer = FX.createReverbBuffer(this, '1/1/20');
     this.gainNode = this.context.createGain();
     this.convolverNode.connect(this.gainNode);
     this.gainNode.connect(this.context.destination);
@@ -63,6 +64,7 @@ class Codebeat {
   createContext(nodeContext) {
     this.context = new (nodeContext || global.AudioContext || global.webkitAudioContext)();
     this.convolverNode = this.context.createConvolver();
+    this.convolverNode.buffer = FX.createReverbBuffer(this, '1/1/20');
     this.gainNode = this.context.createGain();
     this.convolverNode.connect(this.gainNode);
     this.gainNode.connect(this.context.destination);
