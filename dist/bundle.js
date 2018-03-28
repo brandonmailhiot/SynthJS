@@ -688,7 +688,7 @@ third = h c5, q g4, t f4, t e4, t f4;
 t g3 * 3,
 first, second,
 h c5, q g4,
-@reverb 1:1:5,
+@reverb 1/1/20,
 second, 
 third,
 h d4`;
