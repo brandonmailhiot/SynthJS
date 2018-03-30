@@ -58,6 +58,13 @@ module.exports = (note) => {
 			};
 			break;
 
+		case '@distortion':
+			noteSchema = {
+				fx,
+				value: secondParam,
+			};
+			break;
+
 		default:
 			noteSchema = {
 				fx,

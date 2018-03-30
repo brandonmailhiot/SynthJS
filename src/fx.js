@@ -14,10 +14,27 @@ function createReverbBuffer(codebeat, val) {
   return buffer
 }
 
+function makeDistortionCurve(val) {
+  var v = +val,
+  n_samples = 44100,
+  curve = new Float32Array(n_samples),
+  deg = Math.PI / 180,
+  i = 0,
+  x;
+  for ( ; i < n_samples; ++i ) {
+    x = i * 2 / n_samples - 1;
+    curve[i] = (3 + v) * x * 20 * deg / (Math.PI + v * Math.abs(x));
+  }
+  return curve;
+};
+
 module.exports = {
   createReverbBuffer,
   gain: (codebeat, val=100) => {
-    codebeat.gainNode.gain.value = +val/100;
+    var gainNode = codebeat.context.createGain();
+    gainNode.gain.value = +val/100;
+    gainNode.connect(codebeat.lastNode);
+    codebeat.lastNode = gainNode;
   },
   instrument: (codebeat, val) => {
     if (!val) return codebeat.instrument;
@@ -28,6 +45,17 @@ module.exports = {
     codebeat.detune = +val;
   },
   reverb: (codebeat, val) => {   
-    codebeat.convolverNode.buffer = createReverbBuffer(codebeat, val);
+    var convolverNode = codebeat.context.createConvolver();
+    convolverNode.buffer = createReverbBuffer(codebeat, val);
+    convolverNode.connect(codebeat.lastNode);
+    codebeat.lastNode = convolverNode;
+  },
+  distortion: (codebeat, val) => {
+    val = val.split('/');
+    var distortionNode = codebeat.context.createWaveShaper();
+    distortionNode.curve = makeDistortionCurve(val[0]);
+    distortionNode.oversample = val[1];
+    distortionNode.connect(codebeat.lastNode);
+    codebeat.lastNode = distortionNode;
   },
 }

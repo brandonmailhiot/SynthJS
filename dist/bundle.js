@@ -19,11 +19,7 @@ class Codebeat {
     this.loop = props.loop || false;
 
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
-    this.convolverNode = this.context.createConvolver();
-    this.convolverNode.buffer = FX.createReverbBuffer(this, '1/1/20');
-    this.gainNode = this.context.createGain();
-    this.convolverNode.connect(this.gainNode);
-    this.gainNode.connect(this.context.destination);
+    this.lastNode = this.context.destination;
 
     this.parseNotes();
     this.getBPM();
@@ -65,11 +61,7 @@ class Codebeat {
   */
   createContext(nodeContext) {
     this.context = new (nodeContext || global.AudioContext || global.webkitAudioContext)();
-    this.convolverNode = this.context.createConvolver();
-    this.convolverNode.buffer = FX.createReverbBuffer(this, '1/1/20');
-    this.gainNode = this.context.createGain();
-    this.convolverNode.connect(this.gainNode);
-    this.gainNode.connect(this.context.destination);
+    this.lastNode = this.context.destination;
   }
 
   /**
@@ -122,7 +114,7 @@ class Codebeat {
     // create and configure oscillators
     note.outputFrequency.forEach(f => {
       let o = this.context.createOscillator();
-      o.connect(this.convolverNode)
+      o.connect(this.lastNode)
       // set instrument
       o.type = this.instrument;
       // set detune
@@ -661,10 +653,27 @@ function createReverbBuffer(codebeat, val) {
   return buffer
 }
 
+function makeDistortionCurve(val) {
+  var v = +val,
+  n_samples = 44100,
+  curve = new Float32Array(n_samples),
+  deg = Math.PI / 180,
+  i = 0,
+  x;
+  for ( ; i < n_samples; ++i ) {
+    x = i * 2 / n_samples - 1;
+    curve[i] = (3 + v) * x * 20 * deg / (Math.PI + v * Math.abs(x));
+  }
+  return curve;
+};
+
 module.exports = {
   createReverbBuffer,
   gain: (codebeat, val=100) => {
-    codebeat.gainNode.gain.value = +val/100;
+    var gainNode = codebeat.context.createGain();
+    gainNode.gain.value = +val/100;
+    gainNode.connect(codebeat.lastNode);
+    codebeat.lastNode = gainNode;
   },
   instrument: (codebeat, val) => {
     if (!val) return codebeat.instrument;
@@ -675,11 +684,45 @@ module.exports = {
     codebeat.detune = +val;
   },
   reverb: (codebeat, val) => {   
-    codebeat.convolverNode.buffer = createReverbBuffer(codebeat, val);
+    var convolverNode = codebeat.context.createConvolver();
+    convolverNode.buffer = createReverbBuffer(codebeat, val);
+    convolverNode.connect(codebeat.lastNode);
+    codebeat.lastNode = convolverNode;
+  },
+  distortion: (codebeat, val) => {
+    val = val.split('/');
+    var distortionNode = codebeat.context.createWaveShaper();
+    distortionNode.curve = makeDistortionCurve(val[0]);
+    distortionNode.oversample = val[1];
+    distortionNode.connect(codebeat.lastNode);
+    codebeat.lastNode = distortionNode;
   },
 }
 },{}],5:[function(require,module,exports){
 const Codebeat = require('./Codebeat');
+
+const edmMelody = 
+`intro = 
+w g1 + d3, h g1 + f3, h g1 + c4, w g1 + b3, e g1 + f4, e g1 + d4, e g1 + c5;
+
+hook = 
+e c5 - z a4, e g4, e rest, e d4, e rest, e c4, e rest,
+e c5 - z a4, e g4, e rest, e d4, 
+e f3 + c4 + d3, 
+e f3 + c4 + d3, 
+e f3 + c4 + d3, 
+e f3 + c3 + d3,
+e f3 + b3 + d3,
+e f3 + b3 + d3,
+e f3 + b3 + d3,
+q rest;
+
+@instrument sawtooth,
+@distortion 15/2x,
+@reverb 4/0.5/0.9,
+
+intro, 
+hook`;
 
 const starwarsMelody =
 `first = h c4, h g4;
@@ -719,6 +762,11 @@ first,
 q d#4, e f4,
 q. b3`;
 
+const edm = new Codebeat({
+  tempo: 120,
+  notes: edmMelody,
+});
+
 const starwars = new Codebeat({
   tempo: 120,
   notes: starwarsMelody,
@@ -734,27 +782,32 @@ const harrypotter = new Codebeat({
   timeSig: '3/8',
   notes: harrypotterMelody,
 });
-
+$('#edm .play-btn').click(() => { edm.play() });
 $('#starwars .play-btn').click(() => { starwars.play() });
 $('#ghostbusters .play-btn').click(() => { ghostbusters.play() });
 $('#harrypotter .play-btn').click(() => { harrypotter.play() });
 
+$('#edm .playLoop-btn').click(() => { edm.playLoop() });
 $('#starwars .playLoop-btn').click(() => { starwars.playLoop() });
 $('#ghostbusters .playLoop-btn').click(() => { ghostbusters.playLoop() });
 $('#harrypotter .playLoop-btn').click(() => { harrypotter.playLoop() });
 
+$('#edm .reverse-btn').click(() => { edm.playReverse() });
 $('#starwars .reverse-btn').click(() => { starwars.playReverse() });
 $('#ghostbusters .reverse-btn').click(() => { ghostbusters.playReverse() });
 $('#harrypotter .reverse-btn').click(() => { harrypotter.playReverse() });
 
+$('#edm .stop-btn').click(() => { edm.stop() });
 $('#starwars .stop-btn').click(() => { starwars.stop() });
 $('#ghostbusters .stop-btn').click(() => { ghostbusters.stop() });
 $('#harrypotter .stop-btn').click(() => { harrypotter.stop() });
 
+$('#edm .composition').text(edmMelody);
 $('#starwars .composition').text(starwarsMelody);
 $('#ghostbusters .composition').text(ghostbustersMelody);
 $('#harrypotter .composition').text(harrypotterMelody);
 
+$('#edm .time').html(`<strong>Time:</strong> ${edm.time().toFixed(2)} seconds`);
 $('#starwars .time').html(`<strong>Time:</strong> ${starwars.time().toFixed(2)} seconds`);
 $('#ghostbusters .time').html(`<strong>Time:</strong> ${ghostbusters.time().toFixed(2)} seconds`);
 $('#harrypotter .time').html(`<strong>Time:</strong> ${harrypotter.time().toFixed(2)} seconds`);
@@ -848,6 +901,13 @@ module.exports = (note) => {
 			break;
 		
 		case '@reverb':
+			noteSchema = {
+				fx,
+				value: secondParam,
+			};
+			break;
+
+		case '@distortion':
 			noteSchema = {
 				fx,
 				value: secondParam,
