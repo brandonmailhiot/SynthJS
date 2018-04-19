@@ -703,7 +703,6 @@ const Codebeat = require('./Codebeat');
 
 const edmMelody = 
 `intro = 
-@distortion 0/1x,
 w g1 + d3, h g1 + f3, h g1 + c4, w g1 + b3, e g1 + f4, e g1 + d4, e g1 + c5;
 
 hook = 
