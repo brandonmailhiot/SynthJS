@@ -1,6 +1,6 @@
 {
   "name": "codebeat",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A browser-based audio programming language for music composition and audio synthesis.",
   "main": "index.js",
   "directories": {
