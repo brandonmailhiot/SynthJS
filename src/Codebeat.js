@@ -1,7 +1,7 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 const Note = require('./note');
-const FX = require('./fx');
+const effect = require('./effect');
 
 class Codebeat {
   /**
@@ -102,9 +102,9 @@ class Codebeat {
         : this.ended();
     }
 
-    if (note.fx[0]) {
-      if (note.fx[0].indexOf('@') === 0) {
-        FX[note.fx[0].slice(1)](this, note.value);
+    if (note.effect[0]) {
+      if (note.effect[0].indexOf('@') === 0) {
+        effect[note.effect[0].slice(1)](this, note.value);
         return playNext();
       }
     }
@@ -124,7 +124,7 @@ class Codebeat {
 
     oscillators.forEach(o => {
       o.start(0);
-      if (nextNote && note.fx.includes('slide')) this.slideNote(o, n)
+      if (nextNote && note.effect.includes('slide')) this.slideNote(o, n)
       o.stop(this.context.currentTime + stopTime);
     })
 
@@ -182,7 +182,7 @@ class Codebeat {
   */
   brief() {
     //TODO: Brief chords as well
-    const singleNotes = this.notesParsed.filter(n => !n.fx.includes('poly'))
+    const singleNotes = this.notesParsed.filter(n => !n.effect.includes('poly'))
     const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency[0]));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
     notes.sort();
@@ -393,7 +393,7 @@ class Codebeat {
 
     slideNote(oscillator, n) {
       const nextNote = this.notesParsed[n + 1];
-      if (!nextNote.fx.includes('slide')) return
+      if (!nextNote.effect.includes('slide')) return
 
       const note = this.notesParsed[n];
       let output = note.outputFrequency[0];
