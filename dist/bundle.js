@@ -715,10 +715,10 @@ module.exports = {
 const Codebeat = require('./Codebeat');
 
 const edmMelody = 
-`intro = 
+`intro: 
 w g1 + d3, h g1 + f3, h g1 + c4, w g1 + b3, e g1 + f4, e g1 + d4, e g1 + c5;
 
-hook = 
+hook: 
 e c5 - z a4, e g4, e rest, e d4, e rest, e c4, e rest,
 e c5 - z a4, e g4, e rest, e d4, 
 e f3 + c4 + d3, 
@@ -738,9 +738,9 @@ intro,
 hook`;
 
 const starwarsMelody =
-`first = h c4, h g4;
-second = t f4, t e4, t d4;
-third = h c5, q g4, t f4, t e4, t f4;
+`first: h c4, h g4;
+second: t f4, t e4, t d4;
+third: h c5, q g4, t f4, t e4, t f4;
 
 @reverb 4/1.5/1.5,
 @instrument sine,
@@ -753,8 +753,8 @@ third,
 h d4`;
 
 const ghostbustersMelody =
-`first = s c4 * 2, e e4, e c4, e d4, e b_3;
-second = q rest * 2, s c4 * 4, e b_3;
+`first: s c4 * 2, e e4, e c4, e d4, e b_3;
+second: q rest * 2, s c4 * 4, e b_3;
 
 first, second,
 e c4, h rest,
@@ -763,7 +763,7 @@ first, second,
 e d4, q c4`;
 
 const harrypotterMelody =
-`first = e. e4, s g4 - e f#4;
+`first: e. e4, s g4 - e f#4;
 
 e b3,
 first,
