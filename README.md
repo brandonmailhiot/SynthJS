@@ -69,10 +69,10 @@ A note's name is mapped to its frequency in hertz. D in the 5th octave is writte
 _Note:_ Any amount of tabs, newlines, or whitespace can appear after the comma, but one space must appear between the duration and pitch. 
 
 ### Repetition
-To simplify the writing process, groups of notes may be assigned to variables (separated by semicolons).
+To simplify the writing process, groups of notes may be assigned to variable names. Notice the use of colons and semicolons in this example: 
 
 ~~~
-motif = h d5, q g_3, q c#6;
+motif: h d5, q g_3, q c#6;
 
 t d4, motif,
 t a4, motif

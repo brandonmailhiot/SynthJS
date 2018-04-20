@@ -69,10 +69,10 @@ class Codebeat {
   */
   parseNotes(notes = this.notes) {
     // prepare variable names for notes delimiter=;
-    notes = Codebeat._expandMotifs(notes);
+    const motifsAndNotes = Codebeat._expandMotifs(notes);
 
     // prepare note multiples delimiter=*
-    notes = Codebeat._expandMultiples(notes);
+    notes = Codebeat._expandMultiples(motifsAndNotes);
 
     // prepare note slides delimiter=-
     notes = Codebeat._expandSlides(notes);
@@ -285,7 +285,7 @@ class Codebeat {
       if (notes.includes(';')) {
         notes = notes.split(';');
         const motifOccursAt = [];
-        const operator = '=';
+        const operator = ':';
 
         notes.forEach((n, i) => {
           if (n.includes(operator)) {
@@ -294,41 +294,54 @@ class Codebeat {
             motifOccursAt.push(i);
           }
         });
-
+        
         notes = notes
+          // filter motif definitions from note collection
           .filter((n, i) => !motifOccursAt.includes(i))
-          .reduce((a, b) => a.concat(`,${b}`))
-          .split(',')
+          // split notes
+          .join(',').split(',')
           .map(n => n.trim())
-          .map(n => (Object.prototype.hasOwnProperty.call(motifs, n) ? motifs[n] : n))
+          // replace motif name with notes
+          .map(n => Object.prototype.hasOwnProperty.call(motifs, n) ? motifs[n] : n)
+          // merge back to one string
           .join(',');
       }
 
-      return notes.split(',').map(n => n.trim().split(' '));
+      // split into 2D array of input frequencies and durations
+      notes = notes.split(',')
+        .map(n => n.trim().split(' '))
+
+      return {
+        motifs,
+        notes,
+      };
     }
 
-    static _expandMultiples(notes) {
-      const multiply = {
-        occursAt: [],
-        augment: 0,
-      };
+    static _expandMultiples({motifs, notes}) {
+      let offset = 0;
+      let l = notes.length;
+      
+      for (let i = 0; i < l; i += 1) {
+        const next = i + offset
+        const multiply = notes[next].indexOf('*')
+        if (multiply != -1 && multiply < notes[next].length-1) {
+          const note = notes[next].slice(0, multiply);
+          const repeat = +notes[next][multiply + 1]
+          let section = []
+          while (section.length < repeat) {
+            section.push(note)
+          }
 
-      notes.forEach((n, i) => {
-        if (n.includes('*')) {
-          multiply.occursAt.push(i);
+          section = section
+            .map(s => Object.prototype.hasOwnProperty.call(motifs, s) ? motifs[s].split(' ') : s)
+
+          notes.splice(next, 1, ...section)
+          offset += repeat - 1
         }
-      });
+      }
 
-      multiply.occursAt.forEach((i) => {
-        const index = i + multiply.augment;
-        const note = notes[index];
-        for (let j = 1; j < note[3]; j += 1) {
-          notes.splice(index + 1, 0, [note[0], note[1]]);
-          multiply.augment += 1;
-        }
-      });
-
-      return notes
+      console.log(notes)
+      return notes;
     }
 
     static _expandSlides(notes) {
@@ -851,76 +864,76 @@ const Frequency = require('./frequency');
 const Duration = require('./duration');
 
 module.exports = (note) => {
-	const firstParam = note[0];
-    const secondParam = note[1];
-	const fx = note[2] || [];
-	if (firstParam[0] === '@') fx.push(firstParam)
+	const inputDuration = note[0];
+    const inputFrequency = note[1];
+	const effect = note[2] || [];
+	if (inputDuration[0] === '@') effect.push(inputDuration)
 
 	let noteSchema = {};
 
-	switch(fx[0]) {
+	switch(effect[0]) {
 		case 'slide':
 			noteSchema = {
-				fx,
-				firstParam,
-				secondParam,
-				outputDuration: Duration[firstParam],
-				outputFrequency: [Frequency[secondParam]],
+				effect,
+				inputDuration,
+				inputFrequency,
+				outputDuration: Duration[inputDuration],
+				outputFrequency: [Frequency[inputFrequency]],
 			};
 			break;
 
 		case 'poly':
 			noteSchema = {
-				fx,
-				firstParam,
-				secondParam,
-				outputDuration: Duration[firstParam],
-				outputFrequency: secondParam.split(' ').map(f => Frequency[f]),
+				effect,
+				inputDuration,
+				inputFrequency,
+				outputDuration: Duration[inputDuration],
+				outputFrequency: inputFrequency.split(' ').map(f => Frequency[f]),
 			};
 			break;
 
 		case '@gain':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		case '@instrument':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		case '@detune':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 		
 		case '@reverb':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		case '@distortion':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		default:
 			noteSchema = {
-				fx,
-				firstParam,
-				secondParam,
-				outputDuration: Duration[firstParam],
-				outputFrequency: [Frequency[secondParam]],
+				effect,
+				inputDuration,
+				inputFrequency,
+				outputDuration: Duration[inputDuration],
+				outputFrequency: [Frequency[inputFrequency]],
 			};
 			break;
 	}

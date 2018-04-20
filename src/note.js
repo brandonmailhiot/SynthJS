@@ -2,76 +2,76 @@ const Frequency = require('./frequency');
 const Duration = require('./duration');
 
 module.exports = (note) => {
-	const firstParam = note[0];
-    const secondParam = note[1];
-	const fx = note[2] || [];
-	if (firstParam[0] === '@') fx.push(firstParam)
+	const inputDuration = note[0];
+    const inputFrequency = note[1];
+	const effect = note[2] || [];
+	if (inputDuration[0] === '@') effect.push(inputDuration)
 
 	let noteSchema = {};
 
-	switch(fx[0]) {
+	switch(effect[0]) {
 		case 'slide':
 			noteSchema = {
-				fx,
-				firstParam,
-				secondParam,
-				outputDuration: Duration[firstParam],
-				outputFrequency: [Frequency[secondParam]],
+				effect,
+				inputDuration,
+				inputFrequency,
+				outputDuration: Duration[inputDuration],
+				outputFrequency: [Frequency[inputFrequency]],
 			};
 			break;
 
 		case 'poly':
 			noteSchema = {
-				fx,
-				firstParam,
-				secondParam,
-				outputDuration: Duration[firstParam],
-				outputFrequency: secondParam.split(' ').map(f => Frequency[f]),
+				effect,
+				inputDuration,
+				inputFrequency,
+				outputDuration: Duration[inputDuration],
+				outputFrequency: inputFrequency.split(' ').map(f => Frequency[f]),
 			};
 			break;
 
 		case '@gain':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		case '@instrument':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		case '@detune':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 		
 		case '@reverb':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		case '@distortion':
 			noteSchema = {
-				fx,
-				value: secondParam,
+				effect,
+				value: inputFrequency,
 			};
 			break;
 
 		default:
 			noteSchema = {
-				fx,
-				firstParam,
-				secondParam,
-				outputDuration: Duration[firstParam],
-				outputFrequency: [Frequency[secondParam]],
+				effect,
+				inputDuration,
+				inputFrequency,
+				outputDuration: Duration[inputDuration],
+				outputFrequency: [Frequency[inputFrequency]],
 			};
 			break;
 	}
