@@ -88,7 +88,7 @@ h c4 * 8, t b_3 * 3
 Use the `+` operator to play notes simultaneously. A chord is constituted of its pitches played for a specified duration.
 
 ~~~
-chord = h d3 + a3 + g3;
+chord: h d3 + a3 + g3;
 
 h d3, chord,
 h a3, chord
@@ -98,7 +98,7 @@ h a3, chord
 A note may be gradually altered over time until it reaches a new pitch. This is achieved with the `-` operator.
 
 ~~~
-slide = h e2 - e c3;
+slide: h e2 - e c3;
 
 e f3, slide,
 h b3, slide
