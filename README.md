@@ -5,7 +5,7 @@ SynthJS is an interpreter and toolset for the Synth Web Audio Programming Langua
 ## Related applications
 
 - [Kebo](https://kebo.herokuapp.com) is a React synthesizer based on SynthJS.
-- [SynthJS-Editor](https://github.com/lefthandhacker/SynthJS-Editor) is a real-time SPA for writing and debugging Synth compositions.
+- [SynthJS-Editor](https://github.com/leftiehacker/SynthJS-Editor) is a real-time SPA for writing and debugging Synth compositions.
 
 # Usage  
 Install:
