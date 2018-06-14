@@ -1,2 +1,2 @@
-const Codebeat = require('./src/Codebeat')
-module.exports = Codebeat
+const SynthJS = require('./src/Synth')
+module.exports = SynthJS

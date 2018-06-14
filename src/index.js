@@ -1,4 +1,4 @@
-const Codebeat = require('./Codebeat');
+const SynthJS = require('./Synth');
 
 const edmMelody = 
 `intro: 
@@ -61,22 +61,22 @@ first,
 q d#4, e f4,
 q. b3`;
 
-const edm = new Codebeat({
+const edm = new SynthJS({
   tempo: 120,
   notes: edmMelody,
 });
 
-const starwars = new Codebeat({
+const starwars = new SynthJS({
   tempo: 120,
   notes: starwarsMelody,
 });
 
-const ghostbusters = new Codebeat({
+const ghostbusters = new SynthJS({
   tempo: 116,
   notes: ghostbustersMelody,
 });
 
-const harrypotter = new Codebeat({
+const harrypotter = new SynthJS({
   tempo: 60,
   timeSig: '3/8',
   notes: harrypotterMelody,
@@ -120,7 +120,7 @@ const tryItOptions = () => {
   };
 };
 
-const tryIt = new Codebeat(tryItOptions());
+const tryIt = new SynthJS(tryItOptions());
 
 $('#try-it .play-btn').click(() => {
   tryIt.update(tryItOptions());

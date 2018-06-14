@@ -1,10 +1,10 @@
-function createReverbBuffer(codebeat, val) {
+function createReverbBuffer(synthjs, val) {
   val = val.split('/')
-  let rate = codebeat.context.sampleRate
+  let rate = synthjs.context.sampleRate
   let channels = val[0] || 1
   let length = rate * (val[1] || 1)
   let decay = val[2] || 0.5
-  let buffer = codebeat.context.createBuffer(channels, length, rate)
+  let buffer = synthjs.context.createBuffer(channels, length, rate)
   for (let c = 0; c < channels; c++) {
     let channelData = buffer.getChannelData(c)
     for (let i = 0; i < channelData.length; i++) {
@@ -30,32 +30,32 @@ function makeDistortionCurve(val) {
 
 module.exports = {
   createReverbBuffer,
-  gain: (codebeat, val=100) => {
-    var gainNode = codebeat.context.createGain();
+  gain: (synthjs, val=100) => {
+    var gainNode = synthjs.context.createGain();
     gainNode.gain.value = +val/100;
-    gainNode.connect(codebeat.lastNode);
-    codebeat.lastNode = gainNode;
+    gainNode.connect(synthjs.lastNode);
+    synthjs.lastNode = gainNode;
   },
-  instrument: (codebeat, val) => {
-    if (!val) return codebeat.instrument;
-    codebeat.instrument = val;
+  instrument: (synthjs, val) => {
+    if (!val) return synthjs.instrument;
+    synthjs.instrument = val;
   },
-  detune: (codebeat, val) => {
-    if (!val) return codebeat.detune;
-    codebeat.detune = +val;
+  detune: (synthjs, val) => {
+    if (!val) return synthjs.detune;
+    synthjs.detune = +val;
   },
-  reverb: (codebeat, val) => {   
-    var convolverNode = codebeat.context.createConvolver();
-    convolverNode.buffer = createReverbBuffer(codebeat, val);
-    convolverNode.connect(codebeat.lastNode);
-    codebeat.lastNode = convolverNode;
+  reverb: (synthjs, val) => {   
+    var convolverNode = synthjs.context.createConvolver();
+    convolverNode.buffer = createReverbBuffer(synthjs, val);
+    convolverNode.connect(synthjs.lastNode);
+    synthjs.lastNode = convolverNode;
   },
-  distortion: (codebeat, val) => {
+  distortion: (synthjs, val) => {
     val = val.split('/');
-    var distortionNode = codebeat.context.createWaveShaper();
+    var distortionNode = synthjs.context.createWaveShaper();
     distortionNode.curve = makeDistortionCurve(val[0]);
     distortionNode.oversample = val[1];
-    distortionNode.connect(codebeat.lastNode);
-    codebeat.lastNode = distortionNode;
+    distortionNode.connect(synthjs.lastNode);
+    synthjs.lastNode = distortionNode;
   },
 }

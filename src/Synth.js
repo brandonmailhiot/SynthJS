@@ -3,9 +3,9 @@ const Duration = require('./duration');
 const Note = require('./note');
 const effect = require('./effect');
 
-class Codebeat {
+class SynthJS {
   /**
-  * Create an instance of Codebeat.
+  * Create an instance of SynthJS.
   * @constructor
   * @param {Object} props - Initialize with tempo, timeSig, instrument, notes, and loop properties.
   */
@@ -65,26 +65,26 @@ class Codebeat {
   /**
   * Parse this.notes into an array of note objects.
   */
-  parseNotes(notes = this.notes) {
-    // prepare variable names for notes delimiter=;
-    const motifsAndNotes = Codebeat._expandMotifs(notes);
+  parseNotes(rawNotes = this.notes) {
+    // prepare variable names for notes w/ delimiter ;
+    const motifs = SynthJS._expandMotifs(rawNotes);
 
-    // prepare note multiples delimiter=*
-    notes = Codebeat._expandMultiples(motifsAndNotes);
+    // prepare note and motif multiples w/ delimiter *
+    const multiples = SynthJS._expandMultiples(motifs);
 
-    // prepare note slides delimiter=-
-    notes = Codebeat._expandSlides(notes);
+    // prepare note slides w/ delimiter -
+    const slides = SynthJS._expandSlides(multiples);
 
-    // prepare chords delimiter=+
-    notes = Codebeat._expandPoly(notes);
+    // prepare chords w/ delimiter +
+    const poly = SynthJS._expandPoly(slides);
 
-    // translate data to Note object delimiter=,
-    notes = Codebeat._expandNotes(notes);
+    // translate data to Note object w/ delimiter ,
+    const notes = SynthJS._expandNotes(poly);
 
     // update or reset notesParsed
     this.notesParsed = notes;
 
-    return this.notesParsed
+    return notes;
   }
 
   /**
@@ -183,10 +183,10 @@ class Codebeat {
   brief() {
     //TODO: Brief chords as well
     const singleNotes = this.notesParsed.filter(n => !n.effect.includes('poly'))
-    const origin = this.notesParsed.map(f => Codebeat._originFrequency(f.outputFrequency[0]));
+    const origin = this.notesParsed.map(f => SynthJS._originFrequency(f.outputFrequency[0]));
     const notes = origin.filter((note, i) => i === origin.indexOf(note));
     notes.sort();
-    const names = notes.map(note => Codebeat._noteName(note));
+    const names = notes.map(note => SynthJS._noteName(note));
     return names.filter(name => name && name !== 'rest');
   }
 
@@ -227,9 +227,9 @@ class Codebeat {
     this.notesParsed = this.notesParsed.map(n => {
       n.outputFrequency = n.outputFrequency.map(f => {
         let o = octave
-        const origin = Codebeat._originFrequency(f)
+        const origin = SynthJS._originFrequency(f)
 
-        if (Codebeat._noteName(origin).match(/g|f|e|c|d/)) {
+        if (SynthJS._noteName(origin).match(/g|f|e|c|d/)) {
           o -= 1
         }
 
@@ -254,7 +254,7 @@ class Codebeat {
   * @return {number} Frequency of the same note in the first octave.
   */
   static _originFrequency(f) {
-    const note = Codebeat._noteName(f)
+    const note = SynthJS._noteName(f)
     const origin = note.slice(0, note.length - 1) + '1'
     const originFrequency = Frequency[origin]
     return originFrequency >= 55 
@@ -315,7 +315,7 @@ class Codebeat {
       };
     }
 
-    static _expandMultiples({motifs, notes}) {
+    static _expandMultiples({ motifs, notes }) {
       let offset = 0;
       let l = notes.length;
       
@@ -338,7 +338,6 @@ class Codebeat {
         }
       }
 
-      console.log(notes)
       return notes;
     }
 
@@ -356,8 +355,8 @@ class Codebeat {
 
       slide.occursAt.forEach((i) => {
         const index = i + slide.augment;
-        let s = notes.splice(index, 1);
-        notes.splice(index, 0, [s[0][0], s[0][1], ['slide']], [s[0][3], s[0][4], ['slide']])
+        let s = notes.splice(index, 1)[0];
+        notes.splice(index, 0, [s[0], s[1], ['slide']], [s[3], s[4], ['slide']])
         slide.augment += 1;
       });
 
@@ -411,4 +410,4 @@ class Codebeat {
     }
 }
 
-module.exports = Codebeat;
+module.exports = SynthJS;

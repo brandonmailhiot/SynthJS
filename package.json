@@ -1,5 +1,5 @@
 {
-  "name": "codebeat",
+  "name": "synthjs",
   "version": "1.2.3",
   "description": "A browser-based audio programming language for music composition and audio synthesis.",
   "main": "index.js",
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lefthandhacker/Codebeat.git"
+    "url": "https://github.com/lefthandhacker/SynthJS.git"
   },
   "author": "Brandon Mailhiot",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lefthandhacker/Codebeat/issues"
+    "url": "https://github.com/lefthandhacker/SynthJS/issues"
   },
-  "homepage": "https://github.com/lefthandhacker/Codebeat#readme",
+  "homepage": "https://github.com/lefthandhacker/SynthJS#readme",
   "devDependencies": {
     "browserify": "^14.4.0",
     "chai": "^3.5.0",

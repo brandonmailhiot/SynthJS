@@ -1,40 +1,45 @@
 
 # Introduction
-Codebeat is a browser-based audio programming language for music composition and audio synthesis. [This](https://kebo.herokuapp.com) is an example application using the codebeat module.
+SynthJS is an interpreter and toolset for the Synth Web Audio Programming Language. Its core JavaScript parsing engine leverages the capabilities of the Web Audio API, allowing SynthJS to distill complex compositions, effects, and instruments into JSON-structured sequences. 
+
+## Related applications
+
+- [Kebo](https://kebo.herokuapp.com) is a React synthesizer based on SynthJS.
+- [SynthJS-Notebook](https://github.com/lefthandhacker/synthjs-notebook) is a real-time SPA for writing and debugging Synth compositions.
 
 # Usage  
 Install:
 
 ~~~
-npm install codebeat
+npm install synthjs
 ~~~
 
-Import and instantiate with voice config: 
+Every instance of SynthJS handles a single instrument/voice. Pass each instance a voice configuration: 
 
 ~~~
-import Codebeat from 'codebeat'
+import SynthJS from 'synthjs'
 
-const melody = new Codebeat({  
-   tempo: 128,                //default is 60
-   instrument: 'square',      //default is 'sine'
-   timeSig: '3/4',            //default is '4/4'
-   loop: true                 //default is false  
+const composition = new SynthJS({  
+  tempo: 128,                // default is 60
+  instrument: 'square',      // default is 'sine'
+  timeSig: '3/4',            // default is '4/4'
+  loop: true                 // default is false  
 })
 ~~~
 
 Write and play:
 
 ~~~
-melody.update({notes: `
+composition.update({notes: `
   t d4, t d_4,
   t d4, q a#5,
   q b5, q rest
 `})
 
-melody.play()
+composition.play()
 ~~~
 
-_Note:_ Up to six audio contexts (voices) can be active on the window object. Each instance of Codebeat creates a new context.
+_Note:_ Up to six audio contexts (voices) can be active on the window object. Each instance of SynthJS creates a new context.
 
 ## Note duration
 A note's duration is the amount of time it is played relative to the tempo, known as a subdivision.
@@ -53,7 +58,7 @@ Common subdivisions are abbreviated as follows:
 * h. = dotted-half   
 * w = whole
 * w. = dotted-whole
-* i = indefinite (or 32,000 thirty-second notes to be clear)
+* i = indefinite (1,000 whole notes)
 
 _Note:_ 3 triplets = 2 eighths
 
@@ -132,16 +137,16 @@ In the above example, the instrument is set to square and later changed to sine.
 
 #### Reverb
 
-@reverb accepts 3 optional parameters delimited with '/': channel #, reverb length as a function of the sample rate, and decay rate. 
+`@reverb` accepts 3 optional parameters delimited with '/': channel #, reverb length as a function of the sample rate, and decay rate. 
 
 #### Gain
 
-@gain accepts 1 parameter: the amount of gain from 0 (mute) to 100 (maximum volume).
+`@gain` accepts 1 parameter: the amount of gain from 0 (mute) to 100 (maximum volume).
 
 #### Detune
 
-@detune accepts 1 parameter: the value in cents to detune a frequency.
+`@detune` accepts 1 parameter: the value in cents to detune a frequency.
 
 #### Instrument
 
-@instrument accepts 1 parameter: the instrument name.
+`@instrument` accepts 1 parameter: the instrument name.
