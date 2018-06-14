@@ -1,5 +1,5 @@
 {
-  "name": "synthjs",
+  "name": "synth-javascript",
   "version": "1.2.3",
   "description": "A browser-based audio programming language for music composition and audio synthesis.",
   "main": "index.js",

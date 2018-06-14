@@ -11,13 +11,13 @@ SynthJS is an interpreter and toolset for the Synth Web Audio Programming Langua
 Install:
 
 ~~~
-npm install synthjs
+npm install synth-javascript
 ~~~
 
 Every instance of SynthJS handles a single instrument/voice. Pass each instance a voice configuration: 
 
 ~~~
-import SynthJS from 'synthjs'
+import SynthJS from 'synth-javascript'
 
 const composition = new SynthJS({  
   tempo: 128,                // default is 60
