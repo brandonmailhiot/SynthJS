@@ -1,6 +1,6 @@
 {
   "name": "synth-javascript",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "A browser-based audio programming language for music composition and audio synthesis.",
   "main": "index.js",
   "directories": {
