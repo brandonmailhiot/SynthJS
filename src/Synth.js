@@ -283,136 +283,137 @@ class SynthJS {
   }
 
   static _expandMotifs(notes) {
-      const motifs = {};
+    const motifs = {};
 
-      if (notes.includes(';')) {
-        notes = notes.split(';');
-        const motifOccursAt = [];
-        const operator = ':';
-
-        notes.forEach((n, i) => {
-          if (n.includes(operator)) {
-            const motif = n.split(operator).map(m => m.trim());
-            motifs[motif[0]] = motif[1];
-            motifOccursAt.push(i);
-          }
-        });
-        
-        notes = notes
-          // filter motif definitions from note collection
-          .filter((n, i) => !motifOccursAt.includes(i))
-          // split notes
-          .join(',').split(',')
-          .map(n => n.trim())
-          // replace motif name with notes
-          .map(n => Object.prototype.hasOwnProperty.call(motifs, n) ? motifs[n] : n)
-          // merge back to one string
-          .join(',');
-      }
-
-      // split into 2D array of input frequencies and durations
-      notes = notes.split(',')
-        .map(n => n.trim().split(' '))
-
-      return {
-        motifs,
-        notes,
-      };
-    }
-
-    static _expandMultiples({ motifs, notes }) {
-      let offset = 0;
-      let l = notes.length;
-      
-      for (let i = 0; i < l; i += 1) {
-        const next = i + offset
-        const multiply = notes[next].indexOf('*')
-        if (multiply != -1 && multiply < notes[next].length-1) {
-          const note = notes[next].slice(0, multiply);
-          const repeat = +notes[next][multiply + 1]
-          let section = []
-          while (section.length < repeat) {
-            section.push(note)
-          }
-
-          section = section
-            .map(s => Object.prototype.hasOwnProperty.call(motifs, s) ? motifs[s].split(' ') : s)
-
-          notes.splice(next, 1, ...section)
-          offset += repeat - 1
-        }
-      }
-
-      return notes;
-    }
-
-    static _expandSlides(notes) {
-      const slide = {
-        occursAt: [],
-        augment: 0,
-      };
+    if (notes.includes(';')) {
+      notes = notes.split(';');
+      const motifOccursAt = [];
+      const operator = ':';
 
       notes.forEach((n, i) => {
-        if (n.includes('-')) {
-          slide.occursAt.push(i);
+        if (n.includes(operator)) {
+          const motif = n.split(operator).map(m => m.trim());
+          motifs[motif[0]] = motif[1];
+          motifOccursAt.push(i);
         }
       });
-
-      slide.occursAt.forEach((i) => {
-        const index = i + slide.augment;
-        let s = notes.splice(index, 1)[0];
-        notes.splice(index, 0, [s[0], s[1], ['slide']], [s[3], s[4], ['slide']])
-        slide.augment += 1;
-      });
-
-      return notes;
-    }
-
-    static _expandPoly(notes) {
-      notes = notes.map((n, i) => {
-        if (n.includes('+')) {
-          const duration = n.shift()
-          const pitch = n.filter(p => p != '+')
-                         .reduce((a,b) => a.concat(' ').concat(b))
-
-          const poly = [
-            duration,
-            pitch,
-            ['poly']
-          ];
-
-          n = poly;
-        }
-        return n;
-      });
-
-      return notes;
-    }
-
-    static _expandNotes(notes) {
-      return notes.map((n, i) => {
-        return Note(n)
-      });
-    }
-
-    slideNote(oscillator, n) {
-      const nextNote = this.notesParsed[n + 1];
-      if (!nextNote.effect.includes('slide')) return
-
-      const note = this.notesParsed[n];
-      let output = note.outputFrequency[0];
-      const nextOutput = nextNote.outputFrequency[0];
-      const timeInterval = this.toTime(note.outputDuration) / Math.abs(nextOutput - output) * 1000;
       
-      let slide = setInterval(() => {
-        oscillator.frequency.value = output;
-        if (output < nextOutput) {
-          output += 1;
-        }  else if (output > nextOutput) {
-          output -= 1;
-        } else clearInterval(slide);
-      }, timeInterval)
+      notes = notes
+        // filter motif definitions from note collection
+        .filter((n, i) => !motifOccursAt.includes(i))
+        // split notes
+        .join(',').split(',')
+        .map(n => n.trim())
+        // replace motif name with notes
+        .map(n => Object.prototype.hasOwnProperty.call(motifs, n) ? motifs[n] : n)
+        // merge back to one string
+        .join(',');
     }
+
+    // split into 2D array of input frequencies and durations
+    notes = notes.split(',')
+      .map(n => n.trim().split(' '))
+
+    return {
+      motifs,
+      notes
+    };
+  }
+
+  static _expandMultiples({ motifs, notes }) {
+    let offset = 0;
+    let l = notes.length;
+    
+    for (let i = 0; i < l; i += 1) {
+      const next = i + offset;
+      const multiply = notes[next].indexOf('*');
+      if (multiply !== -1 && multiply < notes[next].length-1) {
+        const note = notes[next].slice(0, multiply);
+        const repeat = +notes[next][multiply + 1];
+        let section = []
+        while (section.length < repeat) {
+          section.push(note);
+        }
+
+        section = section
+          .map(s => Object.prototype.hasOwnProperty.call(motifs, s) ? motifs[s].split(' ') : s)
+
+        notes.splice(next, 1, ...section)
+        offset += repeat - 1
+      }
+    }
+
+    return notes;
+  }
+
+  static _expandSlides(notes) {
+    const slide = {
+      occursAt: [],
+      augment: 0,
+    };
+
+    notes.forEach((n, i) => {
+      if (n.includes('-')) {
+        slide.occursAt.push(i);
+      }
+    });
+
+    slide.occursAt.forEach((i) => {
+      const index = i + slide.augment;
+      const s = notes.splice(index, 1)[0];
+      notes.splice(index, 0, [s[0], s[1], ['slide']], [s[3], s[4], ['slide']]);
+      slide.augment += 1;
+    });
+
+    return notes;
+  }
+
+  static _expandPoly(notes) {
+    notes = notes.map((n, i) => {
+      if (n.includes('+')) {
+        const duration = n.shift()
+        const pitch = n.filter(p => p !== '+').reduce((a,b) => a.concat(' ').concat(b));
+
+        const poly = [
+          duration,
+          pitch,
+          ['poly']
+        ];
+
+        n = poly;
+      }
+      return n;
+    });
+
+    return notes;
+  }
+
+  static _expandNotes(notes) {
+    return notes.map(n => {
+      return Note(n);
+    });
+  }
+
+  slideNote(oscillator, n) {
+    const nextNote = this.notesParsed[n + 1];
+    if (!nextNote.effect.includes('slide')) return;
+
+    const note = this.notesParsed[n];
+    let output = note.outputFrequency[0];
+    const nextOutput = nextNote.outputFrequency[0];
+    const timeInterval = this.toTime(note.outputDuration) / Math.abs(nextOutput - output) * 1000;
+    
+    let slide = setInterval(() => {
+      oscillator.frequency.value = output;
+      if (output < nextOutput) {
+        output += 1;
+      } 
+      else if (output > nextOutput) {
+        output -= 1;
+      } 
+      else clearInterval(slide);
+    }, timeInterval);
+  }
 }
 
 module.exports = SynthJS;

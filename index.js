@@ -1,2 +1,2 @@
-const SynthJS = require('./src/Synth')
-module.exports = SynthJS
+const SynthJS = require('./src/Synth');
+module.exports = SynthJS;
