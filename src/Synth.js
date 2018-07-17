@@ -164,7 +164,7 @@ class SynthJS {
   */
   stop() {
     this.loop = false;
-    this.ended();
+    return this.ended();
   }
 
   /**
