@@ -175,7 +175,10 @@ class SynthJS {
       this.createContext();
       if (this.loop) this.play();
       else this.parseNotes();
-    });
+    })
+    .catch(err => { throw new Error(err); });
+
+    return this;
   }
 
   /**
