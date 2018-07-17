@@ -33,6 +33,8 @@ class SynthJS {
     });
     if (props.notes) this.parseNotes();
     if (props.timeSig) this.getBPM();
+
+    return this;
   }
 
   /**
