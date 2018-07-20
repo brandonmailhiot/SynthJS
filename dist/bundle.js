@@ -3,7 +3,7 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 const Note = require('./note');
-const effect = require('./effect');
+const FX = require('./fx');
 
 class SynthJS {
   /**
@@ -19,7 +19,11 @@ class SynthJS {
     this.loop = props.loop || false;
 
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
-    this.lastNode = this.context.destination;
+    this.analyserNode = this.context.createAnalyser();
+    this.analyserNode.fftSize = 2048;
+    this.analyzerDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+    this.analyserNode.connect(this.context.destination);
+    this.lastNode = this.analyserNode;
 
     this.parseNotes();
     this.getBPM();
@@ -37,6 +41,15 @@ class SynthJS {
     if (props.timeSig) this.getBPM();
 
     return this;
+  }
+
+  /**
+   * Exposes the current waveform data from analyzer
+   * Call on UI repaint (e.g. requestAnimationFrame)
+   */
+  getAnalyzerData() {
+    this.analyserNode.getByteTimeDomainData(this.analyzerDataArray);
+    return this.analyzerDataArray;
   }
 
   /**
@@ -59,11 +72,15 @@ class SynthJS {
 
   /**
   * Open an audio context.
-  * @param {string} nodeContext - Required for node web audio API (used for testing).
+  * @param {string} nodeAudioContext - Required for node web audio API (used for testing).
   */
-  createContext(nodeContext) {
-    this.context = new (nodeContext || global.AudioContext || global.webkitAudioContext)();
-    this.lastNode = this.context.destination;
+  createContext(nodeAudioContext) {
+    this.context = new (nodeAudioContext || global.AudioContext || global.webkitAudioContext)();
+    this.analyserNode = this.context.createAnalyser();
+    this.analyserNode.fftSize = 2048;
+    this.analyzerDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+    this.analyserNode.connect(this.context.destination);
+    this.lastNode = this.analyserNode;
   }
 
   /**
@@ -96,45 +113,48 @@ class SynthJS {
   * the last oscillator node ends, or on stop().
   */
   play(n = 0) {
-    const note = this.notesParsed[n];
+    const currentNote = this.notesParsed[n];
     const nextNote = this.notesParsed[n + 1];
-    const stopTime = this.toTime(note.outputDuration);
+    const stopTime = this.toTime(currentNote.outputDuration);
     const oscillators = [];
     const playNext = () => {
-      n < this.notesParsed.length - 1
-        ? this.play(n += 1)
-        : this.ended();
-    }
+      return n < this.notesParsed.length - 1 ? this.play(n + 1) : this.ended();
+    };
 
-    if (note.effect[0]) {
-      if (note.effect[0].indexOf('@') === 0) {
-        effect[note.effect[0].slice(1)](this, note.value);
-        return playNext();
-      }
+    // Is the current note an @effect?
+    const effect = currentNote.effect[0];
+    if (effect && effect.charAt(0) === '@') {
+      // remove '@' and add effect to chain of context nodes
+      FX[effect.slice(1)](this, currentNote.value);
+      return playNext();
     }
 
     // create and configure oscillators
-    note.outputFrequency.forEach(f => {
-      let o = this.context.createOscillator();
-      o.connect(this.lastNode)
+    currentNote.outputFrequency.forEach(f => {
+      let osc = this.context.createOscillator();
+      // connect oscillator first node in chain e.g. osc -> reverbNode -> analyser -> destination
+      osc.connect(this.lastNode);
       // set instrument
-      o.type = this.instrument;
+      osc.type = this.instrument;
       // set detune
-      o.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
+      osc.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
       // set note frequency
-      o.frequency.value = f;
-      oscillators.push(o);
+      osc.frequency.value = f;
+
+      oscillators.push(osc);
     });
 
     oscillators.forEach(o => {
       o.start(0);
-      if (nextNote && note.effect.includes('slide')) this.slideNote(o, n)
-      o.stop(this.context.currentTime + stopTime);
-    })
 
-    oscillators.shift().onended = () => {
-      playNext()
-    };
+      if (nextNote && currentNote.effect.includes('slide')) {
+        this.slideNote(o, n);
+      }
+
+      o.stop(this.context.currentTime + stopTime);
+    });
+
+    oscillators.shift().onended = () => playNext();
   }
 
   /**
@@ -233,18 +253,18 @@ class SynthJS {
 
     this.notesParsed = this.notesParsed.map(n => {
       n.outputFrequency = n.outputFrequency.map(f => {
-        let o = octave
-        const origin = SynthJS._originFrequency(f)
+        let o = octave;
+        const origin = SynthJS._originFrequency(f);
 
         if (SynthJS._noteName(origin).match(/g|f|e|c|d/)) {
-          o -= 1
+          o -= 1;
         }
 
-        return origin * Math.pow(2, o)
-      })
+        return origin * Math.pow(2, o);
+      });
 
-      return n
-    })
+      return n;
+    });
   }
 
   findKey() {
@@ -421,7 +441,7 @@ class SynthJS {
 module.exports = SynthJS;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./duration":2,"./effect":3,"./frequency":4,"./note":6}],2:[function(require,module,exports){
+},{"./duration":2,"./frequency":3,"./fx":4,"./note":6}],2:[function(require,module,exports){
 // base duration of 1/32
 const ts = 0.03125;
 
@@ -470,68 +490,6 @@ module.exports = {
 };
 
 },{}],3:[function(require,module,exports){
-function createReverbBuffer(synthjs, val) {
-  val = val.split('/')
-  let rate = synthjs.context.sampleRate
-  let channels = val[0] || 1
-  let length = rate * (val[1] || 1)
-  let decay = val[2] || 0.5
-  let buffer = synthjs.context.createBuffer(channels, length, rate)
-  for (let c = 0; c < channels; c++) {
-    let channelData = buffer.getChannelData(c)
-    for (let i = 0; i < channelData.length; i++) {
-      channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
-    }
-  }
-  return buffer
-}
-
-function makeDistortionCurve(val) {
-  var v = +val,
-  n_samples = 44100,
-  curve = new Float32Array(n_samples),
-  deg = Math.PI / 180,
-  i = 0,
-  x;
-  for ( ; i < n_samples; ++i ) {
-    x = i * 2 / n_samples - 1;
-    curve[i] = (3 + v) * x * 20 * deg / (Math.PI + v * Math.abs(x));
-  }
-  return curve;
-};
-
-module.exports = {
-  createReverbBuffer,
-  gain: (synthjs, val=100) => {
-    var gainNode = synthjs.context.createGain();
-    gainNode.gain.value = +val/100;
-    gainNode.connect(synthjs.lastNode);
-    synthjs.lastNode = gainNode;
-  },
-  instrument: (synthjs, val) => {
-    if (!val) return synthjs.instrument;
-    synthjs.instrument = val;
-  },
-  detune: (synthjs, val) => {
-    if (!val) return synthjs.detune;
-    synthjs.detune = +val;
-  },
-  reverb: (synthjs, val) => {   
-    var convolverNode = synthjs.context.createConvolver();
-    convolverNode.buffer = createReverbBuffer(synthjs, val);
-    convolverNode.connect(synthjs.lastNode);
-    synthjs.lastNode = convolverNode;
-  },
-  distortion: (synthjs, val) => {
-    val = val.split('/');
-    var distortionNode = synthjs.context.createWaveShaper();
-    distortionNode.curve = makeDistortionCurve(val[0]);
-    distortionNode.oversample = val[1];
-    distortionNode.connect(synthjs.lastNode);
-    synthjs.lastNode = distortionNode;
-  },
-}
-},{}],4:[function(require,module,exports){
 // base frequency for each note
 const a = 27.5;
 const asharp = 29.1352;
@@ -716,6 +674,75 @@ module.exports = {
 };
 // end note_data object
 
+},{}],4:[function(require,module,exports){
+function createReverbBuffer(synthjs, val) {
+  let values = val.split('/');
+  let rate = synthjs.context.sampleRate;
+  let channels = values[0] || 1;
+  let length = rate * (values[1] || 1);
+  let decay = values[2] || 0.5;
+  let buffer = synthjs.context.createBuffer(channels, length, rate);
+
+  for (let c = 0; c < channels; c++) {
+    let channelData = buffer.getChannelData(c);
+    for (let i = 0; i < channelData.length; i++) {
+      channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+  }
+
+  return buffer;
+}
+
+function makeDistortionCurve(val) {
+  let v = +val;
+  let n_samples = 44100;
+  let curve = new Float32Array(n_samples);
+  let deg = Math.PI / 180;
+  let x;
+
+  for (let i = 0; i < n_samples; ++i ) {
+    x = i * 2 / n_samples - 1;
+    curve[i] = (3 + v) * x * 20 * deg / (Math.PI + v * Math.abs(x));
+  }
+
+  return curve;
+}
+
+exports.createReverbBuffer = createReverbBuffer;
+exports.makeDistortionCurve = makeDistortionCurve;
+
+exports.gain = (synthjs, val=100) => {
+  const gainNode = synthjs.context.createGain();
+  gainNode.gain.value = +val / 100;
+  gainNode.connect(synthjs.lastNode);
+  synthjs.lastNode = gainNode;
+};
+
+exports.instrument = (synthjs, val) => {
+  if (!val) return synthjs.instrument;
+  synthjs.instrument = val;
+};
+
+exports.detune = (synthjs, val) => {
+  if (!val) return synthjs.detune;
+  synthjs.detune = +val;
+};
+
+exports.reverb = (synthjs, val) => {   
+  const convolverNode = synthjs.context.createConvolver();
+  convolverNode.buffer = createReverbBuffer(synthjs, val);
+  convolverNode.connect(synthjs.lastNode);
+  synthjs.lastNode = convolverNode;
+};
+
+exports.distortion = (synthjs, val) => {
+  let values = val.split('/');
+  const distortionNode = synthjs.context.createWaveShaper();
+  distortionNode.curve = makeDistortionCurve(values[0]);
+  distortionNode.oversample = values[1];
+  distortionNode.connect(synthjs.lastNode);
+  synthjs.lastNode = distortionNode;
+};
 },{}],5:[function(require,module,exports){
 const SynthJS = require('./Synth');
 
@@ -945,4 +972,4 @@ module.exports = (note) => {
 	
 	return noteSchema
 }
-},{"./duration":2,"./frequency":4}]},{},[5]);
+},{"./duration":2,"./frequency":3}]},{},[5]);

@@ -1,7 +1,7 @@
 const Frequency = require('./frequency');
 const Duration = require('./duration');
 const Note = require('./note');
-const effect = require('./effect');
+const FX = require('./fx');
 
 class SynthJS {
   /**
@@ -17,7 +17,11 @@ class SynthJS {
     this.loop = props.loop || false;
 
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
-    this.lastNode = this.context.destination;
+    this.analyserNode = this.context.createAnalyser();
+    this.analyserNode.fftSize = 2048;
+    this.analyzerDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+    this.analyserNode.connect(this.context.destination);
+    this.lastNode = this.analyserNode;
 
     this.parseNotes();
     this.getBPM();
@@ -35,6 +39,15 @@ class SynthJS {
     if (props.timeSig) this.getBPM();
 
     return this;
+  }
+
+  /**
+   * Exposes the current waveform data from analyzer
+   * Call on UI repaint (e.g. requestAnimationFrame)
+   */
+  getAnalyzerData() {
+    this.analyserNode.getByteTimeDomainData(this.analyzerDataArray);
+    return this.analyzerDataArray;
   }
 
   /**
@@ -57,11 +70,15 @@ class SynthJS {
 
   /**
   * Open an audio context.
-  * @param {string} nodeContext - Required for node web audio API (used for testing).
+  * @param {string} nodeAudioContext - Required for node web audio API (used for testing).
   */
-  createContext(nodeContext) {
-    this.context = new (nodeContext || global.AudioContext || global.webkitAudioContext)();
-    this.lastNode = this.context.destination;
+  createContext(nodeAudioContext) {
+    this.context = new (nodeAudioContext || global.AudioContext || global.webkitAudioContext)();
+    this.analyserNode = this.context.createAnalyser();
+    this.analyserNode.fftSize = 2048;
+    this.analyzerDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+    this.analyserNode.connect(this.context.destination);
+    this.lastNode = this.analyserNode;
   }
 
   /**
@@ -94,45 +111,48 @@ class SynthJS {
   * the last oscillator node ends, or on stop().
   */
   play(n = 0) {
-    const note = this.notesParsed[n];
+    const currentNote = this.notesParsed[n];
     const nextNote = this.notesParsed[n + 1];
-    const stopTime = this.toTime(note.outputDuration);
+    const stopTime = this.toTime(currentNote.outputDuration);
     const oscillators = [];
     const playNext = () => {
-      n < this.notesParsed.length - 1
-        ? this.play(n += 1)
-        : this.ended();
-    }
+      return n < this.notesParsed.length - 1 ? this.play(n + 1) : this.ended();
+    };
 
-    if (note.effect[0]) {
-      if (note.effect[0].indexOf('@') === 0) {
-        effect[note.effect[0].slice(1)](this, note.value);
-        return playNext();
-      }
+    // Is the current note an @effect?
+    const effect = currentNote.effect[0];
+    if (effect && effect.charAt(0) === '@') {
+      // remove '@' and add effect to chain of context nodes
+      FX[effect.slice(1)](this, currentNote.value);
+      return playNext();
     }
 
     // create and configure oscillators
-    note.outputFrequency.forEach(f => {
-      let o = this.context.createOscillator();
-      o.connect(this.lastNode)
+    currentNote.outputFrequency.forEach(f => {
+      let osc = this.context.createOscillator();
+      // connect oscillator first node in chain e.g. osc -> reverbNode -> analyser -> destination
+      osc.connect(this.lastNode);
       // set instrument
-      o.type = this.instrument;
+      osc.type = this.instrument;
       // set detune
-      o.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
+      osc.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
       // set note frequency
-      o.frequency.value = f;
-      oscillators.push(o);
+      osc.frequency.value = f;
+
+      oscillators.push(osc);
     });
 
     oscillators.forEach(o => {
       o.start(0);
-      if (nextNote && note.effect.includes('slide')) this.slideNote(o, n)
-      o.stop(this.context.currentTime + stopTime);
-    })
 
-    oscillators.shift().onended = () => {
-      playNext()
-    };
+      if (nextNote && currentNote.effect.includes('slide')) {
+        this.slideNote(o, n);
+      }
+
+      o.stop(this.context.currentTime + stopTime);
+    });
+
+    oscillators.shift().onended = () => playNext();
   }
 
   /**
@@ -231,18 +251,18 @@ class SynthJS {
 
     this.notesParsed = this.notesParsed.map(n => {
       n.outputFrequency = n.outputFrequency.map(f => {
-        let o = octave
-        const origin = SynthJS._originFrequency(f)
+        let o = octave;
+        const origin = SynthJS._originFrequency(f);
 
         if (SynthJS._noteName(origin).match(/g|f|e|c|d/)) {
-          o -= 1
+          o -= 1;
         }
 
-        return origin * Math.pow(2, o)
-      })
+        return origin * Math.pow(2, o);
+      });
 
-      return n
-    })
+      return n;
+    });
   }
 
   findKey() {
