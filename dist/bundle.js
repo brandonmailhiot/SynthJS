@@ -21,8 +21,11 @@ class SynthJS {
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
     this.analyserNode = this.context.createAnalyser();
     this.analyserNode.fftSize = 2048;
-    this.analyzerDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+    this.analyserDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
     this.analyserNode.connect(this.context.destination);
+
+    // used to connect oscillator nodes to output:
+    // osc -> analyser -> javascript -> destination
     this.lastNode = this.analyserNode;
 
     this.parseNotes();
@@ -44,12 +47,12 @@ class SynthJS {
   }
 
   /**
-   * Exposes the current waveform data from analyzer
+   * Exposes the current waveform data from analyser
    * Call on UI repaint (e.g. requestAnimationFrame)
    */
-  getAnalyzerData() {
-    this.analyserNode.getByteTimeDomainData(this.analyzerDataArray);
-    return this.analyzerDataArray;
+  getAnalyserFrequency() {
+    this.analyserNode.getByteFrequencyData(this.analyserDataArray);
+    return this.analyserDataArray;
   }
 
   /**
@@ -78,8 +81,11 @@ class SynthJS {
     this.context = new (nodeAudioContext || global.AudioContext || global.webkitAudioContext)();
     this.analyserNode = this.context.createAnalyser();
     this.analyserNode.fftSize = 2048;
-    this.analyzerDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+    this.analyserDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
     this.analyserNode.connect(this.context.destination);
+
+    // used to connect oscillator nodes to output:
+    // osc -> analyser -> javascript -> destination
     this.lastNode = this.analyserNode;
   }
 
@@ -132,20 +138,27 @@ class SynthJS {
     // create and configure oscillators
     currentNote.outputFrequency.forEach(f => {
       let osc = this.context.createOscillator();
-      // connect oscillator first node in chain e.g. osc -> reverbNode -> analyser -> destination
-      osc.connect(this.lastNode);
+
       // set instrument
       osc.type = this.instrument;
+
       // set detune
       osc.detune.setValueAtTime(this.detune || 0, this.context.currentTime);
+
       // set note frequency
       osc.frequency.value = f;
+
+      // connect oscillator first node in chain:
+      // osc -> lastNode (e.g. gainNode) -> analyser -> destination
+      osc.connect(this.lastNode);
 
       oscillators.push(osc);
     });
 
     oscillators.forEach(o => {
       o.start(0);
+
+      this.getAnalyserFrequency();
 
       if (nextNote && currentNote.effect.includes('slide')) {
         this.slideNote(o, n);
