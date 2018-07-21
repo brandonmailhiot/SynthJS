@@ -15,9 +15,11 @@ class SynthJS {
     this.instrument = props.instrument || 'sine';
     this.notes = props.notes || '';
     this.loop = props.loop || false;
+    this.smoothingTimeConstant = props.smoothingTimeConstant || 0.95;
 
     this.context = new (props.context || global.AudioContext || global.webkitAudioContext)();
     this.analyserNode = this.context.createAnalyser();
+    this.analyserNode.smoothingTimeConstant = this.smoothingTimeConstant;
     this.analyserNode.fftSize = 2048;
     this.analyserDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
     this.analyserNode.connect(this.context.destination);
@@ -35,11 +37,23 @@ class SynthJS {
   * @param {Object} props - Update the tempo, timeSig, instrument, notes, and/or loop properties.
   */
   update(props) {
+    if (typeof props !== 'object') {
+      throw new Error('Invalid argument passed to SynthJS.update()');
+    }
+
     Object.keys(props).forEach((key) => {
       this[key] = props[key];
     });
-    if (props.notes) this.parseNotes();
-    if (props.timeSig) this.getBPM();
+
+    if (props.smoothingTimeConstant) {
+      this.analyserNode.smoothingTimeConstant = this.smoothingTimeConstant;
+    }
+    if (props.notes) {
+      this.parseNotes();
+    }
+    if (props.timeSig) {
+      this.getBPM();
+    }
 
     return this;
   }
@@ -78,6 +92,7 @@ class SynthJS {
   createContext(nodeAudioContext) {
     this.context = new (nodeAudioContext || global.AudioContext || global.webkitAudioContext)();
     this.analyserNode = this.context.createAnalyser();
+    this.analyserNode.smoothingTimeConstant = this.smoothingTimeConstant;
     this.analyserNode.fftSize = 2048;
     this.analyserDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
     this.analyserNode.connect(this.context.destination);
