@@ -59,11 +59,20 @@ class SynthJS {
   }
 
   /**
-   * Exposes the current waveform data from analyser
+   * Exposes the current frequency data from analyser
    * Call on UI repaint (e.g. requestAnimationFrame)
    */
   getAnalyserFrequency() {
     this.analyserNode.getByteFrequencyData(this.analyserDataArray);
+    return this.analyserDataArray;
+  }
+
+  /**
+   * Exposes the current time domain data from analyser
+   * Call on UI repaint (e.g. requestAnimationFrame)
+   */
+  getAnalyserTimeDomain() {
+    this.analyserNode.getByteTimeDomainData(this.analyserDataArray);
     return this.analyserDataArray;
   }
 
