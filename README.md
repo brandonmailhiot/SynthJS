@@ -1,6 +1,6 @@
 
 # Introduction
-SynthJS is an interpreter and toolset for the Synth Web Audio Programming Language. Its core JavaScript parsing engine leverages the capabilities of the Web Audio API, allowing SynthJS to distill complex compositions, effects, and instruments into JSON-structured sequences. 
+SynthJS is a music production framework and DSL that leverages the Web Audio API to translate compositions, effects, and instruments into JSON-structured sequences. 
 
 ## Related applications
 
