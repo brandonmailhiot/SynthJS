@@ -223,6 +223,24 @@ describe("emit IR — instrument", () => {
     expect(ev?.instrument.pitchSweep).toEqual({ semitones: -7, duration: 0.1 });
   });
 
+  it("sample oscillator captured in layer", () => {
+    const src =
+      'instrument define real_kick { oscillator sample("kick.wav") root c2 envelope percussive(0.001, 0.5) }\n\\instrument real_kick\n4 c2';
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.oscillators[0]?.kind).toBe("sample");
+    expect(ev?.instrument.oscillators[0]?.samplePath).toBe("kick.wav");
+    expect(ev?.instrument.oscillators[0]?.rootHz).toBeCloseTo(65.406, 1); // c2
+  });
+
+  it("sample without root has undefined rootHz", () => {
+    const src = 'instrument define hit { oscillator sample("crash.wav") }\n\\instrument hit\n4 c4';
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.oscillators[0]?.kind).toBe("sample");
+    expect(ev?.instrument.oscillators[0]?.rootHz).toBeUndefined();
+  });
+
   it("gain field captured in IR", () => {
     const src = "instrument define loud { oscillator sine gain 2.5 }\n\\instrument loud\n4 c4";
     const ir = compile(src);

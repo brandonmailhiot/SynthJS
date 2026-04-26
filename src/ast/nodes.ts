@@ -76,9 +76,12 @@ export type InstrumentDef = {
 export type InstrumentField =
   | {
       kind: "Oscillator";
-      value: string;
+      value: string; // primitive kind ("sine", "square", ...) or "sample"
       detune?: number;
       envelope?: Call;
+      // Sample-specific fields (present iff value === "sample"):
+      samplePath?: string; // URL or path to audio file
+      root?: AbsolutePitch; // optional recorded pitch; controls playbackRate
       span: SourceSpan;
     }
   | { kind: "EnvelopeField"; call: Call; span: SourceSpan }

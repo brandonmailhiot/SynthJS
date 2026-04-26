@@ -141,6 +141,15 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
         const layer: OscillatorLayer = { kind: field.value as OscillatorKind };
         if (field.detune !== undefined && field.detune !== 0) layer.detune = field.detune;
         if (field.envelope !== undefined) layer.envelope = callToEnvelopeSpec(field.envelope);
+        if (field.samplePath !== undefined) layer.samplePath = field.samplePath;
+        if (field.root !== undefined) {
+          layer.rootHz = computeFrequency({
+            letter: field.root.letter,
+            accidental: field.root.accidental,
+            octave: field.root.octave,
+            cents: field.root.cents,
+          });
+        }
         oscillators.push(layer);
         break;
       }

@@ -152,6 +152,39 @@ voice melody {
     2 g4 f4 e4
   }
 }`,
+
+  "sampled-drums": `\\version "2.0"
+\\use "@stdlib/drums-sampled"
+\\tempo 100
+\\time 4/4
+
+// Bundled stdlib samples — sourced from procedurally rendered 808 voices.
+// Replace assets/samples/*.wav and re-run \`pnpm samples:encode\` to swap in
+// real recordings; instruments below pick up whatever bytes are bundled.
+
+voice kick {
+  \\instrument kick_real
+  \\f
+  repeat 4 { 4 c2 r c2 r }
+}
+
+voice snare {
+  \\instrument snare_real
+  \\mf
+  repeat 4 { 4 r d3 r d3 }
+}
+
+voice hats {
+  \\instrument hat_closed_real
+  \\p
+  repeat 16 { 8 f6 f6 }
+}
+
+voice clap {
+  \\instrument clap_real
+  \\mp
+  repeat 2 { 1 r 4 r d4 r r }
+}`,
 };
 
 const examplesEl = document.getElementById("examples");

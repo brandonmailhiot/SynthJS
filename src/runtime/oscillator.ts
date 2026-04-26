@@ -52,17 +52,33 @@ type LayerNode = {
   frequencyParam: AudioParamLike | null; // null for noise
 };
 
+/** Map from sample path -> decoded AudioBuffer. Populated by preloadSamples. */
+export type SampleBuffers = Map<string, AudioBufferLike>;
+
 function buildLayer(
   ctx: AudioContextLike,
   layer: OscillatorLayer,
   frequency: number,
   instrumentDetune: number,
+  sampleBuffers: SampleBuffers,
 ): LayerNode {
   const totalDetune = instrumentDetune + (layer.detune ?? 0);
   if (layer.kind === "noise") {
     const node: AudioBufferSourceNodeLike = ctx.createBufferSource();
     node.buffer = getNoiseBuffer(ctx);
     node.loop = true;
+    if (totalDetune !== 0) node.detune.setValueAtTime(totalDetune, 0);
+    return { source: node, output: node, frequencyParam: null };
+  }
+  if (layer.kind === "sample") {
+    const node: AudioBufferSourceNodeLike = ctx.createBufferSource();
+    if (layer.samplePath !== undefined) {
+      const buf = sampleBuffers.get(layer.samplePath);
+      if (buf !== undefined) node.buffer = buf;
+    }
+    // playbackRate ratio = freq / rootHz; 1.0 if no root specified (drum-style)
+    const rate = layer.rootHz !== undefined ? frequency / layer.rootHz : 1.0;
+    node.playbackRate.value = rate;
     if (totalDetune !== 0) node.detune.setValueAtTime(totalDetune, 0);
     return { source: node, output: node, frequencyParam: null };
   }
@@ -79,6 +95,7 @@ export function buildOscillator(
   frequency: number,
   audioStart = 0,
   playDuration = 1,
+  sampleBuffers: SampleBuffers = new Map(),
 ): OscillatorRig {
   const layers = instrument.oscillators;
   const instrumentDetune = instrument.detune ?? 0;
@@ -91,7 +108,7 @@ export function buildOscillator(
   const sources: Sourceish[] = [];
   const frequencies: AudioParamLike[] = [];
   for (const layer of layers) {
-    const ln = buildLayer(ctx, layer, frequency, instrumentDetune);
+    const ln = buildLayer(ctx, layer, frequency, instrumentDetune, sampleBuffers);
     // Per-layer envelope wraps just this layer with peakGain=1.0 so the master
     // envelope (applied in voice-player) handles final amplitude. Multiplicative
     // when both are present.
@@ -116,7 +133,9 @@ export function buildOscillator(
   };
 
   const output = applyFilterChain(ctx, instrument, summing);
-  const isNoise = layers.every((l) => l.kind === "noise");
+  // "isNoise" historically means: no tonal layer (slides become no-ops).
+  // Sample layers also have no frequency param, so treat them the same.
+  const isNoise = layers.every((l) => l.kind === "noise" || l.kind === "sample");
   return { source: aggregate, output, isNoise, frequencies };
 }
 

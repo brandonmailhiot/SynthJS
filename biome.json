@@ -12,6 +12,6 @@
     "lineWidth": 100
   },
   "files": {
-    "ignore": ["dist", "legacy", "node_modules", "coverage"]
+    "ignore": ["dist", "legacy", "node_modules", "coverage", "src/stdlib/samples-data.ts"]
   }
 }

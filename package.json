@@ -31,7 +31,9 @@
     "pretest": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "samples:render": "tsx scripts/render-default-samples.ts",
+    "samples:encode": "tsx scripts/encode-samples.ts"
   },
   "repository": {
     "type": "git",
