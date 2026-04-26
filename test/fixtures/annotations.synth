@@ -1,0 +1,14 @@
+\version "2.0"
+\tempo 120
+
+@section("intro")
+voice melody {
+  @midi_channel(1)
+  4 c4 d4 e4 f4@cue("riff_drop")
+}
+
+@section("chorus") {
+  ramp(\mf, \ff) {
+    repeat 4 { 4 c4 d4 e4 f4 }
+  }
+}

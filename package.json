@@ -13,7 +13,12 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
@@ -29,9 +34,12 @@
   },
   "author": "Brandon Mailhiot",
   "license": "MIT",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
+    "@types/node": "^25.6.0",
     "@vitest/coverage-v8": "^2.1.0",
     "tsup": "^8.3.0",
     "typescript": "^5.6.0",

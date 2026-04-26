@@ -761,8 +761,13 @@ class Parser {
       let mark: ArticulationKind | null = null;
       if (tok.kind === "Dot") mark = ".";
       else if (tok.kind === "Underscore") mark = "_";
-      else if (tok.kind === "Caret") mark = "^";
-      else if (tok.kind === "RAngle") mark = ">";
+      else if (tok.kind === "Caret") {
+        // Only treat '^' as articulation when NOT followed by a digit or '-'
+        // (which would make it a scale degree like ^1, ^-3)
+        const next = this.peek(1);
+        if (next.kind === "IntLiteral" || next.kind === "Minus") break;
+        mark = "^";
+      } else if (tok.kind === "RAngle") mark = ">";
       else break;
 
       this.advance();
