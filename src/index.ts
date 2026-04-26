@@ -106,6 +106,7 @@ export type {
 
 // Tools
 export { exportJson, type JsonExportOptions } from "./tools/export-json.js";
+export { exportMidi } from "./tools/export-midi.js";
 export { generateDocs, type GenDocsOptions } from "./tools/gen-docs.js";
 export { format } from "./tools/format.js";
 
