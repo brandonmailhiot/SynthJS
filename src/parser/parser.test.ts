@@ -262,4 +262,17 @@ describe("parse — errors", () => {
   it("missing rbrace", () => {
     expect(() => parse(lex("voice m { 4 c4"))).toThrow(ParseError);
   });
+  it("unexpected token in arg value throws ParseError", () => {
+    // a call with a bar marker as argument — not a valid arg value
+    expect(() => parse(lex("with reverb(|) { 4 c4 }"))).toThrow(ParseError);
+  });
+  it("parseNumber with non-number token throws ParseError", () => {
+    // \\detune expects a (possibly signed) number; a bare identifier triggers parseNumber error
+    expect(() => parse(lex("\\detune c4"))).toThrow(ParseError);
+  });
+  it("parseSignedNumber with leading plus", () => {
+    // \\detune +5 should parse successfully (+ prefix branch in parseSignedNumber)
+    const c = parse(lex("\\detune +5"));
+    expect(c.body[0]).toMatchObject({ kind: "Detune", cents: 5 });
+  });
 });
