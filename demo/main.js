@@ -11,8 +11,10 @@ import {
   ValidationError,
   compileSync,
   formatError,
+  isolateIR,
 } from "synth-javascript";
 import { synthCompletions, synthHover, synthLinter } from "./lsp-extensions.js";
+import { synthLanguage } from "./synth-language.js";
 
 const examples = {
   scale: `\\version "2.0"
@@ -49,13 +51,64 @@ voice melody {
 
   "custom-instrument": `\\version "2.0"
 \\use "@stdlib/instruments"
-\\tempo 60
-\\instrument warm_pad
+\\use "@stdlib/drums"
+\\tempo 80
+\\time 4/4
+
+// Pad: brass on a Cmaj7 -> Am7 -> Fmaj7 -> G7 progression, twice
 voice pad {
+  \\instrument brass
+  \\mp
   1 <c3 e3 g3 b3>
   1 <a2 c3 e3 g3>
   1 <f2 a2 c3 e3>
   1 <g2 b2 d3 f3>
+  1 <c3 e3 g3 b3>
+  1 <a2 c3 e3 g3>
+  1 <f2 a2 c3 e3>
+  1 <g2 b2 d3 f3>
+}
+
+// Walking bass on chord roots
+voice bass {
+  \\instrument bass_synth
+  \\mf
+  4 c2 c2 g2 c3
+  4 a1 a1 e2 a2
+  4 f1 f1 c2 f2
+  4 g1 g1 d2 g2
+  4 c2 c2 g2 c3
+  4 a1 a1 e2 a2
+  4 f1 f1 c2 f2
+  4 g1 g1 d2 g2
+}
+
+// Kick on every other quarter
+voice drums {
+  \\instrument kick_drum
+  \\f
+  repeat 8 { 4 c2 r c2 r }
+}
+
+// Closed hi-hat on every eighth
+voice hats {
+  \\instrument hat_closed
+  \\p
+  repeat 32 { 8 c5 c5 }
+}
+
+// Bell melody — sparse first half, fills out second half
+voice melody {
+  \\instrument bell
+  \\mp
+  2 r 2 e5
+  4 d5 c5 b4 a4
+  2 r 4 a4 c5
+  4 e5 d5 c5 b4
+  4 a4 c5 e5 g5
+  4 a5 g5 e5 c5
+  4 d5 c5 b4 a4
+  1 c5
 }`,
 
   slide: `\\version "2.0"
@@ -81,12 +134,39 @@ voice melody {
 };
 
 const examplesEl = document.getElementById("examples");
+const soloEl = document.getElementById("solo");
 const playBtn = document.getElementById("play");
+const playSelectionBtn = document.getElementById("play-selection");
 const stopBtn = document.getElementById("stop");
 const editorParent = document.getElementById("editor");
 
 let currentComposition = null;
 let editorView = null;
+
+function refreshSoloOptions() {
+  // Best-effort: parse the current source and populate the solo dropdown
+  // with whatever voice names compile cleanly. Preserve current selection.
+  const previous = soloEl.value;
+  const source = getSource();
+  let voiceNames = [];
+  try {
+    const ir = compileSync(source);
+    voiceNames = ir.voices.map((v) => v.name);
+  } catch {
+    // Leave dropdown as-is on parse error
+    return;
+  }
+  soloEl.innerHTML = '<option value="">All voices</option>';
+  for (const name of voiceNames) {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    soloEl.appendChild(opt);
+  }
+  if (voiceNames.includes(previous)) {
+    soloEl.value = previous;
+  }
+}
 
 function buildState(initialDoc) {
   return EditorState.create({
@@ -95,6 +175,7 @@ function buildState(initialDoc) {
       lineNumbers(),
       history(),
       highlightActiveLine(),
+      synthLanguage(),
       autocompletion(),
       keymap.of([...defaultKeymap, ...historyKeymap, ...completionKeymap]),
       lintGutter(),
@@ -124,23 +205,19 @@ editorView = new EditorView({
   parent: editorParent,
 });
 
-examplesEl.addEventListener("change", () => loadExample(examplesEl.value));
+examplesEl.addEventListener("change", () => {
+  loadExample(examplesEl.value);
+  refreshSoloOptions();
+});
 
 function getSource() {
   return editorView ? editorView.state.doc.toString() : "";
 }
 
-playBtn.addEventListener("click", async () => {
-  if (currentComposition) {
-    currentComposition.stop();
-    await currentComposition.destroy();
-    currentComposition = null;
-  }
-
+function compileOrLog() {
   const source = getSource();
-  let ir;
   try {
-    ir = compileSync(source);
+    return { source, ir: compileSync(source) };
   } catch (err) {
     if (
       err instanceof LexError ||
@@ -152,21 +229,61 @@ playBtn.addEventListener("click", async () => {
     } else {
       console.error(err);
     }
-    return;
+    return null;
   }
+}
 
-  for (const d of ir.diagnostics) {
-    console.warn(`${d.severity}: ${d.message} (line ${d.span.line})`);
-  }
-
-  currentComposition = new Composition(ir);
-  await currentComposition.play();
-});
-
-stopBtn.addEventListener("click", async () => {
+async function stopCurrent() {
   if (currentComposition) {
     currentComposition.stop();
     await currentComposition.destroy();
     currentComposition = null;
   }
+}
+
+async function startPlayback(ir) {
+  for (const d of ir.diagnostics) {
+    console.warn(`${d.severity}: ${d.message} (line ${d.span.line})`);
+  }
+  if (ir.voices.length === 0 || ir.voices.every((v) => v.events.length === 0)) {
+    console.warn("Nothing to play after isolation.");
+    return;
+  }
+  currentComposition = new Composition(ir);
+  await currentComposition.play();
+}
+
+playBtn.addEventListener("click", async () => {
+  await stopCurrent();
+  const result = compileOrLog();
+  if (!result) return;
+  refreshSoloOptions();
+  let ir = result.ir;
+  if (soloEl.value) {
+    ir = isolateIR(ir, { voices: [soloEl.value] });
+  }
+  await startPlayback(ir);
 });
+
+playSelectionBtn.addEventListener("click", async () => {
+  await stopCurrent();
+  const result = compileOrLog();
+  if (!result || !editorView) return;
+  refreshSoloOptions();
+  // Determine selected line range from the editor (1-indexed lines).
+  const sel = editorView.state.selection.main;
+  const fromLine = editorView.state.doc.lineAt(sel.from).number;
+  const toLine = editorView.state.doc.lineAt(sel.to).number;
+  let ir = isolateIR(result.ir, { lineRange: [fromLine, toLine] });
+  if (soloEl.value) {
+    ir = isolateIR(ir, { voices: [soloEl.value] });
+  }
+  await startPlayback(ir);
+});
+
+stopBtn.addEventListener("click", async () => {
+  await stopCurrent();
+});
+
+// Populate solo options once the initial example is loaded.
+refreshSoloOptions();

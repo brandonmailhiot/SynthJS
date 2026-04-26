@@ -14,6 +14,7 @@
       "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.5.0?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3",
       "@codemirror/language": "https://esm.sh/@codemirror/language@6.10.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3",
       "@codemirror/lint": "https://esm.sh/@codemirror/lint@6.5.0?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3",
+      "@lezer/highlight": "https://esm.sh/@lezer/highlight@1.2.0",
       "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete@6.16.0?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3,@codemirror/language@6.10.1",
       "@codemirror/search": "https://esm.sh/@codemirror/search@6.5.6?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3",
       "codemirror": "https://esm.sh/codemirror@6.0.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3,@codemirror/commands@6.5.0,@codemirror/language@6.10.1,@codemirror/lint@6.5.0,@codemirror/autocomplete@6.16.0,@codemirror/search@6.5.6"
@@ -38,8 +39,14 @@
           <option value="dynamics">Dynamics &amp; Articulation</option>
         </select>
       </label>
+      <label class="solo">Solo voice:
+        <select id="solo">
+          <option value="">All voices</option>
+        </select>
+      </label>
       <div class="buttons">
-        <button id="play">▶ Play</button>
+        <button id="play" title="Play full composition">▶ Play</button>
+        <button id="play-selection" title="Play only the events in the current editor selection">▶ Play Selection</button>
         <button id="stop">■ Stop</button>
       </div>
     </div>

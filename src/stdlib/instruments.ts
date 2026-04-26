@@ -28,7 +28,6 @@ instrument define bass_synth {
   oscillator square
   envelope adsr(0.005, 0.1, 0.6, 0.1)
   filter lowpass(1000, 1.2)
-  detune -1200
 }
 
 /// Bell — fast attack, long decay

@@ -29,12 +29,14 @@ header p {
   margin-bottom: 1rem;
 }
 
-.examples {
+.examples,
+.solo {
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
 }
 
-.examples select {
+.examples select,
+.solo select {
   padding: 0.4rem;
   background: #2a2a2a;
   color: #e0e0e0;
