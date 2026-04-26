@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CompositionIR } from "../ir/nodes.js";
 import { MockAudioContext } from "./mock-audio-context.js";
-import { collectSamplePaths, preloadSamples } from "./sample-preload.js";
+import { collectSamplePaths, defaultSampleFetcher, preloadSamples } from "./sample-preload.js";
 
 const span = { start: 0, end: 0, line: 1, column: 1 };
 
@@ -71,5 +71,18 @@ describe("preloadSamples", () => {
     const buffers = await preloadSamples(irWith([undefined]), ctx, fetcher);
     expect(fetcher).not.toHaveBeenCalled();
     expect(buffers.size).toBe(0);
+  });
+});
+
+describe("defaultSampleFetcher", () => {
+  it("resolves @stdlib/samples/<name> to bundled bytes", async () => {
+    const bytes = await defaultSampleFetcher("@stdlib/samples/kick");
+    expect(bytes.byteLength).toBeGreaterThan(44); // at least a WAV header
+  });
+
+  it("throws on unknown stdlib sample name", async () => {
+    await expect(defaultSampleFetcher("@stdlib/samples/does_not_exist")).rejects.toThrow(
+      /Unknown stdlib sample/,
+    );
   });
 });

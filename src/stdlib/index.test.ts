@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { STDLIB, getStdlibSource, isStdlibPath } from "./index.js";
 
 describe("STDLIB registry", () => {
-  it("contains all five stdlib modules", () => {
+  it("contains all stdlib modules", () => {
     expect(Object.keys(STDLIB).sort()).toEqual([
       "@stdlib/chords",
       "@stdlib/drums",
+      "@stdlib/drums-sampled",
       "@stdlib/fx",
       "@stdlib/instruments",
       "@stdlib/scales",

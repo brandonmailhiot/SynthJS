@@ -1,4 +1,5 @@
 import type { CompositionIR, OscillatorLayer } from "../ir/nodes.js";
+import { STDLIB_SAMPLES } from "../stdlib/samples-data.js";
 import type { AudioBufferLike, AudioContextLike } from "./audio-context.js";
 
 export type SampleBuffers = Map<string, AudioBufferLike>;
@@ -21,12 +22,37 @@ export function collectSamplePaths(ir: CompositionIR): string[] {
 /** Fetcher signature: maps a sample path to the raw audio bytes. */
 export type SampleFetcher = (path: string) => Promise<ArrayBuffer>;
 
+const STDLIB_PREFIX = "@stdlib/samples/";
+
+function decodeBase64DataUrl(url: string): ArrayBuffer {
+  const comma = url.indexOf(",");
+  if (comma < 0) throw new Error("malformed data URL");
+  const b64 = url.slice(comma + 1);
+  // Use Buffer in Node, atob in browsers — both are widely supported.
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(b64, "base64").buffer.slice(0);
+  }
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
 /**
- * Default fetcher: uses the global `fetch` to resolve a path/URL to an
- * ArrayBuffer. Suitable for the browser; CLI/Node callers should pass their
- * own fetcher (e.g., one that reads from disk).
+ * Default fetcher. Resolves `@stdlib/samples/<name>` virtual paths against
+ * the bundled sample registry; falls back to global `fetch` for any other
+ * URL or path. Browser callers get this for free; CLI/Node callers can pass
+ * their own fetcher (e.g., one that reads from disk).
  */
 export const defaultSampleFetcher: SampleFetcher = async (path) => {
+  if (path.startsWith(STDLIB_PREFIX)) {
+    const name = path.slice(STDLIB_PREFIX.length);
+    const dataUrl = STDLIB_SAMPLES[name];
+    if (dataUrl === undefined) {
+      throw new Error(`Unknown stdlib sample '${name}'`);
+    }
+    return decodeBase64DataUrl(dataUrl);
+  }
   const res = await fetch(path);
   if (!res.ok) throw new Error(`Failed to fetch sample '${path}': HTTP ${res.status}`);
   return await res.arrayBuffer();
