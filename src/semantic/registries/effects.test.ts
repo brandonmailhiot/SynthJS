@@ -91,14 +91,16 @@ describe("validateEffectArgs", () => {
   });
 
   it("wrong arg type for number param rejected", () => {
-    expect(
-      validateEffectArgs("gain", [{ kind: "StringArg", value: "loud" }]),
-    ).toContain("expects number");
+    expect(validateEffectArgs("gain", [{ kind: "StringArg", value: "loud" }])).toContain(
+      "expects number",
+    );
   });
 
   it("unknown named arg rejected", () => {
     expect(
-      validateEffectArgs("gain", [{ kind: "NamedArg", name: "xyz", value: { kind: "NumberArg", value: 0.5 } }]),
+      validateEffectArgs("gain", [
+        { kind: "NamedArg", name: "xyz", value: { kind: "NumberArg", value: 0.5 } },
+      ]),
     ).toContain("unknown parameter");
   });
 

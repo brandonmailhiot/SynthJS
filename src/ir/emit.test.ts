@@ -244,6 +244,6 @@ describe("emit IR — fx named args", () => {
     const ir = compile("with delay(seconds: 0.3, feedback: 0.5) { 4 c4 }");
     const ev = ir.voices[0]?.events[0];
     expect(ev?.fxChain[0]?.args.named).toBeDefined();
-    expect(ev?.fxChain[0]?.args.named?.["seconds"]).toBeCloseTo(0.3);
+    expect(ev?.fxChain[0]?.args.named?.seconds).toBeCloseTo(0.3);
   });
 });
