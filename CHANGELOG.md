@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0-alpha.6] — 2026-04-26
+
+### Added
+- **Language services** (`src/services/`) — pure-function API for editor integrations:
+  - `getDiagnostics(source)` — LSP-style diagnostics with ranges and did-you-mean suggestions
+  - `getHover(source, offset)` — hover content for pitches (frequency), motifs (signature + doc), effects, annotations, bindings, instrument defs
+  - `getCompletions(source, offset)` — context-aware completions (after `\`, `@`, `with `, `\instrument `, `\key `, default event-position)
+  - `getDefinition(source, offset)` — jump from `MotifRef`/`Call`/`\instrument` to the declaration
+  - `rename(source, offset, newName)` — list of `TextEdit`s renaming a binding/motif/instrument and all its references
+  - `offsetToPosition`, `positionToOffset`, `spanToRange` helpers
+- **`synth-lsp` binary** — minimal LSP server over stdio using JSON-RPC. Implements `initialize`, `textDocument/didOpen|didChange|didClose|hover|completion|definition|rename|prepareRename`, plus auto-published diagnostics. Editors that speak LSP (VS Code, Neovim, Helix) can connect.
+- **Demo upgrade** — replaced `<textarea>` with CodeMirror 6 + extensions backed by the language services. In-editor experience:
+  - Inline error/warning highlights via lint gutter
+  - Hover tooltips with rendered markdown
+  - Context-aware autocomplete on Ctrl+Space and as you type
+  - Doc comments surfaced in hover and completion info
+  - CodeMirror loaded from esm.sh via import map; no install step beyond `pnpm build`
+
+### Changed
+- `package.json` `bin` now exports two binaries: `synth` (CLI) and `synth-lsp` (LSP server).
+- `tsup.config.ts` builds three entry points: `dist/index.js` (library), `dist/cli.js`, `dist/lsp.js`.
+
 ## [2.0.0-alpha.5] — 2026-04-26
 
 ### Added

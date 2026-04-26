@@ -8,7 +8,14 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/index.ts", "src/ast/nodes.ts", "src/ir/nodes.ts", "src/cli/main.ts"],
+      exclude: [
+        "src/**/*.test.ts",
+        "src/index.ts",
+        "src/ast/nodes.ts",
+        "src/ir/nodes.ts",
+        "src/cli/main.ts",
+        "src/lsp/server.ts",
+      ],
       thresholds: {
         lines: 90,
         functions: 90,

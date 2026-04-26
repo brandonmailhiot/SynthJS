@@ -16,4 +16,11 @@ export default defineConfig([
     sourcemap: true,
     banner: { js: "#!/usr/bin/env node" },
   },
+  {
+    entry: { lsp: "src/lsp/server.ts" },
+    format: ["esm"],
+    target: "es2022",
+    sourcemap: true,
+    banner: { js: "#!/usr/bin/env node" },
+  },
 ]);

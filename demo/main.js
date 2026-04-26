@@ -1,3 +1,8 @@
+import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { lintGutter } from "@codemirror/lint";
+import { EditorState } from "@codemirror/state";
+import { EditorView, highlightActiveLine, keymap, lineNumbers } from "@codemirror/view";
 import {
   Composition,
   LexError,
@@ -6,7 +11,8 @@ import {
   ValidationError,
   compileSync,
   formatError,
-} from "../dist/index.js";
+} from "synth-javascript";
+import { synthCompletions, synthHover, synthLinter } from "./lsp-extensions.js";
 
 const examples = {
   scale: `\\version "2.0"
@@ -74,27 +80,55 @@ voice melody {
 }`,
 };
 
-const sourceEl = document.getElementById("source");
 const examplesEl = document.getElementById("examples");
-const diagsEl = document.getElementById("diagnostics");
 const playBtn = document.getElementById("play");
 const stopBtn = document.getElementById("stop");
+const editorParent = document.getElementById("editor");
 
 let currentComposition = null;
+let editorView = null;
+
+function buildState(initialDoc) {
+  return EditorState.create({
+    doc: initialDoc,
+    extensions: [
+      lineNumbers(),
+      history(),
+      highlightActiveLine(),
+      autocompletion(),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...completionKeymap]),
+      lintGutter(),
+      synthLinter(),
+      synthHover(),
+      synthCompletions(),
+      EditorView.theme({
+        "&": { fontSize: "14px", height: "400px" },
+        ".cm-scroller": { fontFamily: "ui-monospace, 'SF Mono', Monaco, monospace" },
+        "&.cm-focused": { outline: "none" },
+      }),
+    ],
+  });
+}
 
 function loadExample(name) {
-  sourceEl.value = examples[name] ?? "";
-  showDiag("");
+  const doc = examples[name] ?? "";
+  if (editorView) {
+    editorView.dispatch({
+      changes: { from: 0, to: editorView.state.doc.length, insert: doc },
+    });
+  }
 }
 
-function showDiag(msg) {
-  diagsEl.textContent = msg;
-  if (msg) diagsEl.classList.add("visible");
-  else diagsEl.classList.remove("visible");
-}
+editorView = new EditorView({
+  state: buildState(examples[examplesEl.value]),
+  parent: editorParent,
+});
 
 examplesEl.addEventListener("change", () => loadExample(examplesEl.value));
-loadExample(examplesEl.value);
+
+function getSource() {
+  return editorView ? editorView.state.doc.toString() : "";
+}
 
 playBtn.addEventListener("click", async () => {
   if (currentComposition) {
@@ -102,11 +136,11 @@ playBtn.addEventListener("click", async () => {
     await currentComposition.destroy();
     currentComposition = null;
   }
-  showDiag("");
 
+  const source = getSource();
   let ir;
   try {
-    ir = compileSync(sourceEl.value);
+    ir = compileSync(source);
   } catch (err) {
     if (
       err instanceof LexError ||
@@ -114,18 +148,15 @@ playBtn.addEventListener("click", async () => {
       err instanceof ResolveError ||
       err instanceof ValidationError
     ) {
-      showDiag(formatError(err, sourceEl.value));
+      console.error(formatError(err, source));
     } else {
-      showDiag(String(err));
+      console.error(err);
     }
     return;
   }
 
-  if (ir.diagnostics.length > 0) {
-    const text = ir.diagnostics
-      .map((d) => `${d.severity}: ${d.message} (line ${d.span.line})`)
-      .join("\n");
-    showDiag(text);
+  for (const d of ir.diagnostics) {
+    console.warn(`${d.severity}: ${d.message} (line ${d.span.line})`);
   }
 
   currentComposition = new Composition(ir);
