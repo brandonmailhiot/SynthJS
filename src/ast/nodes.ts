@@ -181,7 +181,7 @@ export type AnnotatedBlock = {
 
 // ----- Pitch terms -----
 
-export type PitchTerm = AbsolutePitch | ScaleDegree | PitchArith | ParamRef;
+export type PitchTerm = AbsolutePitch | ScaleDegree | PitchArith | ParamRef | InheritedPitchLetter;
 
 export type AbsolutePitch = {
   kind: "Pitch";
@@ -209,6 +209,13 @@ export type PitchArith = {
 export type ParamRef = {
   kind: "ParamRef";
   name: string;
+  span: SourceSpan;
+};
+
+export type InheritedPitchLetter = {
+  kind: "InheritedPitchLetter";
+  letter: NoteLetter;
+  accidental?: Accidental;
   span: SourceSpan;
 };
 
