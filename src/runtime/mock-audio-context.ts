@@ -1,5 +1,6 @@
 import type {
   AudioBufferLike,
+  AudioBufferSourceNodeLike,
   AudioContextLike,
   AudioNodeLike,
   AudioParamLike,
@@ -21,6 +22,7 @@ export type MockEvent =
   | { method: "createWaveShaper" }
   | { method: "createDynamicsCompressor" }
   | { method: "createBuffer"; channels: number; length: number; sampleRate: number }
+  | { method: "createBufferSource" }
   | { method: "resume" }
   | { method: "suspend" }
   | { method: "close" };
@@ -89,6 +91,10 @@ export class MockAudioContext implements AudioContextLike {
   createBuffer(channels: number, length: number, sampleRate: number): AudioBufferLike {
     this.history.push({ method: "createBuffer", channels, length, sampleRate });
     return new MockAudioBuffer(channels, length, sampleRate);
+  }
+  createBufferSource(): AudioBufferSourceNodeLike {
+    this.history.push({ method: "createBufferSource" });
+    return new MockAudioBufferSourceNode();
   }
   async resume(): Promise<void> {
     this.history.push({ method: "resume" });
@@ -166,6 +172,19 @@ class MockOscillatorNode extends MockBaseNode implements OscillatorNodeLike {
   frequency = new MockAudioParam("frequency");
   detune = new MockAudioParam("detune");
   onended: ((this: OscillatorNodeLike, ev: Event) => void) | null = null;
+  start(when?: number): void {
+    this.history.push(when !== undefined ? { method: "start", when } : { method: "start" });
+  }
+  stop(when?: number): void {
+    this.history.push(when !== undefined ? { method: "stop", when } : { method: "stop" });
+  }
+}
+
+class MockAudioBufferSourceNode extends MockBaseNode implements AudioBufferSourceNodeLike {
+  buffer: AudioBufferLike | null = null;
+  loop = false;
+  playbackRate = new MockAudioParam("playbackRate");
+  detune = new MockAudioParam("detune");
   start(when?: number): void {
     this.history.push(when !== undefined ? { method: "start", when } : { method: "start" });
   }

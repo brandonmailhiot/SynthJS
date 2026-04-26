@@ -12,6 +12,7 @@ export interface AudioContextLike {
   createWaveShaper(): WaveShaperNodeLike;
   createDynamicsCompressor(): DynamicsCompressorNodeLike;
   createBuffer(channels: number, length: number, sampleRate: number): AudioBufferLike;
+  createBufferSource(): AudioBufferSourceNodeLike;
 
   resume(): Promise<void>;
   suspend(): Promise<void>;
@@ -85,6 +86,15 @@ export interface AudioBufferLike {
   getChannelData(channel: number): Float32Array;
 }
 
+export interface AudioBufferSourceNodeLike extends AudioNodeLike {
+  buffer: AudioBufferLike | null;
+  loop: boolean;
+  playbackRate: AudioParamLike;
+  detune: AudioParamLike;
+  start(when?: number): void;
+  stop(when?: number): void;
+}
+
 export function adaptAudioContext(ctx: AudioContext): AudioContextLike {
   // Browser AudioContext is already structurally compatible.
   // Cast at the boundary; a runtime sanity check ensures the required methods exist.
@@ -97,6 +107,7 @@ export function adaptAudioContext(ctx: AudioContext): AudioContextLike {
     "createWaveShaper",
     "createDynamicsCompressor",
     "createBuffer",
+    "createBufferSource",
     "resume",
     "suspend",
     "close",

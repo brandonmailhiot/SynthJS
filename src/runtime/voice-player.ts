@@ -1,12 +1,33 @@
-import type { TimelineEvent, VoiceTimeline } from "../ir/nodes.js";
+import type { InstrumentSpec, TimelineEvent, VoiceTimeline } from "../ir/nodes.js";
 import { applyArticulation } from "./articulation.js";
-import type { AudioContextLike, AudioNodeLike, OscillatorNodeLike } from "./audio-context.js";
+import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
 import { buildEnvelope } from "./envelope.js";
 import { buildFxChain } from "./fx-chain.js";
-import { buildOscillator } from "./oscillator.js";
+import { type Sourceish, buildOscillator } from "./oscillator.js";
 import type { LookaheadScheduler } from "./scheduler.js";
 import { applySlide } from "./slide.js";
 import { beatsToSeconds } from "./time.js";
+
+// Per-oscillator-type loudness compensation. Different waveforms have very
+// different RMS / perceived loudness at the same peak amplitude:
+//   sine     — pure tone, lowest energy
+//   triangle — small odd harmonics, ~95% of sine
+//   sawtooth — full harmonic series, much brighter and louder
+//   square   — strongest odd harmonics, loudest of the four
+//   noise    — full-spectrum random; very loud unless tightly band-limited
+// These factors normalize the apparent volume so swapping `\instrument`
+// doesn't change overall level.
+const OSC_LOUDNESS: Record<InstrumentSpec["oscillator"], number> = {
+  sine: 1.0,
+  triangle: 0.95,
+  sawtooth: 0.55,
+  square: 0.45,
+  noise: 0.3,
+};
+
+function oscillatorLoudness(spec: InstrumentSpec): number {
+  return OSC_LOUDNESS[spec.oscillator] ?? 1.0;
+}
 
 export type VoicePlayerOptions = {
   ctx: AudioContextLike;
@@ -20,7 +41,7 @@ export type VoicePlayerOptions = {
 };
 
 export class VoicePlayer {
-  private activeOscillators: OscillatorNodeLike[] = [];
+  private activeOscillators: Sourceish[] = [];
   private scheduledFlag = false;
   private eventTimeline: { audioStart: number; audioEnd: number; event: TimelineEvent }[] = [];
 
@@ -49,10 +70,13 @@ export class VoicePlayer {
       // = 0.5× per pitch.
       const pitchCount = Math.max(1, event.frequencies.length);
       const polyScale = 1 / Math.sqrt(pitchCount);
-      const peakGain = Math.min(1.0, event.gain * gainBoost) * polyScale;
+      const oscScale = oscillatorLoudness(event.instrument);
+      const peakGain = Math.min(1.0, event.gain * gainBoost) * polyScale * oscScale;
 
-      // Schedule oscillators (one per frequency)
-      const oscillators: OscillatorNodeLike[] = [];
+      // Schedule oscillators (one per frequency). For noise sources we still
+      // build one node per frequency entry so polyphony scaling is consistent;
+      // frequency setting and slides are skipped since noise has no pitch.
+      const oscillators: Sourceish[] = [];
       for (let i = 0; i < event.frequencies.length; i++) {
         const freq = event.frequencies[i];
         if (typeof freq !== "number") continue;
@@ -61,10 +85,10 @@ export class VoicePlayer {
         oscRig.output.connect(envRig.input);
         const fxOut = buildFxChain(ctx, event.fxChain, envRig.output);
         fxOut.connect(voiceOutput);
-        // Slide?
+        // Slide? Only meaningful for tonal oscillators.
         const slideTarget = event.slideTo?.[i];
-        if (slideTarget !== undefined) {
-          applySlide(oscRig.source.frequency, freq, slideTarget, audioStart, playDuration);
+        if (slideTarget !== undefined && oscRig.frequency) {
+          applySlide(oscRig.frequency, freq, slideTarget, audioStart, playDuration);
         }
         oscillators.push(oscRig.source);
       }

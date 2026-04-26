@@ -825,28 +825,33 @@ class Parser {
         let accidental: Accidental | undefined;
         let endSpan = tok.span;
 
+        // Accidentals must be source-adjacent to the letter (no whitespace).
+        // Otherwise `<c3 e g b>` would consume the trailing `b` as a flat on
+        // `g`, dropping it as a separate sticky-octave pitch.
+        const adjacent = (s: SourceSpan): boolean => this.peek().span.start === s.end;
+
         // Consume optional accidental
-        if (this.check("Hash")) {
+        if (this.check("Hash") && adjacent(tok.span)) {
           this.advance(); // consume first '#'
           endSpan = this.peekPrev().span;
-          if (this.check("Hash")) {
+          if (this.check("Hash") && adjacent(endSpan)) {
             this.advance(); // consume second '#'
             endSpan = this.peekPrev().span;
             accidental = "##";
           } else {
             accidental = "#";
           }
-        } else if (this.check("Identifier") && this.peek().value === "b") {
+        } else if (this.check("Identifier") && this.peek().value === "b" && adjacent(tok.span)) {
           this.advance(); // consume first 'b'
           endSpan = this.peekPrev().span;
-          if (this.check("Identifier") && this.peek().value === "b") {
+          if (this.check("Identifier") && this.peek().value === "b" && adjacent(endSpan)) {
             this.advance(); // consume second 'b'
             endSpan = this.peekPrev().span;
             accidental = "bb";
           } else {
             accidental = "b";
           }
-        } else if (this.check("Identifier") && this.peek().value === "n") {
+        } else if (this.check("Identifier") && this.peek().value === "n" && adjacent(tok.span)) {
           this.advance();
           endSpan = this.peekPrev().span;
           accidental = "n";

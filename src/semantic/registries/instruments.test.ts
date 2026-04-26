@@ -8,13 +8,13 @@ import {
 } from "./instruments.js";
 
 describe("isPrimitiveOscillator", () => {
-  it("accepts the four primitives", () => {
-    for (const o of ["sine", "square", "sawtooth", "triangle"]) {
+  it("accepts the five primitives (incl. noise)", () => {
+    for (const o of ["sine", "square", "sawtooth", "triangle", "noise"]) {
       expect(isPrimitiveOscillator(o)).toBe(true);
     }
   });
   it("rejects unknown", () => {
-    expect(isPrimitiveOscillator("noise")).toBe(false);
+    expect(isPrimitiveOscillator("xyz")).toBe(false);
   });
 });
 

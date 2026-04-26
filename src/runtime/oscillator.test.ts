@@ -13,13 +13,15 @@ describe("buildOscillator", () => {
   it("sets oscillator type from instrument", () => {
     const ctx = new MockAudioContext();
     const rig = buildOscillator(ctx, baseInstrument({ oscillator: "sawtooth" }), 440);
-    expect(rig.source.type).toBe("sawtooth");
+    expect((rig.source as unknown as { type: string }).type).toBe("sawtooth");
   });
 
   it("sets frequency.value", () => {
     const ctx = new MockAudioContext();
     const rig = buildOscillator(ctx, baseInstrument(), 261.626);
-    expect(rig.source.frequency.value).toBeCloseTo(261.626);
+    expect((rig.source as unknown as { frequency: { value: number } }).frequency.value).toBeCloseTo(
+      261.626,
+    );
   });
 
   it("output equals source when no filter", () => {
@@ -31,7 +33,9 @@ describe("buildOscillator", () => {
   it("applies detune when non-zero", () => {
     const ctx = new MockAudioContext();
     const rig = buildOscillator(ctx, baseInstrument({ detune: 5 }), 440);
-    const hist = (rig.source.detune as unknown as { history: unknown[] }).history;
+    const hist = (
+      (rig.source as unknown as { detune: unknown }).detune as unknown as { history: unknown[] }
+    ).history;
     expect(hist).toContainEqual({
       method: "param",
       name: "detune",
@@ -44,7 +48,9 @@ describe("buildOscillator", () => {
   it("skips detune when zero", () => {
     const ctx = new MockAudioContext();
     const rig = buildOscillator(ctx, baseInstrument({ detune: 0 }), 440);
-    const hist = (rig.source.detune as unknown as { history: unknown[] }).history;
+    const hist = (
+      (rig.source as unknown as { detune: unknown }).detune as unknown as { history: unknown[] }
+    ).history;
     expect(hist).toHaveLength(0);
   });
 

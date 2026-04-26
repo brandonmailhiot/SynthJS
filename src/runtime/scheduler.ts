@@ -24,8 +24,10 @@ export class LookaheadScheduler {
     private readonly ctx: AudioContextLike,
     opts: SchedulerOptions = {},
   ) {
-    this.lookahead = opts.lookaheadSeconds ?? 0.025;
-    this.interval = opts.intervalMs ?? 100;
+    // Wilson "Tale of Two Clocks": lookahead must exceed poll interval so JS
+    // jitter between flushes never lets events slip into the past.
+    this.lookahead = opts.lookaheadSeconds ?? 0.1;
+    this.interval = opts.intervalMs ?? 25;
     // Wrap globalThis.setInterval/clearInterval in arrow functions so the call
     // site doesn't depend on `this` binding (browsers throw "Illegal invocation"
     // when these are invoked as detached methods).

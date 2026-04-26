@@ -147,3 +147,4 @@ export { getHover, type HoverInfo } from "./services/hover.js";
 export { getCompletions, type CompletionItem } from "./services/completion.js";
 export { getDefinition } from "./services/definition.js";
 export { rename, type TextEdit } from "./services/rename.js";
+export { isolateIR, type IsolateOptions } from "./services/isolate.js";

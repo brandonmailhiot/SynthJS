@@ -1,8 +1,9 @@
-import type { Composition, TopLevel } from "../ast/nodes.js";
+import type { Composition, TopLevel, UseDecl } from "../ast/nodes.js";
 import { lex } from "../lexer/lexer.js";
 import { parse } from "../parser/parser.js";
 import { ANNOTATION_REGISTRY } from "../semantic/registries/annotations.js";
 import { EFFECT_REGISTRY } from "../semantic/registries/effects.js";
+import { STDLIB, getStdlibSource } from "../stdlib/index.js";
 
 export type CompletionItem = {
   label: string;
@@ -22,7 +23,7 @@ export type CompletionItem = {
   documentation?: string;
 };
 
-const PRIMITIVES = ["sine", "square", "sawtooth", "triangle"];
+const PRIMITIVES = ["sine", "square", "sawtooth", "triangle", "noise"];
 const MODES = ["major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "locrian"];
 const KEYWORDS = [
   "voice",
@@ -109,7 +110,18 @@ export function getCompletions(source: string, offset: number): CompletionItem[]
     });
   }
 
-  // After "\\instrument " → primitives + custom instruments
+  // After "\\use \"" → stdlib paths
+  const beforeUseString = before.match(/\\use\s+"([^"]*)$/);
+  if (beforeUseString) {
+    return Object.keys(STDLIB).map((path) => ({
+      label: path,
+      kind: "value" as const,
+      detail: "stdlib module",
+      documentation: stdlibSummary(path),
+    }));
+  }
+
+  // After "\\instrument " → primitives + custom instruments + stdlib instruments
   const beforeInstr = before.match(/\\instrument\s+(\w*)$/);
   if (beforeInstr) {
     const items: CompletionItem[] = PRIMITIVES.map((p) => ({
@@ -118,12 +130,27 @@ export function getCompletions(source: string, offset: number): CompletionItem[]
       detail: "primitive oscillator",
     }));
     const ast = tryParse(source);
+    const importedStdlib = ast ? findStdlibImports(ast) : new Set<string>();
     if (ast) {
       for (const n of ast.body) {
         if (n.kind === "InstrumentDef") {
           items.push({ label: n.name, kind: "instrument", detail: "custom instrument" });
         }
       }
+    }
+    // Pull instrument names from every stdlib module, even when not yet
+    // imported — flag the unimported ones so users discover them.
+    const stdlibInstruments = collectStdlibInstruments();
+    for (const inst of stdlibInstruments) {
+      const imported = importedStdlib.has(inst.module);
+      items.push({
+        label: inst.name,
+        kind: "instrument",
+        detail: imported
+          ? `stdlib (${inst.module})`
+          : `stdlib (${inst.module}) — add \`\\use "${inst.module}"\``,
+        ...(inst.doc ? { documentation: inst.doc } : {}),
+      });
     }
     return items;
   }
@@ -153,6 +180,23 @@ export function getCompletions(source: string, offset: number): CompletionItem[]
   const ast = tryParse(source);
   if (ast) {
     collectBindings(ast.body, items);
+  }
+
+  // Surface stdlib motifs (parameterized bindings) as completions, with hints
+  // when the source hasn't yet imported the relevant module.
+  const importedStdlib = ast ? findStdlibImports(ast) : new Set<string>();
+  const stdlibMotifs = collectStdlibMotifs();
+  for (const m of stdlibMotifs) {
+    const imported = importedStdlib.has(m.module);
+    const sig = m.params ? `${m.name}(${m.params.join(", ")})` : m.name;
+    items.push({
+      label: m.name,
+      kind: "function",
+      detail: imported
+        ? `stdlib (${m.module}) — ${sig}`
+        : `stdlib (${m.module}) — ${sig} — add \`\\use "${m.module}"\``,
+      ...(m.doc ? { documentation: m.doc } : {}),
+    });
   }
 
   return items;
@@ -193,4 +237,77 @@ function collectBindings(body: TopLevel[], items: CompletionItem[]): void {
       collectBindings(n.body.body, items);
     }
   }
+}
+
+// ---- stdlib introspection ----
+
+const STDLIB_SUMMARIES: Record<string, string> = {
+  "@stdlib/scales":
+    "Scale motifs: major_scale, minor_scale, pentatonic_major, pentatonic_minor, blues, dorian_scale, mixolydian_scale.",
+  "@stdlib/chords": "Chord motifs: triad_major/minor/dim/aug/sus2/sus4 + sevenths.",
+  "@stdlib/drums":
+    "Drum instruments: kick_drum, snare_drum, hat_closed, hat_open, tom_low, tom_high.",
+  "@stdlib/instruments":
+    "Custom instruments: warm_pad, lead_saw, brass, bass_synth, bell, string_pad.",
+  "@stdlib/fx": "Effect presets (documentation only — use inline `with` calls).",
+};
+
+function stdlibSummary(path: string): string {
+  return STDLIB_SUMMARIES[path] ?? "";
+}
+
+function findStdlibImports(ast: Composition): Set<string> {
+  const imported = new Set<string>();
+  for (const node of ast.body) {
+    if (node.kind === "UseDecl" && (node as UseDecl).path.startsWith("@stdlib/")) {
+      imported.add((node as UseDecl).path);
+    }
+  }
+  return imported;
+}
+
+type StdlibInstrument = { module: string; name: string; doc?: string };
+type StdlibMotif = { module: string; name: string; params?: string[]; doc?: string };
+
+let stdlibCache: { instruments: StdlibInstrument[]; motifs: StdlibMotif[] } | null = null;
+
+function buildStdlibCache(): { instruments: StdlibInstrument[]; motifs: StdlibMotif[] } {
+  if (stdlibCache) return stdlibCache;
+  const instruments: StdlibInstrument[] = [];
+  const motifs: StdlibMotif[] = [];
+  for (const path of Object.keys(STDLIB)) {
+    const src = getStdlibSource(path) ?? "";
+    let ast: Composition;
+    try {
+      ast = parse(lex(src));
+    } catch {
+      continue;
+    }
+    for (const node of ast.body) {
+      if (node.kind === "InstrumentDef") {
+        instruments.push({
+          module: path,
+          name: node.name,
+          ...(node.doc ? { doc: node.doc.trim() } : {}),
+        });
+      } else if (node.kind === "Binding") {
+        motifs.push({
+          module: path,
+          name: node.name,
+          ...(node.params ? { params: node.params } : {}),
+          ...(node.doc ? { doc: node.doc.trim() } : {}),
+        });
+      }
+    }
+  }
+  stdlibCache = { instruments, motifs };
+  return stdlibCache;
+}
+
+function collectStdlibInstruments(): StdlibInstrument[] {
+  return buildStdlibCache().instruments;
+}
+
+function collectStdlibMotifs(): StdlibMotif[] {
+  return buildStdlibCache().motifs;
 }

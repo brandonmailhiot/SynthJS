@@ -40,7 +40,7 @@ export type EffectInvocation = {
 
 export type InstrumentSpec = {
   name: string; // primitive or custom name
-  oscillator: "sine" | "square" | "sawtooth" | "triangle";
+  oscillator: "sine" | "square" | "sawtooth" | "triangle" | "noise";
   envelope?: EnvelopeSpec; // from custom instrument body
   filter?: { type: string; cutoff: number; q: number };
   detune?: number; // cents
