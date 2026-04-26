@@ -612,9 +612,12 @@ function findModule(modules: Map<string, LoadedModule>, path: string): LoadedMod
   // Try direct key match first
   const direct = modules.get(path);
   if (direct !== undefined) return direct;
-  // Try suffix match for relative paths
+  // Normalize ./foo -> foo and ../dir/foo -> dir/foo for suffix matching
+  const normalized = path.replace(/^(\.\/)+/, "").replace(/^(\.\.\/)+([\s\S]*)$/, "$2");
   for (const [key, mod] of modules) {
-    if (key.endsWith(path) || key.endsWith(`/${path}`)) return mod;
+    if (key.endsWith(path) || key.endsWith(`/${path}`) || key.endsWith(`/${normalized}`)) {
+      return mod;
+    }
   }
   return null;
 }
