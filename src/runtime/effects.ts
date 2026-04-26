@@ -11,7 +11,12 @@ export const DEFAULT_EFFECT_ARGS = {
   compressor: { threshold: -24, ratio: 12, attack: 0.003, release: 0.25 },
 } as const;
 
-export function buildEffect(ctx: AudioContextLike, effect: EffectInvocation): AudioNodeLike {
+export type EffectNode = {
+  input: AudioNodeLike;
+  output: AudioNodeLike;
+};
+
+export function buildEffect(ctx: AudioContextLike, effect: EffectInvocation): EffectNode {
   switch (effect.name) {
     case "gain":
       return buildGain(ctx, effect);
@@ -32,6 +37,10 @@ export function buildEffect(ctx: AudioContextLike, effect: EffectInvocation): Au
   }
 }
 
+function simpleNode(node: AudioNodeLike): EffectNode {
+  return { input: node, output: node };
+}
+
 function arg(effect: EffectInvocation, idx: number, name: string): number | string | undefined {
   return effect.args.named?.[name] ?? effect.args.positional[idx];
 }
@@ -46,19 +55,19 @@ function strArg(effect: EffectInvocation, idx: number, name: string, fallback: s
   return typeof a === "string" ? a : fallback;
 }
 
-function buildGain(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildGain(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const gain = ctx.createGain();
   gain.gain.value = numArg(e, 0, "level", DEFAULT_EFFECT_ARGS.gain.level);
-  return gain;
+  return simpleNode(gain);
 }
 
-function buildReverb(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildReverb(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const channels = numArg(e, 0, "channels", DEFAULT_EFFECT_ARGS.reverb.channels);
   const seconds = numArg(e, 1, "seconds", DEFAULT_EFFECT_ARGS.reverb.seconds);
   const decay = numArg(e, 2, "decay", DEFAULT_EFFECT_ARGS.reverb.decay);
   const conv = ctx.createConvolver();
   conv.buffer = createReverbBuffer(ctx, channels, seconds, decay);
-  return conv;
+  return simpleNode(conv);
 }
 
 export function createReverbBuffer(
@@ -87,7 +96,7 @@ export function createReverbBuffer(
   return buffer;
 }
 
-function buildDelay(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildDelay(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const seconds = numArg(e, 0, "seconds", DEFAULT_EFFECT_ARGS.delay.seconds);
   const feedback = numArg(e, 1, "feedback", DEFAULT_EFFECT_ARGS.delay.feedback);
   const delay = ctx.createDelay(Math.max(2, seconds + 0.1));
@@ -97,10 +106,10 @@ function buildDelay(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
   fb.gain.value = feedback;
   delay.connect(fb);
   fb.connect(delay);
-  return delay;
+  return simpleNode(delay);
 }
 
-function buildFilter(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildFilter(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const type = strArg(e, 0, "type", DEFAULT_EFFECT_ARGS.filter.type);
   const cutoff = numArg(e, 1, "cutoff", DEFAULT_EFFECT_ARGS.filter.cutoff);
   const q = numArg(e, 2, "q", DEFAULT_EFFECT_ARGS.filter.q);
@@ -110,10 +119,10 @@ function buildFilter(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike 
   }
   filter.frequency.value = cutoff;
   filter.Q.value = q;
-  return filter;
+  return simpleNode(filter);
 }
 
-function buildDistortion(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildDistortion(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const amount = numArg(e, 0, "amount", DEFAULT_EFFECT_ARGS.distortion.amount);
   const oversample = strArg(e, 1, "oversample", DEFAULT_EFFECT_ARGS.distortion.oversample);
   const ws = ctx.createWaveShaper();
@@ -121,7 +130,7 @@ function buildDistortion(ctx: AudioContextLike, e: EffectInvocation): AudioNodeL
   if (oversample === "none" || oversample === "2x" || oversample === "4x") {
     ws.oversample = oversample;
   }
-  return ws;
+  return simpleNode(ws);
 }
 
 export function makeDistortionCurve(amount: number, samples = 44100): Float32Array {
@@ -135,12 +144,13 @@ export function makeDistortionCurve(amount: number, samples = 44100): Float32Arr
   return curve;
 }
 
-function buildChorus(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildChorus(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const rate = numArg(e, 0, "rate", DEFAULT_EFFECT_ARGS.chorus.rate);
   const depth = numArg(e, 1, "depth", DEFAULT_EFFECT_ARGS.chorus.depth);
   const mix = numArg(e, 2, "mix", DEFAULT_EFFECT_ARGS.chorus.mix);
-  // Chorus = delay modulated by LFO + dry/wet mix
+
   const input = ctx.createGain();
+  const output = ctx.createGain();
   const dry = ctx.createGain();
   const wet = ctx.createGain();
   const delay = ctx.createDelay(0.05);
@@ -152,27 +162,24 @@ function buildChorus(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike 
   lfoGain.gain.value = depth;
   dry.gain.value = 1 - mix;
   wet.gain.value = mix;
+  output.gain.value = 1;
 
-  // input → dry → output; input → delay → wet → output
-  // LFO modulates delay.delayTime (we connect lfo → lfoGain, but LFO routing to AudioParam is on the AudioNode side; for the mock we treat it as a simple connect)
+  // input → dry → output
   input.connect(dry);
+  dry.connect(output);
+  // input → delay → wet → output
   input.connect(delay);
   delay.connect(wet);
+  wet.connect(output);
+  // LFO modulates delay
   lfo.connect(lfoGain);
-  // LFO would ideally connect to delay.delayTime; for the mock structure we connect the gain to the delay
   lfoGain.connect(delay);
-
-  // Both dry and wet outputs need a common output. Caller wires the *input* node;
-  // we return the input. The chorus output is the sum of dry + wet, which would
-  // require a mixer — but for v1, we just return the input which routes through
-  // the delay branch. This is acceptable as a simplification; document it.
-  // For best quality, return a mixer. Use a wet-only path for simplicity here.
   lfo.start(0);
 
-  return input;
+  return { input, output };
 }
 
-function buildCompressor(ctx: AudioContextLike, e: EffectInvocation): AudioNodeLike {
+function buildCompressor(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const threshold = numArg(e, 0, "threshold", DEFAULT_EFFECT_ARGS.compressor.threshold);
   const ratio = numArg(e, 1, "ratio", DEFAULT_EFFECT_ARGS.compressor.ratio);
   const attack = numArg(e, 2, "attack", DEFAULT_EFFECT_ARGS.compressor.attack);
@@ -182,5 +189,5 @@ function buildCompressor(ctx: AudioContextLike, e: EffectInvocation): AudioNodeL
   c.ratio.value = ratio;
   c.attack.value = attack;
   c.release.value = release;
-  return c;
+  return simpleNode(c);
 }
