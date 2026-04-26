@@ -144,3 +144,4 @@ export {
   type Range,
 } from "./services/position.js";
 export { getHover, type HoverInfo } from "./services/hover.js";
+export { getCompletions, type CompletionItem } from "./services/completion.js";
