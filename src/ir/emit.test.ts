@@ -177,14 +177,14 @@ describe("emit IR — instrument", () => {
   it("primitive oscillator", () => {
     const ir = compile("\\instrument sawtooth\n4 c4");
     const ev = ir.voices[0]?.events[0];
-    expect(ev?.instrument.oscillator).toBe("sawtooth");
+    expect(ev?.instrument.oscillators).toEqual([{ kind: "sawtooth" }]);
   });
   it("custom instrument expanded from definition", () => {
     const src =
       "instrument define warm { oscillator sawtooth envelope adsr(0.3, 0.4, 0.7, 1.2) detune 5 }\n\\instrument warm\n4 c4";
     const ir = compile(src);
     const ev = ir.voices[0]?.events[0];
-    expect(ev?.instrument.oscillator).toBe("sawtooth");
+    expect(ev?.instrument.oscillators).toEqual([{ kind: "sawtooth" }]);
     expect(ev?.instrument.detune).toBe(5);
     expect(ev?.instrument.envelope?.kind).toBe("adsr");
   });
@@ -192,7 +192,31 @@ describe("emit IR — instrument", () => {
   it("default instrument is sine", () => {
     const ir = compile("4 c4");
     const ev = ir.voices[0]?.events[0];
-    expect(ev?.instrument.oscillator).toBe("sine");
+    expect(ev?.instrument.oscillators).toEqual([{ kind: "sine" }]);
+  });
+
+  it("multi-layer instrument with per-layer detune", () => {
+    const src =
+      "instrument define stack { oscillator sawtooth -7 oscillator sawtooth oscillator sawtooth 7 }\n\\instrument stack\n4 c4";
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.oscillators).toEqual([
+      { kind: "sawtooth", detune: -7 },
+      { kind: "sawtooth" },
+      { kind: "sawtooth", detune: 7 },
+    ]);
+  });
+
+  it("multi-filter instrument cascades in declared order", () => {
+    const src =
+      "instrument define chain { oscillator noise filter highpass(500, 0.7) filter bandpass(2000, 1.0) filter lowpass(8000, 0.7) }\n\\instrument chain\n4 c4";
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.filters).toEqual([
+      { type: "highpass", cutoff: 500, q: 0.7 },
+      { type: "bandpass", cutoff: 2000, q: 1.0 },
+      { type: "lowpass", cutoff: 8000, q: 0.7 },
+    ]);
   });
 });
 

@@ -26,7 +26,7 @@ triad_major(c4)`);
 \\instrument warm_pad
 4 c4`);
     const ev = ir.voices[0]?.events[0];
-    expect(ev?.instrument.oscillator).toBe("sawtooth");
+    expect(ev?.instrument.oscillators[0]?.kind).toBe("sawtooth");
     expect(ev?.instrument.detune).toBe(5);
   });
 
@@ -35,7 +35,7 @@ triad_major(c4)`);
 \\instrument kick_drum
 16 c2`);
     const ev = ir.voices[0]?.events[0];
-    expect(ev?.instrument.oscillator).toBe("sine");
+    expect(ev?.instrument.oscillators[0]?.kind).toBe("sine");
     expect(ev?.instrument.detune).toBe(-1200);
   });
 

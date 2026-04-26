@@ -74,7 +74,7 @@ export type InstrumentDef = {
 };
 
 export type InstrumentField =
-  | { kind: "Oscillator"; value: string; span: SourceSpan }
+  | { kind: "Oscillator"; value: string; detune?: number; span: SourceSpan }
   | { kind: "EnvelopeField"; call: Call; span: SourceSpan }
   | { kind: "FilterField"; call: Call; span: SourceSpan }
   | { kind: "DetuneField"; cents: number; span: SourceSpan };

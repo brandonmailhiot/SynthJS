@@ -277,7 +277,9 @@ function printInstrumentDef(n: InstrumentDef, depth: number): string {
 function printInstrumentField(f: InstrumentField, depth: number): string {
   switch (f.kind) {
     case "Oscillator":
-      return `${indent(depth)}oscillator ${f.value}`;
+      return f.detune !== undefined && f.detune !== 0
+        ? `${indent(depth)}oscillator ${f.value} ${formatNumber(f.detune)}`
+        : `${indent(depth)}oscillator ${f.value}`;
     case "EnvelopeField":
       return `${indent(depth)}envelope ${printCall(f.call)}`;
     case "FilterField":

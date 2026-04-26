@@ -38,12 +38,21 @@ export type EffectInvocation = {
   args: { positional: (number | string)[]; named?: Record<string, number | string> };
 };
 
+export type OscillatorKind = "sine" | "square" | "sawtooth" | "triangle" | "noise";
+
+export type OscillatorLayer = {
+  kind: OscillatorKind;
+  detune?: number; // per-layer detune in cents (additive with InstrumentSpec.detune)
+};
+
+export type FilterSpec = { type: string; cutoff: number; q: number };
+
 export type InstrumentSpec = {
   name: string; // primitive or custom name
-  oscillator: "sine" | "square" | "sawtooth" | "triangle" | "noise";
+  oscillators: OscillatorLayer[]; // length >= 1; single primitive = length-1 array
   envelope?: EnvelopeSpec; // from custom instrument body
-  filter?: { type: string; cutoff: number; q: number };
-  detune?: number; // cents
+  filters: FilterSpec[]; // length 0+; chained source -> f1 -> f2 -> ... -> output
+  detune?: number; // instrument-level cents (applied to every layer)
 };
 
 export type AnnotationData = {

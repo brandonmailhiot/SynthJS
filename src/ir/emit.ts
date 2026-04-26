@@ -23,7 +23,10 @@ import type {
   Diagnostic,
   EffectInvocation,
   EnvelopeSpec,
+  FilterSpec,
   InstrumentSpec,
+  OscillatorKind,
+  OscillatorLayer,
   TimelineEvent,
   VoiceTimeline,
 } from "./nodes.js";
@@ -112,28 +115,31 @@ function pitchToFreq(pitch: AbsolutePitch): number {
 
 // ---- Instrument resolution ----
 
-const DEFAULT_OSCILLATOR = "sine" as const;
+const DEFAULT_OSCILLATOR: OscillatorKind = "sine";
 
 function primitiveInstrument(name: string): InstrumentSpec {
-  const osc = (["sine", "square", "sawtooth", "triangle"] as const).includes(
+  const osc: OscillatorKind = (["sine", "square", "sawtooth", "triangle"] as const).includes(
     name as "sine" | "square" | "sawtooth" | "triangle",
   )
-    ? (name as InstrumentSpec["oscillator"])
+    ? (name as OscillatorKind)
     : DEFAULT_OSCILLATOR;
-  return { name, oscillator: osc };
+  return { name, oscillators: [{ kind: osc }], filters: [] };
 }
 
 function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
-  let oscillator: InstrumentSpec["oscillator"] = DEFAULT_OSCILLATOR;
+  const oscillators: OscillatorLayer[] = [];
   let envelope: EnvelopeSpec | undefined;
-  let filter: InstrumentSpec["filter"];
+  const filters: FilterSpec[] = [];
   let detune: number | undefined;
 
   for (const field of def.fields) {
     switch (field.kind) {
-      case "Oscillator":
-        oscillator = field.value as InstrumentSpec["oscillator"];
+      case "Oscillator": {
+        const layer: OscillatorLayer = { kind: field.value as OscillatorKind };
+        if (field.detune !== undefined && field.detune !== 0) layer.detune = field.detune;
+        oscillators.push(layer);
         break;
+      }
       case "EnvelopeField":
         envelope = callToEnvelopeSpec(field.call);
         break;
@@ -142,11 +148,11 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
         for (const arg of field.call.args) {
           if (arg.kind === "NumberArg") args.push(arg.value);
         }
-        filter = {
+        filters.push({
           type: field.call.name,
           cutoff: args[0] ?? 1000,
           q: args[1] ?? 1,
-        };
+        });
         break;
       }
       case "DetuneField":
@@ -155,9 +161,10 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
     }
   }
 
-  const spec: InstrumentSpec = { name: def.name, oscillator };
+  if (oscillators.length === 0) oscillators.push({ kind: DEFAULT_OSCILLATOR });
+
+  const spec: InstrumentSpec = { name: def.name, oscillators, filters };
   if (envelope !== undefined) spec.envelope = envelope;
-  if (filter !== undefined) spec.filter = filter;
   if (detune !== undefined) spec.detune = detune;
   return spec;
 }

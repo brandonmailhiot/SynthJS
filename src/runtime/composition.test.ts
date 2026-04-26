@@ -4,7 +4,11 @@ import { Composition } from "./composition.js";
 import { MockAudioContext } from "./mock-audio-context.js";
 
 const span = { start: 0, end: 0, line: 1, column: 1 };
-const sineInstrument: InstrumentSpec = { name: "sine", oscillator: "sine" };
+const sineInstrument: InstrumentSpec = {
+  name: "sine",
+  oscillators: [{ kind: "sine" }],
+  filters: [],
+};
 
 const noteEvent = (over: Partial<TimelineEvent> = {}): TimelineEvent => ({
   startBeat: 0,

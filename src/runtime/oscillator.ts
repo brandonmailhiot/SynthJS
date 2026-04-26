@@ -1,19 +1,20 @@
-import type { InstrumentSpec } from "../ir/nodes.js";
+import type { InstrumentSpec, OscillatorLayer } from "../ir/nodes.js";
 import type {
   AudioBufferLike,
   AudioBufferSourceNodeLike,
   AudioContextLike,
   AudioNodeLike,
+  AudioParamLike,
+  GainNodeLike,
   OscillatorNodeLike,
 } from "./audio-context.js";
 
 /**
  * The runtime treats noise as a sound source that quacks like an oscillator
- * for start/stop purposes but ignores frequency. To keep the rest of the
- * runtime simple, we expose a unified `SoundSource` shape with `start` and
- * `stop` methods. For sine/square/sawtooth/triangle, `source` is a real
- * `OscillatorNodeLike`. For noise, `source` is a `Sourceish` shim wrapping an
- * `AudioBufferSourceNode` so voice-player's start/stop dispatch is uniform.
+ * for start/stop purposes but ignores frequency. Stacked instruments may sum
+ * multiple layers (any mix of pitched + noise) into a single rig. To keep the
+ * rest of the runtime simple, we expose a unified `Sourceish` shape with
+ * `start` and `stop` that fans out to every underlying node.
  */
 export type Sourceish = {
   start(when?: number): void;
@@ -23,10 +24,10 @@ export type Sourceish = {
 export type OscillatorRig = {
   source: Sourceish;
   output: AudioNodeLike;
-  /** True when this rig is a noise source (frequency setting is meaningless). */
+  /** True when every layer is a noise source (slides become no-ops). */
   isNoise: boolean;
-  /** The oscillator's frequency param for slides; null for noise. */
-  frequency: OscillatorNodeLike["frequency"] | null;
+  /** Frequency params of all tonal layers. Empty when all-noise. */
+  frequencies: AudioParamLike[];
 };
 
 // Cache the noise buffer per AudioContext so we don't regenerate 1 second of
@@ -44,54 +45,89 @@ function getNoiseBuffer(ctx: AudioContextLike): AudioBufferLike {
   return buffer;
 }
 
+type LayerNode = {
+  source: Sourceish;
+  output: AudioNodeLike;
+  frequencyParam: AudioParamLike | null; // null for noise
+};
+
+function buildLayer(
+  ctx: AudioContextLike,
+  layer: OscillatorLayer,
+  frequency: number,
+  instrumentDetune: number,
+): LayerNode {
+  const totalDetune = instrumentDetune + (layer.detune ?? 0);
+  if (layer.kind === "noise") {
+    const node: AudioBufferSourceNodeLike = ctx.createBufferSource();
+    node.buffer = getNoiseBuffer(ctx);
+    node.loop = true;
+    if (totalDetune !== 0) node.detune.setValueAtTime(totalDetune, 0);
+    return { source: node, output: node, frequencyParam: null };
+  }
+  const osc: OscillatorNodeLike = ctx.createOscillator();
+  osc.type = layer.kind;
+  osc.frequency.value = frequency;
+  if (totalDetune !== 0) osc.detune.setValueAtTime(totalDetune, 0);
+  return { source: osc, output: osc, frequencyParam: osc.frequency };
+}
+
 export function buildOscillator(
   ctx: AudioContextLike,
   instrument: InstrumentSpec,
   frequency: number,
 ): OscillatorRig {
-  if (instrument.oscillator === "noise") {
-    return buildNoiseSource(ctx, instrument);
+  const layers = instrument.oscillators;
+  const instrumentDetune = instrument.detune ?? 0;
+
+  // Build each layer and sum into a single GainNode. Equal-power normalization
+  // (1/sqrt(N)) keeps total amplitude roughly constant as users add layers.
+  const summing: GainNodeLike = ctx.createGain();
+  summing.gain.value = 1 / Math.sqrt(layers.length);
+
+  const sources: Sourceish[] = [];
+  const frequencies: AudioParamLike[] = [];
+  for (const layer of layers) {
+    const ln = buildLayer(ctx, layer, frequency, instrumentDetune);
+    ln.output.connect(summing);
+    sources.push(ln.source);
+    if (ln.frequencyParam) frequencies.push(ln.frequencyParam);
   }
 
-  const osc = ctx.createOscillator();
-  osc.type = instrument.oscillator;
-  osc.frequency.value = frequency;
-  if (instrument.detune !== undefined && instrument.detune !== 0) {
-    osc.detune.setValueAtTime(instrument.detune, 0);
-  }
-  const output = applyInstrumentFilter(ctx, instrument, osc);
-  return { source: osc, output, isNoise: false, frequency: osc.frequency };
+  const aggregate: Sourceish = {
+    start: (when) => {
+      for (const s of sources) s.start(when);
+    },
+    stop: (when) => {
+      for (const s of sources) s.stop(when);
+    },
+  };
+
+  const output = applyFilterChain(ctx, instrument, summing);
+  const isNoise = layers.every((l) => l.kind === "noise");
+  return { source: aggregate, output, isNoise, frequencies };
 }
 
-function buildNoiseSource(ctx: AudioContextLike, instrument: InstrumentSpec): OscillatorRig {
-  const node: AudioBufferSourceNodeLike = ctx.createBufferSource();
-  node.buffer = getNoiseBuffer(ctx);
-  node.loop = true;
-  if (instrument.detune !== undefined && instrument.detune !== 0) {
-    node.detune.setValueAtTime(instrument.detune, 0);
-  }
-  const output = applyInstrumentFilter(ctx, instrument, node);
-  return { source: node, output, isNoise: true, frequency: null };
-}
-
-function applyInstrumentFilter(
+function applyFilterChain(
   ctx: AudioContextLike,
   instrument: InstrumentSpec,
   source: AudioNodeLike,
 ): AudioNodeLike {
-  if (!instrument.filter) return source;
-  const filter = ctx.createBiquadFilter();
-  const filterType = instrument.filter.type;
-  if (
-    filterType === "lowpass" ||
-    filterType === "highpass" ||
-    filterType === "bandpass" ||
-    filterType === "notch"
-  ) {
-    filter.type = filterType;
+  let node = source;
+  for (const spec of instrument.filters) {
+    const filter = ctx.createBiquadFilter();
+    if (
+      spec.type === "lowpass" ||
+      spec.type === "highpass" ||
+      spec.type === "bandpass" ||
+      spec.type === "notch"
+    ) {
+      filter.type = spec.type;
+    }
+    filter.frequency.value = spec.cutoff;
+    filter.Q.value = spec.q;
+    node.connect(filter);
+    node = filter;
   }
-  filter.frequency.value = instrument.filter.cutoff;
-  filter.Q.value = instrument.filter.q;
-  source.connect(filter);
-  return filter;
+  return node;
 }
