@@ -126,22 +126,32 @@ voice pad {
 voice bass {
   \\instrument bass_synth
   \\mf
-  /// Intro — quarter roots
-  4 e2 r e2 r
-  4 c2 r c2 r
-  4 g2 r g2 r
-  4 d2 r d2 r
-  /// Build — eighth-note repeated roots
-  8 e2 e2 e2 e2 e2 e2 e2 e2
-  8 c2 c2 c2 c2 c2 c2 c2 c2
-  8 g2 g2 g2 g2 g2 g2 g2 g2
-  8 d2 d2 d2 d2 d2 d2 d2 d2
-  /// Drop — alternating sub + body
-  repeat 4 {
-    8 e1 e2 e2 e2 e1 e2 e2 e2
-    8 c1 c2 c2 c2 c1 c2 c2 c2
-    8 g1 g2 g2 g2 g1 g2 g2 g2
-    8 d1 d2 d2 d2 d1 d2 d2 d2
+  /// Intro — sub roots with offbeat octave answer
+  4 e2 r 8 e3 r 4 e2
+  4 c2 r 8 c3 r 4 c2
+  4 g2 r 8 g3 r 4 g2
+  4 d2 r 8 d3 r 4 d2
+  /// Build — driving syncopation, ramps energy
+  ramp(\\mf, \\f) {
+    8 e1 r e2 e2 e1 r e2 e2
+    8 c1 r c2 c2 c1 r c2 c2
+    8 g1 r g2 g2 g1 r g2 g2
+    8 d1 r d2 d2 d1 r d2 d2
+  }
+  /// Drop A — bars 9-16: syncopated sub + body
+  \\f
+  repeat 2 {
+    8 e1 r e2 e2 e1 r e2 e2
+    8 c1 r c2 c2 c1 r c2 c2
+    8 g1 r g2 g2 g1 r g2 g2
+    8 d1 r d2 d2 d1 r d2 d2
+  }
+  /// Drop B — bars 17-24: walking line with passing tones, octave jumps
+  repeat 2 {
+    8 e1 e2 g2 e2 e1 e2 b2 a2
+    8 c1 c2 e2 c2 c1 c2 g2 e2
+    8 g1 g2 d3 g2 g1 g2 b2 a2
+    8 d1 d2 f#2 d2 d1 d2 a2 g2
   }
 }
 
@@ -149,12 +159,26 @@ voice pluck {
   \\instrument pluck_synth
   \\mp
   repeat 8 { 1 r }
-  repeat 4 {
-    8 e4 g4 b4 g4 e4 g4 b4 g4
-    8 c4 e4 g4 e4 c4 e4 g4 e4
-    8 g4 b4 d5 b4 g4 b4 d5 b4
-    8 d4 f#4 a4 f#4 d4 f#4 a4 f#4
-  }
+  /// Phrase 1 (bars 9-12) — basic broken triads
+  8 e4 g4 b4 g4 e4 g4 b4 g4
+  8 c4 e4 g4 e4 c4 e4 g4 e4
+  8 g4 b4 d5 b4 g4 b4 d5 b4
+  8 d4 f#4 a4 f#4 d4 f#4 a4 f#4
+  /// Phrase 2 (bars 13-16) — octave-reach figures
+  8 e4 b4 e5 b4 g4 b4 e5 b4
+  8 c4 g4 c5 g4 e4 g4 c5 g4
+  8 g4 d5 g5 d5 b4 d5 g5 d5
+  8 d4 a4 d5 a4 f#4 a4 d5 a4
+  /// Phrase 3 (bars 17-20) — sixteenth-note flurry
+  16 e5 d5 b4 g4 e4 g4 b4 d5 e5 d5 b4 g4 b4 d5 b4 g4
+  16 c5 b4 g4 e4 c4 e4 g4 b4 c5 b4 g4 e4 g4 b4 g4 e4
+  16 d5 b4 g4 d4 g4 b4 d5 g5 d5 b4 g4 d4 g4 b4 g4 d4
+  16 a4 f#4 d4 a3 d4 f#4 a4 d5 a4 f#4 d4 a3 d4 f#4 d4 a3
+  /// Phrase 4 (bars 21-24) — descending cool-down
+  4 b5 g5 e5 b4
+  4 g5 e5 c5 g4
+  4 d5 b4 g4 d4
+  1 d4
 }
 
 // ---------- LEAD ----------
@@ -163,20 +187,20 @@ voice lead {
   with reverb(2, 1.4, 0.5) {
     repeat 12 { 1 r }
     \\mf
-    /// Hook A
-    4 b4 g4 e5 d5
+    /// Hook A — syncopated entry, descending answer
+    8 r b4 r b4 4 d5 e5
+    8 e5 d5 b4 a4 4 g4 a4
+    8 r d5 r d5 4 g5 8 e5 d5
+    4 a5 g5 8 e5 d5 b4 a4
+    /// Hook B — climb to peak, slide back, descending run
     4 b4 a4 g4 e4
-    4 c5 a4 g4 e4
-    4 d5 c5 a4 b4
-    /// Hook B — climb with a slide cap
-    4 e5 d5 b4 g4
-    4 a4 b4 c5 d5
-    4 g5 e5 d5 b4
-    1 e5 -> g5
-    /// Tail
-    4 b4 g4 e5 d5
-    4 b4 a4 g4 e4
-    4 c5 a4 g4 e4
+    8 g4 a4 b4 c5 d5 e5 g5 a5
+    1 b5 -> e5
+    8 a5 g5 e5 d5 c5 b4 a4 g4
+    /// Tail — recall hook A, resolve to e4
+    8 r b4 r b4 4 d5 e5
+    8 e5 d5 b4 a4 4 g4 a4
+    4 b4 g4 e4 d4
     1 e4
   }
 }`,
