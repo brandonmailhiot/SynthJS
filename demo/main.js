@@ -20,55 +20,105 @@ const examples = {
   showcase: `\\version "2.0"
 \\use "@stdlib/instruments"
 \\use "@stdlib/drums"
-\\tempo 100
+\\tempo 128
 \\time 4/4
 
-/// Three detuned saws for a wide supersaw lead — shows oscillator
-/// stacks with per-layer detune through a lowpass.
+// ============================================================
+// 4-bar intro · 4-bar build · 16-bar drop · key of E minor
+// ============================================================
+
+/// Wide 4-saw supersaw lead — oscillator stack + lowpass.
 instrument define lead_synth {
+  oscillator sawtooth -10
+  oscillator sawtooth -3
+  oscillator sawtooth 3
+  oscillator sawtooth 10
+  envelope adsr(0.005, 0.15, 0.65, 0.3)
+  filter lowpass(4500, 0.7)
+  gain 0.7
+}
+
+/// Plucky pad arp voice — short envelope, soft filter.
+instrument define pluck_synth {
+  oscillator triangle
   oscillator sawtooth -7
+  envelope adsr(0.001, 0.18, 0.0, 0.06)
+  filter lowpass(2400, 1.1)
+  gain 1.1
+}
+
+/// Stabby supersaw chord pad.
+instrument define stab_pad {
+  oscillator sawtooth -9
   oscillator sawtooth
-  oscillator sawtooth 7
-  envelope adsr(0.04, 0.2, 0.75, 0.5)
-  filter lowpass(3500, 0.6)
-  gain 0.85
+  oscillator sawtooth 9
+  envelope adsr(0.02, 0.18, 0.55, 0.2)
+  filter lowpass(2200, 0.5)
 }
 
 // ---------- DRUMS ----------
 voice kick {
   \\instrument kick_drum
   \\f
-  repeat 16 { 4 c2 r c2 r }
+  repeat 4 { 1 r }
+  repeat 20 { 4 c2 c2 c2 c2 }
 }
 
 voice snare {
   \\instrument snare_drum
   \\mf
+  repeat 8 { 1 r }
+  repeat 16 { 4 r d3 r d3 }
+}
+
+voice clap {
+  \\instrument clap_808
+  \\mp
+  repeat 8 { 1 r }
   repeat 16 { 4 r d3 r d3 }
 }
 
 voice hats {
-  \\instrument hat_closed
-  \\p
-  repeat 64 { 8 f6 f6 }
+  \\instrument hat_closed_808
+  \\mp
+  repeat 4 { 1 r }
+  repeat 20 { 8 r f6 r f6 r f6 r f6 }
 }
 
-voice perc {
-  \\instrument cowbell_808
-  \\mp
-  repeat 8 { 1 r 4 r g5 r r }
+voice openhat {
+  \\instrument hat_open_808
+  \\p
+  repeat 8 { 1 r }
+  repeat 8 {
+    2 r 4 r 8 r f6
+    1 r
+  }
 }
 
 // ---------- HARMONY ----------
 voice pad {
-  \\instrument brass
-  \\mp
-  with reverb(2, 2.5, 0.55) {
+  \\instrument stab_pad
+  with reverb(2, 1.8, 0.5) {
+    \\mp
+    /// Intro chord wash
+    1 <e3 g3 b3>
+    1 <c3 e3 g3>
+    1 <g3 b3 d4>
+    1 <d3 f#3 a3>
+    /// Build — staccato stabs, dynamics ramp
+    ramp(\\mp, \\f) {
+      4 <e3 g3 b3>. r <e3 g3 b3>. r
+      4 <c3 e3 g3>. r <c3 e3 g3>. r
+      4 <g3 b3 d4>. r <g3 b3 d4>. r
+      4 <d3 f#3 a3>. r <d3 f#3 a3>. r
+    }
+    /// Drop — sustained chords
+    \\mf
     repeat 4 {
-      1 <a3 c4 e4>
-      1 <f3 a3 c4>
+      1 <e3 g3 b3>
       1 <c3 e3 g3>
       1 <g3 b3 d4>
+      1 <d3 f#3 a3>
     }
   }
 }
@@ -76,46 +126,58 @@ voice pad {
 voice bass {
   \\instrument bass_synth
   \\mf
-  repeat 3 {
-    4 a1 a1 e2 a2
-    4 f1 f1 c2 f2
-    4 c2 c2 g2 c3
-    4 g1 g1 d2 g2
+  /// Intro — quarter roots
+  4 e2 r e2 r
+  4 c2 r c2 r
+  4 g2 r g2 r
+  4 d2 r d2 r
+  /// Build — eighth-note repeated roots
+  8 e2 e2 e2 e2 e2 e2 e2 e2
+  8 c2 c2 c2 c2 c2 c2 c2 c2
+  8 g2 g2 g2 g2 g2 g2 g2 g2
+  8 d2 d2 d2 d2 d2 d2 d2 d2
+  /// Drop — alternating sub + body
+  repeat 4 {
+    8 e1 e2 e2 e2 e1 e2 e2 e2
+    8 c1 c2 c2 c2 c1 c2 c2 c2
+    8 g1 g2 g2 g2 g1 g2 g2 g2
+    8 d1 d2 d2 d2 d1 d2 d2 d2
   }
-  4 a1 a1 e2 a2
-  4 f1 f1 c2 f2
-  4 c2 c2 g2 c3
-  2 g1 -> a1
+}
+
+voice pluck {
+  \\instrument pluck_synth
+  \\mp
+  repeat 8 { 1 r }
+  repeat 4 {
+    8 e4 g4 b4 g4 e4 g4 b4 g4
+    8 c4 e4 g4 e4 c4 e4 g4 e4
+    8 g4 b4 d5 b4 g4 b4 d5 b4
+    8 d4 f#4 a4 f#4 d4 f#4 a4 f#4
+  }
 }
 
 // ---------- LEAD ----------
-voice melody {
+voice lead {
   \\instrument lead_synth
-  \\mp
-  with reverb(2, 1.8, 0.5) {
-    /// Question phrase
-    2 r 2 e5
-    4 d5 c5 b4 a4
-    2 r 4 a4 c5
-    4 e5 d5 c5 b4
-    /// Answer with a swell
-    ramp(\\mp, \\mf) {
-      4 a4 c5 e5 g5
-      4 a5 g5 e5 c5
-    }
+  with reverb(2, 1.4, 0.5) {
+    repeat 12 { 1 r }
     \\mf
-    4 d5 c5 b4 a4
-    1 c5
-    /// Rise
-    4 e5 g5 a5 c6
-    4 b5 a5 g5 e5
-    4 d5 e5 g5 a5
-    1 g5
-    /// Resolve with a descending eighth-note run
-    8 a5 g5 e5 d5 c5 b4 a4 g4
-    1 a4
-    1 a4
-    1 r
+    /// Hook A
+    4 b4 g4 e5 d5
+    4 b4 a4 g4 e4
+    4 c5 a4 g4 e4
+    4 d5 c5 a4 b4
+    /// Hook B — climb with a slide cap
+    4 e5 d5 b4 g4
+    4 a4 b4 c5 d5
+    4 g5 e5 d5 b4
+    1 e5 -> g5
+    /// Tail
+    4 b4 g4 e5 d5
+    4 b4 a4 g4 e4
+    4 c5 a4 g4 e4
+    1 e4
   }
 }`,
 
