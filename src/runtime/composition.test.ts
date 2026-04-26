@@ -471,7 +471,11 @@ describe("Composition — update (hot reload)", () => {
     const oscCountAfterPlay = ctx.history.filter((h) => h.method === "createOscillator").length;
     expect(oscCountAfterPlay).toBe(2);
 
-    const ir2 = irOf([noteEvent({ startBeat: 0 }), noteEvent({ startBeat: 0.25 }), noteEvent({ startBeat: 0.5 })]);
+    const ir2 = irOf([
+      noteEvent({ startBeat: 0 }),
+      noteEvent({ startBeat: 0.25 }),
+      noteEvent({ startBeat: 0.5 }),
+    ]);
     await comp.update(ir2);
 
     // After update, new oscillators are scheduled for new IR events
