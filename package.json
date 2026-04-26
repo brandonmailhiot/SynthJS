@@ -1,15 +1,27 @@
 {
   "name": "synth-javascript",
-  "version": "1.2.11",
-  "description": "A browser-based audio programming language for music composition and audio synthesis.",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
+  "version": "2.0.0-alpha.0",
+  "description": "A web-native audio programming language for music composition.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
+  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
   "scripts": {
-    "watch": "watchify src/index.js -o dist/bundle.js -v",
-    "test": "mocha",
-    "build": "browserify ./src/index.js > ./dist/bundle.js"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "format": "biome format --write src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "repository": {
     "type": "git",
@@ -17,14 +29,12 @@
   },
   "author": "Brandon Mailhiot",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/lefthandhacker/SynthJS/issues"
-  },
-  "homepage": "https://github.com/lefthandhacker/SynthJS#readme",
+  "engines": { "node": ">=20" },
   "devDependencies": {
-    "browserify": "^14.4.0",
-    "chai": "^3.5.0",
-    "mocha": "^3.1.2",
-    "web-audio-api": "^0.2.2"
+    "@biomejs/biome": "^1.9.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }
