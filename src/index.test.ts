@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { type Composition, LexError, ParseError, formatError, parse } from "./index.js";
+import { type CompositionAST, LexError, ParseError, formatError, parse } from "./index.js";
 
 describe("public parse()", () => {
   it("returns a Composition", () => {
-    const c: Composition = parse("4 c4");
+    const c: CompositionAST = parse("4 c4");
     expect(c.kind).toBe("Composition");
   });
   it("captures \\version", () => {

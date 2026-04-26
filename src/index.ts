@@ -1,13 +1,66 @@
-import type { Composition } from "./ast/nodes.js";
+import type { Composition as CompositionAST } from "./ast/nodes.js";
 import { lex } from "./lexer/lexer.js";
 import { parse as parseTokens } from "./parser/parser.js";
 
-export function parse(source: string): Composition {
+export function parse(source: string): CompositionAST {
   return parseTokens(lex(source));
 }
 
 // AST types
-export type * from "./ast/nodes.js";
+export type {
+  Composition as CompositionAST,
+  TopLevel,
+  UseDecl,
+  Directive,
+  TempoDirective,
+  TimeDirective,
+  KeyDirective,
+  InstrumentDirective,
+  DetuneDirective,
+  VersionDirective,
+  Binding,
+  VoiceDecl,
+  InstrumentDef,
+  InstrumentField,
+  Expr,
+  Block,
+  EventList,
+  Event,
+  NoteEvent,
+  ChordEvent,
+  SlideEvent,
+  RestEvent,
+  SustainEvent,
+  TieEvent,
+  DynamicMarker,
+  RampExpr,
+  RepeatExpr,
+  WithExpr,
+  EnvelopeExpr,
+  TupletExpr,
+  BarMarker,
+  MotifRef,
+  CallExpr,
+  AnnotatedEvent,
+  AnnotatedBlock,
+  PitchTerm,
+  AbsolutePitch,
+  ScaleDegree,
+  PitchArith,
+  ParamRef,
+  InheritedPitchLetter,
+  DurationToken,
+  ArticulationKind,
+  ArticulationMark,
+  Annotation,
+  Call,
+  Arg,
+  NumberArg,
+  StringArg,
+  PitchArg,
+  IdentArg,
+  NamedArg,
+} from "./ast/nodes.js";
 export { walk, type Visitor } from "./ast/visitor.js";
 
 // Pitch
@@ -50,3 +103,12 @@ export type {
   AnnotationData,
   Diagnostic,
 } from "./ir/nodes.js";
+
+// Runtime API
+export {
+  Composition,
+  type CompositionOptions,
+  type CompositionState,
+} from "./runtime/composition.js";
+export type { AudioContextLike, AudioNodeLike, AudioParamLike } from "./runtime/audio-context.js";
+export { MockAudioContext } from "./runtime/mock-audio-context.js"; // useful for users writing tests
