@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0-alpha.2] — 2026-04-26
+
+### Added
+- **Web Audio runtime** (`Composition` class, `src/runtime/composition.ts`): top-level runtime that accepts a `CompositionIR` and an `AudioContext`, schedules all voices, and emits `@cue` events via a typed `EventEmitter`.
+- **Lookahead scheduler** (`scheduler.ts`): tick-based scheduler using `AudioContext.currentTime` with a configurable lookahead window; prevents gaps and drift in real-time playback.
+- **Instrument-aware oscillator factory** (`oscillator.ts`): creates `OscillatorNode` instances with waveform type resolved from the IR instrument name (sine/square/sawtooth/triangle).
+- **ADSR envelope application** (`envelope.ts`): applies attack, decay, sustain, and release ramps to a `GainNode` using `setValueAtTime` / `linearRampToValueAtTime`.
+- **Slide via `linearRampToValueAtTime`** (`slide.ts`): pitch glide between notes by scheduling a linear ramp on an `OscillatorNode.frequency` parameter.
+- **Articulation effect** (`articulation.ts`): adjusts note gate duration (staccato shortens, legato sustains) by scaling the scheduled release time.
+- **Effect node factories** (`effects.ts`): factory functions for gain, reverb (convolver + impulse synthesis), delay, biquad filter, waveshaper distortion, chorus (delay + LFO), and dynamics compressor nodes.
+- **FX chain assembly** (`fx-chain.ts`): connects a list of effect descriptors into a series graph and wires source → chain → destination.
+- **Per-voice scheduling** (`voice-player.ts`): iterates IR timeline events for a single voice, calling oscillator + envelope + slide + articulation + FX chain helpers, and schedules each note at the correct `AudioContext` time offset.
+- **`@cue` event emission** (`composition.ts`): fires a `cue` event (with label and timestamp) when the scheduler reaches a `@cue` annotation, allowing external systems to synchronise visuals or MIDI.
+- **`@chance` probabilistic gating** (`voice-player.ts`): per-note `@chance` annotation suppresses note scheduling with the specified probability at runtime.
+- **`MockAudioContext`** (`audio-context.ts`): deterministic in-process stub of the Web Audio API used across all runtime unit tests; models nodes, params, and scheduling calls without a browser.
+
 ## [2.0.0-alpha.1] — 2026-04-26
 
 ### Added
