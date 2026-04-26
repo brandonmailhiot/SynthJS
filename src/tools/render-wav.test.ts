@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { audioBufferToWav, renderToWav } from "./render-wav.js";
-import { MockAudioContext } from "../runtime/mock-audio-context.js";
 import type { AudioBufferLike } from "../runtime/audio-context.js";
+import { MockAudioContext } from "../runtime/mock-audio-context.js";
+import { audioBufferToWav, renderToWav } from "./render-wav.js";
 
 class MockOfflineAudioContext extends MockAudioContext {
   private renderResult: AudioBufferLike;
@@ -23,10 +23,11 @@ describe("audioBufferToWav — header", () => {
     const ctx = new MockOfflineAudioContext(2, 100, 44100);
     const buf = ctx.createBuffer(2, 100, 44100);
     const wav = audioBufferToWav(buf);
-    expect(String.fromCharCode(wav[0]!, wav[1]!, wav[2]!, wav[3]!)).toBe("RIFF");
-    expect(String.fromCharCode(wav[8]!, wav[9]!, wav[10]!, wav[11]!)).toBe("WAVE");
-    expect(String.fromCharCode(wav[12]!, wav[13]!, wav[14]!, wav[15]!)).toBe("fmt ");
-    expect(String.fromCharCode(wav[36]!, wav[37]!, wav[38]!, wav[39]!)).toBe("data");
+    const dec = new TextDecoder();
+    expect(dec.decode(wav.subarray(0, 4))).toBe("RIFF");
+    expect(dec.decode(wav.subarray(8, 12))).toBe("WAVE");
+    expect(dec.decode(wav.subarray(12, 16))).toBe("fmt ");
+    expect(dec.decode(wav.subarray(36, 40))).toBe("data");
   });
 
   it("PCM format code", () => {
@@ -54,7 +55,8 @@ describe("audioBufferToWav — header", () => {
     const buf = ctx.createBuffer(2, 1000, 44100);
     const wav = audioBufferToWav(buf);
     // Bytes 40-43: data size (LE), should be 2 * 1000 * 2 = 4000
-    const dataSize = wav[40]! | (wav[41]! << 8) | (wav[42]! << 16) | (wav[43]! << 24);
+    const dataSize =
+      (wav[40] ?? 0) | ((wav[41] ?? 0) << 8) | ((wav[42] ?? 0) << 16) | ((wav[43] ?? 0) << 24);
     expect(dataSize).toBe(4000);
   });
 
@@ -107,6 +109,6 @@ describe("renderToWav", () => {
     };
     const wav = await renderToWav(ir, ctx);
     expect(wav.length).toBeGreaterThan(44); // at least header
-    expect(String.fromCharCode(wav[0]!, wav[1]!, wav[2]!, wav[3]!)).toBe("RIFF");
+    expect(new TextDecoder().decode(wav.subarray(0, 4))).toBe("RIFF");
   });
 });

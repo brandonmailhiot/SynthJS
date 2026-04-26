@@ -1,6 +1,6 @@
 import type { CompositionIR } from "../ir/nodes.js";
+import type { AudioBufferLike, AudioContextLike } from "../runtime/audio-context.js";
 import { Composition } from "../runtime/composition.js";
-import type { AudioContextLike, AudioBufferLike } from "../runtime/audio-context.js";
 
 export interface OfflineAudioContextLike extends AudioContextLike {
   startRendering(): Promise<AudioBufferLike>;

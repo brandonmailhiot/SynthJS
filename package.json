@@ -13,6 +13,9 @@
       "require": "./dist/index.cjs"
     }
   },
+  "bin": {
+    "synth": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "README.md",
@@ -24,6 +27,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src",
     "format": "biome format --write src",
+    "pretest": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
