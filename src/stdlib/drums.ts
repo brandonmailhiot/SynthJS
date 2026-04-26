@@ -50,14 +50,17 @@ instrument define bass_drum_808 {
   detune -1200
 }
 
-/// 808-style snare — two detuned triangles for tonal body with
-/// short envelope, plus longer noise tail for the wire rattle.
+/// 808-style snare — two square waves for harmonically rich
+/// body content (more harmonic energy survives the bandpass than
+/// triangle would), plus a noise tail for the wire rattle.
 /// Per-layer envelopes balance body snap and wire sustain.
+/// Gain multiplier compensates for the bandpass attenuation so
+/// the snare cuts through the kit mix.
 instrument define snare_drum_808 {
-  oscillator triangle -1200 {
+  oscillator square -1200 {
     envelope percussive(0.001, 0.05)
   }
-  oscillator triangle -1500 {
+  oscillator square -1500 {
     envelope percussive(0.001, 0.05)
   }
   oscillator noise {
@@ -65,8 +68,8 @@ instrument define snare_drum_808 {
   }
   envelope percussive(0.001, 0.2)
   pitch_sweep 7 0.03
-  filter highpass(400, 0.7)
-  filter bandpass(2000, 1.5)
+  filter bandpass(1500, 1.0)
+  gain 2.5
 }
 
 /// 808-style low tom — sine with octave pitch drop

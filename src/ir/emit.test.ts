@@ -223,6 +223,13 @@ describe("emit IR — instrument", () => {
     expect(ev?.instrument.pitchSweep).toEqual({ semitones: -7, duration: 0.1 });
   });
 
+  it("gain field captured in IR", () => {
+    const src = "instrument define loud { oscillator sine gain 2.5 }\n\\instrument loud\n4 c4";
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.gain).toBe(2.5);
+  });
+
   it("per-layer envelope captured into layer", () => {
     const src =
       "instrument define snare { oscillator triangle { envelope percussive(0.001, 0.05) } oscillator noise { envelope percussive(0.001, 0.005) } }\n\\instrument snare\n4 c4";

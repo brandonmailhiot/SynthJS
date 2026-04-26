@@ -77,7 +77,12 @@ export class VoicePlayer {
       const pitchCount = Math.max(1, event.frequencies.length);
       const polyScale = 1 / Math.sqrt(pitchCount);
       const oscScale = oscillatorLoudness(event.instrument);
-      const peakGain = Math.min(1.0, event.gain * gainBoost) * polyScale * oscScale;
+      // Per-instrument gain multiplier — lets users compensate for heavy
+      // filtering or mix balance. Default 1.0. Applied AFTER the dynamics
+      // clamp so values >1 can deliberately push past nominal headroom; the
+      // master limiter on Composition catches any clipping.
+      const userGain = event.instrument.gain ?? 1.0;
+      const peakGain = Math.min(1.0, event.gain * gainBoost) * polyScale * oscScale * userGain;
 
       // Schedule oscillators (one per frequency). For noise sources we still
       // build one node per frequency entry so polyphony scaling is consistent;

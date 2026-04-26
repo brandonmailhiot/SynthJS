@@ -331,6 +331,11 @@ function validateInstrumentDef(def: InstrumentDef): void {
           );
         }
         break;
+      case "GainField":
+        if (field.factor < 0) {
+          throw new ResolveError(`gain must be non-negative, got ${field.factor}`, field.span);
+        }
+        break;
     }
   }
 }

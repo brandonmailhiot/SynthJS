@@ -84,7 +84,8 @@ export type InstrumentField =
   | { kind: "EnvelopeField"; call: Call; span: SourceSpan }
   | { kind: "FilterField"; call: Call; span: SourceSpan }
   | { kind: "DetuneField"; cents: number; span: SourceSpan }
-  | { kind: "PitchSweepField"; semitones: number; duration: number; span: SourceSpan };
+  | { kind: "PitchSweepField"; semitones: number; duration: number; span: SourceSpan }
+  | { kind: "GainField"; factor: number; span: SourceSpan };
 
 // ----- Expressions -----
 

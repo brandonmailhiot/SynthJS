@@ -299,6 +299,8 @@ function printInstrumentField(f: InstrumentField, depth: number): string {
       return `${indent(depth)}detune ${formatNumber(f.cents)}`;
     case "PitchSweepField":
       return `${indent(depth)}pitch_sweep ${formatNumber(f.semitones)} ${formatNumber(f.duration)}`;
+    case "GainField":
+      return `${indent(depth)}gain ${formatNumber(f.factor)}`;
   }
 }
 

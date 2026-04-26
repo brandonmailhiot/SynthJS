@@ -555,6 +555,16 @@ class Parser {
         span: this.spanRange(tok.span, endSpan),
       };
     }
+    if (val === "gain") {
+      this.advance();
+      const factor = this.parseNumber();
+      const endSpan = this.peekPrev().span;
+      return {
+        kind: "GainField",
+        factor,
+        span: this.spanRange(tok.span, endSpan),
+      };
+    }
     throw new ParseError(`unknown instrument field '${val}'`, tok.span);
   }
 

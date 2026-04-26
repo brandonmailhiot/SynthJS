@@ -64,6 +64,7 @@ export type InstrumentSpec = {
   filters: FilterSpec[]; // length 0+; chained source -> f1 -> f2 -> ... -> output
   detune?: number; // instrument-level cents (applied to every layer)
   pitchSweep?: PitchSweep; // optional pitch envelope; applies to all tonal layers
+  gain?: number; // post-compensation amplitude multiplier; default 1.0
 };
 
 export type AnnotationData = {
