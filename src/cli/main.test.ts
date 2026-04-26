@@ -134,6 +134,29 @@ describe.skipIf(!cliAvailable)("CLI — doc", () => {
   });
 });
 
+describe.skipIf(!cliAvailable)("CLI — render", () => {
+  it("requires -o", () => {
+    const { status } = runCli(["render"], "4 c4");
+    expect(status).toBe(2);
+  });
+
+  it("missing node-web-audio-api yields exit 3 with helpful message", () => {
+    const dir = mkdtempSync(join(tmpdir(), "synth-test-"));
+    const inPath = join(dir, "in.synth");
+    const outPath = join(dir, "out.wav");
+    writeFileSync(inPath, "4 c4");
+    const { status, stderr } = runCli(["render", inPath, "-o", outPath]);
+    // node-web-audio-api is NOT installed in dev deps; expect exit 3.
+    // (If it ever IS installed, status will be 0 and a WAV will exist.)
+    if (status === 3) {
+      expect(stderr).toContain("node-web-audio-api");
+    } else {
+      expect(status).toBe(0);
+      expect(existsSync(outPath)).toBe(true);
+    }
+  });
+});
+
 describe.skipIf(!cliAvailable)("CLI — unknown command", () => {
   it("exits 2", () => {
     const { status, stderr } = runCli(["nonexistent"]);

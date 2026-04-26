@@ -104,6 +104,9 @@ export type {
   Diagnostic,
 } from "./ir/nodes.js";
 
+// Stdlib
+export { isStdlibPath, getStdlibSource, STDLIB } from "./stdlib/index.js";
+
 // Tools
 export { exportJson, type JsonExportOptions } from "./tools/export-json.js";
 export { exportMidi } from "./tools/export-midi.js";

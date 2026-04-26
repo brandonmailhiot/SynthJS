@@ -10,6 +10,7 @@ import {
   format,
   formatError,
   generateDocs,
+  renderToWav,
 } from "../index.js";
 
 function readInput(path?: string): string {
@@ -131,6 +132,73 @@ function runDoc(args: string[]): number {
   return 0;
 }
 
+async function runRender(args: string[]): Promise<number> {
+  let outPath: string | undefined;
+  let inPath: string | undefined;
+  let sampleRate = 44100;
+  let channels = 2;
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === "-o") {
+      outPath = args[i + 1];
+      i++;
+    } else if (a === "--sample-rate") {
+      sampleRate = Number.parseInt(args[i + 1] ?? "44100", 10);
+      i++;
+    } else if (a === "--channels") {
+      channels = Number.parseInt(args[i + 1] ?? "2", 10);
+      i++;
+    } else if (a && !a.startsWith("-")) {
+      inPath = a;
+    }
+  }
+  if (!outPath) {
+    process.stderr.write("render: -o <output> required\n");
+    return 2;
+  }
+  const source = readInput(inPath);
+  const ir = tryCompile(source, inPath ?? "stdin");
+  if (!ir) return 1;
+
+  let OfflineAudioContextCtor: new (
+    channels: number,
+    length: number,
+    sampleRate: number,
+  ) => unknown;
+  try {
+    // Dynamic import via runtime string to avoid build-time type resolution.
+    const modName = "node-web-audio-api";
+    const mod = (await import(modName)) as unknown as {
+      OfflineAudioContext: new (c: number, l: number, sr: number) => unknown;
+    };
+    OfflineAudioContextCtor = mod.OfflineAudioContext;
+  } catch {
+    process.stderr.write(
+      "render requires 'node-web-audio-api' as an optional peer dependency.\n" +
+        "Install it: pnpm add -D node-web-audio-api\n",
+    );
+    return 3;
+  }
+
+  let durationSec = 0;
+  for (const voice of ir.voices) {
+    for (const ev of voice.events) {
+      const end = (ev.startBeat + ev.durationBeats) * 4 * (60 / ir.tempo);
+      if (end > durationSec) durationSec = end;
+    }
+  }
+  durationSec = Math.max(1, durationSec + 0.5);
+
+  const ctx = new OfflineAudioContextCtor(
+    channels,
+    Math.ceil(durationSec * sampleRate),
+    sampleRate,
+  ) as Parameters<typeof renderToWav>[1];
+  const wavBytes = await renderToWav(ir, ctx);
+  writeFileSync(outPath, wavBytes);
+  return 0;
+}
+
 function printHelp(): number {
   process.stdout.write(`synth — SynthJS CLI
 
@@ -143,6 +211,8 @@ COMMANDS:
   json [path] [--include-spans] [--compact]
                              Emit CompositionIR as JSON.
   midi <input> -o <output>   Export to MIDI file.
+  render <input> -o <output> [--sample-rate N] [--channels N]
+                             Render to WAV file (requires node-web-audio-api).
   doc [path] [--title T] [-o <output>]
                              Generate Markdown docs from /// comments.
   help                       Show this help.
@@ -153,31 +223,28 @@ COMMANDS:
 const args = process.argv.slice(2);
 const cmd = args[0];
 
-let exitCode: number;
-switch (cmd) {
-  case "fmt":
-    exitCode = runFmt(args.slice(1));
-    break;
-  case "check":
-    exitCode = runCheck(args.slice(1));
-    break;
-  case "json":
-    exitCode = runJson(args.slice(1));
-    break;
-  case "midi":
-    exitCode = runMidi(args.slice(1));
-    break;
-  case "doc":
-    exitCode = runDoc(args.slice(1));
-    break;
-  case "help":
-  case "--help":
-  case undefined:
-    exitCode = printHelp();
-    break;
-  default:
-    process.stderr.write(`unknown command '${cmd}'. Run 'synth help'.\n`);
-    exitCode = 2;
+async function main(): Promise<number> {
+  switch (cmd) {
+    case "fmt":
+      return runFmt(args.slice(1));
+    case "check":
+      return runCheck(args.slice(1));
+    case "json":
+      return runJson(args.slice(1));
+    case "midi":
+      return runMidi(args.slice(1));
+    case "render":
+      return runRender(args.slice(1));
+    case "doc":
+      return runDoc(args.slice(1));
+    case "help":
+    case "--help":
+    case undefined:
+      return printHelp();
+    default:
+      process.stderr.write(`unknown command '${cmd}'. Run 'synth help'.\n`);
+      return 2;
+  }
 }
 
-process.exit(exitCode);
+main().then((code) => process.exit(code));
