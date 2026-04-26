@@ -117,15 +117,15 @@ function buildDistortion(ctx: AudioContextLike, e: EffectInvocation): AudioNodeL
   const amount = numArg(e, 0, "amount", DEFAULT_EFFECT_ARGS.distortion.amount);
   const oversample = strArg(e, 1, "oversample", DEFAULT_EFFECT_ARGS.distortion.oversample);
   const ws = ctx.createWaveShaper();
-  ws.curve = makeDistortionCurve(amount);
+  ws.curve = makeDistortionCurve(amount, ctx.sampleRate);
   if (oversample === "none" || oversample === "2x" || oversample === "4x") {
     ws.oversample = oversample;
   }
   return ws;
 }
 
-export function makeDistortionCurve(amount: number): Float32Array {
-  const n = 44100;
+export function makeDistortionCurve(amount: number, samples = 44100): Float32Array {
+  const n = Math.max(256, Math.floor(samples));
   const curve = new Float32Array(n);
   const deg = Math.PI / 180;
   for (let i = 0; i < n; i++) {

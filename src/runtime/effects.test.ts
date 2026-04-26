@@ -125,6 +125,33 @@ describe("buildEffect — distortion", () => {
     expect(curve).toBeInstanceOf(Float32Array);
     expect(curve.length).toBe(44100);
   });
+
+  it("96kHz ctx produces curve of length 96000", () => {
+    const ctx = new MockAudioContext();
+    ctx.sampleRate = 96000;
+    const node = buildEffect(ctx, fx("distortion", [15, "2x"]));
+    const curve = (node as unknown as { curve: Float32Array }).curve;
+    expect(curve).not.toBeNull();
+    expect(curve.length).toBe(96000);
+  });
+
+  it("22050Hz ctx produces curve of length 22050", () => {
+    const ctx = new MockAudioContext();
+    ctx.sampleRate = 22050;
+    const node = buildEffect(ctx, fx("distortion", [15, "2x"]));
+    const curve = (node as unknown as { curve: Float32Array }).curve;
+    expect(curve).not.toBeNull();
+    expect(curve.length).toBe(22050);
+  });
+
+  it("tiny sample rate (100) clamps curve length to 256", () => {
+    const ctx = new MockAudioContext();
+    ctx.sampleRate = 100;
+    const node = buildEffect(ctx, fx("distortion", [15, "2x"]));
+    const curve = (node as unknown as { curve: Float32Array }).curve;
+    expect(curve).not.toBeNull();
+    expect(curve.length).toBe(256);
+  });
 });
 
 describe("buildEffect — chorus", () => {
