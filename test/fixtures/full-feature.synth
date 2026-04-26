@@ -1,0 +1,30 @@
+\version "2.0"
+\tempo 110
+\time 4/4
+\key c4 major
+
+/// Major triad arpeggio.
+arp(root) = 8 <root root root>
+
+/// Mellow pad instrument.
+instrument define warm_pad {
+  oscillator sawtooth
+  envelope   adsr(0.3, 0.4, 0.7, 1.2)
+  filter     lowpass(1500, 0.4)
+  detune     5
+}
+
+\instrument warm_pad
+
+voice melody {
+  with reverb(3, 1.5, 0.85) {
+    @swing(0.6) @vary(timing: 5, pitch: 2) {
+      repeat 4 { arp(c4) }
+    }
+  }
+}
+
+voice bass {
+  \mp
+  4 c2 c2 g2 g2
+}

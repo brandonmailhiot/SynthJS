@@ -1,0 +1,7 @@
+\version "2.0"
+\tempo 120
+\key c4 major
+
+voice melody {
+  4 ^1 ^2 ^3 ^4 ^5 ^6 ^7 ^8
+}
