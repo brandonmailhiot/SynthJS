@@ -213,7 +213,8 @@ a:hover {
   color: var(--ink);
   border: 1px solid var(--rule);
   border-radius: 0;
-  padding: 12px 36px 12px 14px;
+  padding: 14px 36px 14px 14px;
+  min-height: 46px;
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.2;
@@ -250,7 +251,8 @@ a:hover {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 18px;
+  padding: 14px 20px;
+  min-height: 46px;
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
