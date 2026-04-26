@@ -219,4 +219,83 @@ describe("lower-effects — slide event", () => {
       expect(slide.destination.durationScale).toBeCloseTo(2 / 3);
     }
   });
+
+  it("envelope propagates to slide source and destination", () => {
+    const c = lower("envelope adsr(0.01, 0.1, 0.7, 0.3) { 4 c4~d4 }");
+    const slide = c.body.find((b) => b.kind === "Slide");
+    if (slide?.kind === "Slide") {
+      expect(slide.envelope).toBeDefined();
+      expect(slide.source.envelope).toBeDefined();
+      expect(slide.destination.envelope).toBeDefined();
+    }
+  });
+
+  it("ramp propagates dynamic override to slide source and destination", () => {
+    const c = lower("ramp(\\p, \\ff) { 4 c4~d4 e4 }");
+    const slide = c.body.find((b) => b.kind === "Slide");
+    if (slide?.kind === "Slide") {
+      // ramp over 2 events: slide (index 0) = p=0.35, note (index 1) = ff=1.0
+      expect(slide.source.effectiveDynamic).toBeCloseTo(0.35, 2);
+      expect(slide.destination.effectiveDynamic).toBeCloseTo(0.35, 2);
+    }
+  });
+});
+
+describe("lower-effects — ramp nested wrappers", () => {
+  it("tuplet inside ramp: durationScale applied, dynamic interpolated", () => {
+    const c = lower("ramp(\\p, \\ff) { tuplet(3) { 8 c4 d4 e4 } }");
+    const notes = c.body.filter((b) => b.kind === "Note");
+    expect(notes).toHaveLength(3);
+    for (const n of notes) {
+      if (n.kind === "Note") {
+        expect(n.durationScale).toBeCloseTo(2 / 3);
+      }
+    }
+    // First note at p=0.35, last at ff=1.0
+    if (notes[0]?.kind === "Note") expect(notes[0].effectiveDynamic).toBeCloseTo(0.35, 2);
+    if (notes[2]?.kind === "Note") expect(notes[2].effectiveDynamic).toBeCloseTo(1.0, 2);
+  });
+
+  it("nested ramp inside outer ramp uses inner ramp's own interpolation", () => {
+    const c = lower("ramp(\\p, \\ff) { ramp(\\ff, \\p) { 4 c4 d4 } }");
+    const notes = c.body.filter((b) => b.kind === "Note");
+    expect(notes).toHaveLength(2);
+    // inner ramp ff=1.0 -> p=0.35: first note at 1.0, last at 0.35
+    if (notes[0]?.kind === "Note") expect(notes[0].effectiveDynamic).toBeCloseTo(1.0, 2);
+    if (notes[1]?.kind === "Note") expect(notes[1].effectiveDynamic).toBeCloseTo(0.35, 2);
+  });
+
+  it("repeat inside ramp: events carry interpolated dynamics", () => {
+    const c = lower("ramp(\\p, \\ff) { repeat 1 { 4 c4 d4 } }");
+    const notes = c.body.filter((b) => b.kind === "Note");
+    expect(notes.length).toBeGreaterThan(0);
+    // All notes should have effectiveDynamic set
+    for (const n of notes) {
+      if (n.kind === "Note") expect(n.effectiveDynamic).toBeDefined();
+    }
+  });
+
+  it("envelope inside ramp: envelope tagged and dynamics interpolated", () => {
+    const c = lower("ramp(\\p, \\ff) { envelope adsr(0.01, 0.1, 0.7, 0.3) { 4 c4 d4 } }");
+    const notes = c.body.filter((b) => b.kind === "Note");
+    expect(notes).toHaveLength(2);
+    for (const n of notes) {
+      if (n.kind === "Note") {
+        expect(n.envelope).toBeDefined();
+        expect(n.effectiveDynamic).toBeDefined();
+      }
+    }
+  });
+
+  it("with inside ramp: fxChain tagged and dynamics interpolated", () => {
+    const c = lower("ramp(\\p, \\ff) { with reverb(2, 1, 0.7) { 4 c4 d4 } }");
+    const notes = c.body.filter((b) => b.kind === "Note");
+    expect(notes).toHaveLength(2);
+    for (const n of notes) {
+      if (n.kind === "Note") {
+        expect(n.fxChain).toHaveLength(1);
+        expect(n.effectiveDynamic).toBeDefined();
+      }
+    }
+  });
 });

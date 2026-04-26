@@ -93,4 +93,46 @@ describe("filter validation", () => {
   it("unknown filter", () => {
     expect(validateFilterCall("xyz", [])).toContain("unknown filter");
   });
+  it("too few args rejects", () => {
+    expect(validateFilterCall("lowpass", [{ kind: "NumberArg", value: 2000 }])).toContain(
+      "expects (cutoff, q)",
+    );
+  });
+  it("non-number cutoff rejects", () => {
+    expect(
+      validateFilterCall("lowpass", [
+        { kind: "StringArg", value: "loud" },
+        { kind: "NumberArg", value: 0.7 },
+      ]),
+    ).toContain("cutoff expects number");
+  });
+  it("non-number q rejects", () => {
+    expect(
+      validateFilterCall("lowpass", [
+        { kind: "NumberArg", value: 2000 },
+        { kind: "StringArg", value: "high" },
+      ]),
+    ).toContain("q expects number");
+  });
+});
+
+describe("envelope missing arg", () => {
+  it("missing release arg rejects", () => {
+    expect(
+      validateEnvelopeCall("adsr", [
+        { kind: "NumberArg", value: 0.01 },
+        { kind: "NumberArg", value: 0.1 },
+      ]),
+    ).toContain("missing");
+  });
+  it("non-number arg rejects", () => {
+    expect(
+      validateEnvelopeCall("adsr", [
+        { kind: "StringArg", value: "fast" },
+        { kind: "NumberArg", value: 0.1 },
+        { kind: "NumberArg", value: 0.7 },
+        { kind: "NumberArg", value: 0.3 },
+      ]),
+    ).toContain("expects number");
+  });
 });

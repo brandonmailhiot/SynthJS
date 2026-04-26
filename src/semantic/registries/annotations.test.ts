@@ -71,4 +71,34 @@ describe("validateAnnotationArgs", () => {
   it("unknown annotation returns error", () => {
     expect(validateAnnotationArgs("@unknown", [])).toContain("unknown annotation");
   });
+
+  it("@vary with partial named args is ok (acceptsNamed skips missing)", () => {
+    // @vary accepts named args so missing params are allowed (continue instead of error)
+    expect(
+      validateAnnotationArgs("@vary", [
+        { kind: "NamedArg", name: "timing", value: { kind: "NumberArg", value: 5 } },
+      ]),
+    ).toBeNull();
+  });
+
+  it("named arg on non-accepting annotation rejects", () => {
+    expect(
+      validateAnnotationArgs("@cue", [
+        { kind: "NamedArg", name: "name", value: { kind: "StringArg", value: "hit" } },
+      ]),
+    ).toContain("does not accept named arguments");
+  });
+
+  it("too many args for @cue rejects", () => {
+    expect(
+      validateAnnotationArgs("@cue", [
+        { kind: "StringArg", value: "hit" },
+        { kind: "StringArg", value: "extra" },
+      ]),
+    ).toContain("too many arguments");
+  });
+
+  it("missing required arg for @section rejects", () => {
+    expect(validateAnnotationArgs("@section", [])).toContain("missing argument");
+  });
 });

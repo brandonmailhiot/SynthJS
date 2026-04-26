@@ -201,4 +201,38 @@ describe("parameterized motif inlining", () => {
       expect(ps[1]?.kind === "Pitch" && ps[1].letter).toBe("g");
     }
   });
+
+  it("param ref in chord inside with block: With branch in substituteParamRefsInEvent", () => {
+    // trill(root) = with reverb(2, 1, 0.7) { 4 <root root+4> } — processes With in substituteParamRefsInEvent
+    // After lowerPitch, the With event is still in body but the chord pitches should be resolved
+    const c = lower("trill(root) = with reverb(2, 1, 0.7) { 4 <root root+4> }\ntrill(e4)");
+    // Find the With event in top-level body (lowerEffects not run, so With remains)
+    const withEv = c.body.find((b) => b.kind === "With");
+    expect(withEv).toBeDefined();
+    if (withEv?.kind === "With") {
+      const chord = withEv.body.body.find((n) => n.kind === "Chord");
+      if (chord?.kind === "Chord") {
+        const ps = chord.pitches.filter((p) => p.kind === "Pitch");
+        expect(ps.length).toBe(2);
+        expect(ps[0]?.kind === "Pitch" && ps[0].letter).toBe("e");
+      }
+    }
+  });
+
+  it("param ref in chord inside tuplet block: Tuplet branch in substituteParamRefsInEvent", () => {
+    // arp3(root) = tuplet(3) { 8 <root root+7> } — processes Tuplet in substituteParamRefsInEvent
+    const c = lower("arp3(root) = tuplet(3) { 8 <root root+7> }\narp3(c4)");
+    // Find the Tuplet event in top-level body
+    const tupletEv = c.body.find((b) => b.kind === "Tuplet");
+    expect(tupletEv).toBeDefined();
+    if (tupletEv?.kind === "Tuplet") {
+      const chord = tupletEv.body.body.find((n) => n.kind === "Chord");
+      if (chord?.kind === "Chord") {
+        const ps = chord.pitches.filter((p) => p.kind === "Pitch");
+        expect(ps.length).toBe(2);
+        expect(ps[0]?.kind === "Pitch" && ps[0].letter).toBe("c");
+        expect(ps[1]?.kind === "Pitch" && ps[1].letter).toBe("g");
+      }
+    }
+  });
 });

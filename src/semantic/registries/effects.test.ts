@@ -80,4 +80,29 @@ describe("validateEffectArgs", () => {
   it("unknown effect", () => {
     expect(validateEffectArgs("xyz", [])).toContain("unknown effect");
   });
+
+  it("too many positional args rejected", () => {
+    expect(
+      validateEffectArgs("gain", [
+        { kind: "NumberArg", value: 0.5 },
+        { kind: "NumberArg", value: 0.5 },
+      ]),
+    ).toContain("too many");
+  });
+
+  it("wrong arg type for number param rejected", () => {
+    expect(
+      validateEffectArgs("gain", [{ kind: "StringArg", value: "loud" }]),
+    ).toContain("expects number");
+  });
+
+  it("unknown named arg rejected", () => {
+    expect(
+      validateEffectArgs("gain", [{ kind: "NamedArg", name: "xyz", value: { kind: "NumberArg", value: 0.5 } }]),
+    ).toContain("unknown parameter");
+  });
+
+  it("missing arg rejected", () => {
+    expect(validateEffectArgs("gain", [])).toContain("missing argument");
+  });
 });

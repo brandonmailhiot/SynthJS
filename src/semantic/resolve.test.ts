@@ -257,4 +257,48 @@ describe("resolveWithImports", () => {
     // The import adds intro to the table; then the local binding resolution tries to define intro again
     await expect(resolveWithImports(ast, modules)).rejects.toThrow(/already defined|conflict/);
   });
+
+  it("module found via suffix match (./relative path)", async () => {
+    const importedMod = makeModule("loop = 4 c4", "/libs/loop.synth");
+    const modules = new Map<string, LoadedModule>([["/libs/loop.synth", importedMod]]);
+    const ast = parse(lex('\\use "./loop.synth"\nloop'));
+    const result = await resolveWithImports(ast, modules);
+    expect(result.symbolTable.lookup("loop")).not.toBeNull();
+  });
+
+  it("missing module throws ResolveError", async () => {
+    const modules = new Map<string, LoadedModule>();
+    const ast = parse(lex('\\use "/missing.synth"\n4 c4'));
+    await expect(resolveWithImports(ast, modules)).rejects.toThrow(/module not found/);
+  });
+
+  it("module exporting InstrumentDef is importable", async () => {
+    const importedMod = makeModule(
+      "instrument define warm { oscillator sawtooth }",
+      "/instruments.synth",
+    );
+    const modules = new Map<string, LoadedModule>([["/instruments.synth", importedMod]]);
+    const ast = parse(lex('\\use "/instruments.synth"\n\\instrument warm\n4 c4'));
+    const result = await resolveWithImports(ast, modules);
+    expect(result.symbolTable.lookup("warm")).not.toBeNull();
+  });
+
+  it("aliased import collision throws when two modules export same qualified name", async () => {
+    const importedMod = makeModule("intro = 4 c4", "/shared.synth");
+    // Two use-decls with same alias cause collision on s.intro
+    const modules = new Map<string, LoadedModule>([["/shared.synth", importedMod]]);
+    const ast = parse(lex('\\use "/shared.synth" as s\n\\use "/shared.synth" as s'));
+    await expect(resolveWithImports(ast, modules)).rejects.toThrow(/already defined|conflict/);
+  });
+
+  it("plain import collision throws when two modules export same name", async () => {
+    const mod1 = makeModule("loop = 4 c4", "/a.synth");
+    const mod2 = makeModule("loop = 4 d4", "/b.synth");
+    const modules = new Map<string, LoadedModule>([
+      ["/a.synth", mod1],
+      ["/b.synth", mod2],
+    ]);
+    const ast = parse(lex('\\use "/a.synth"\n\\use "/b.synth"\n4 c4'));
+    await expect(resolveWithImports(ast, modules)).rejects.toThrow(/already defined|conflict/);
+  });
 });

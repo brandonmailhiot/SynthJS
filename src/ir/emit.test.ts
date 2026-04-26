@@ -209,3 +209,41 @@ describe("emit IR — diagnostics", () => {
     expect(ir.diagnostics).toHaveLength(0);
   });
 });
+
+describe("emit IR — annotated block", () => {
+  it("@section block events emitted into voice timeline", () => {
+    const ir = compile('@section("chorus") { 4 c4 d4 e4 }');
+    const events = ir.voices[0]?.events;
+    expect(events).toHaveLength(3);
+  });
+
+  it("annotated block startBeat is contiguous", () => {
+    const ir = compile('@section("v") { 4 c4 d4 }');
+    const events = ir.voices[0]?.events;
+    expect(events).toHaveLength(2);
+    expect(events?.[0]?.startBeat).toBe(0);
+    expect(events?.[1]?.startBeat).toBeCloseTo(0.25);
+  });
+});
+
+describe("emit IR — slide with destination duration", () => {
+  it("slide with destination duration emits two events", () => {
+    // When slide has duration on both source and destination: 4 c4 -> 4 d4
+    const ir = compile("4 c4 -> 4 d4");
+    const events = ir.voices[0]?.events;
+    // Source event + destination event
+    expect(events).toHaveLength(2);
+    if (events?.[0]) expect(events[0].slideTo).toBeDefined();
+    if (events?.[1]) expect(events[1].frequencies[0]).toBeCloseTo(293.664, 1); // d4
+  });
+});
+
+describe("emit IR — fx named args", () => {
+  it("named args in effect invocation are captured", () => {
+    // delay with named args: delay(seconds: 0.3, feedback: 0.5)
+    const ir = compile("with delay(seconds: 0.3, feedback: 0.5) { 4 c4 }");
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.fxChain[0]?.args.named).toBeDefined();
+    expect(ev?.fxChain[0]?.args.named?.["seconds"]).toBeCloseTo(0.3);
+  });
+});
