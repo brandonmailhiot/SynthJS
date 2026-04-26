@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0-alpha.5] — 2026-04-26
+
+### Added
+- **Standard library** (`src/stdlib/`) embedded as TypeScript string constants. Five modules:
+  - `@stdlib/scales` — `major_scale`, `minor_scale`, `pentatonic_major`, `pentatonic_minor`, `blues`, `dorian_scale`, `mixolydian_scale`
+  - `@stdlib/chords` — `triad_major`, `triad_minor`, `triad_dim`, `triad_aug`, `triad_sus2`, `triad_sus4`, `seventh_major`, `seventh_dom`, `seventh_minor`, `seventh_half_dim`, `seventh_dim`
+  - `@stdlib/drums` — `kick_drum`, `snare_drum`, `hat_closed`, `hat_open`, `tom_low`, `tom_high` instruments
+  - `@stdlib/instruments` — `warm_pad`, `lead_saw`, `brass`, `bass_synth`, `bell`, `string_pad`
+  - `@stdlib/fx` — documentation only (block-parameter motifs not yet supported)
+- **`synth render` CLI** for offline WAV export. Uses `node-web-audio-api` as optional peer dependency with graceful fallback message.
+- **Web demo** (`demo/`) — single-file HTML/JS/CSS playground with six pre-baked examples (scale, chord progression, two-voice, custom instrument, slide chain, dynamics).
+
+### Fixed
+- Parser: bare identifiers followed by `+` or `-` and an integer now route to pitch arithmetic (ParamRef + arith) instead of motif-reference. Stdlib motifs like `major_scale(root)` (which use `root+2`, `root+4`, etc.) now parse correctly.
+
+### Changed
+- `compileSync` inlines `\use "@stdlib/..."` declarations synchronously. Relative imports (`./shared.synth`) still require async `compile()`.
+
 ## [2.0.0-alpha.4] — 2026-04-26
 
 ### Added
