@@ -17,6 +17,108 @@ import { synthCompletions, synthHover, synthLinter } from "./lsp-extensions.js";
 import { synthLanguage } from "./synth-language.js";
 
 const examples = {
+  showcase: `\\version "2.0"
+\\use "@stdlib/instruments"
+\\use "@stdlib/drums"
+\\tempo 100
+\\time 4/4
+
+/// Three detuned saws for a wide supersaw lead — shows oscillator
+/// stacks with per-layer detune through a lowpass.
+instrument define lead_synth {
+  oscillator sawtooth -7
+  oscillator sawtooth
+  oscillator sawtooth 7
+  envelope adsr(0.04, 0.2, 0.75, 0.5)
+  filter lowpass(3500, 0.6)
+  gain 0.85
+}
+
+// ---------- DRUMS ----------
+voice kick {
+  \\instrument kick_drum
+  \\f
+  repeat 16 { 4 c2 r c2 r }
+}
+
+voice snare {
+  \\instrument snare_drum
+  \\mf
+  repeat 16 { 4 r d3 r d3 }
+}
+
+voice hats {
+  \\instrument hat_closed
+  \\p
+  repeat 64 { 8 f6 f6 }
+}
+
+voice perc {
+  \\instrument cowbell_808
+  \\mp
+  repeat 8 { 1 r 4 r g5 r r }
+}
+
+// ---------- HARMONY ----------
+voice pad {
+  \\instrument brass
+  \\mp
+  with reverb(2, 2.5, 0.55) {
+    repeat 4 {
+      1 <a3 c4 e4>
+      1 <f3 a3 c4>
+      1 <c3 e3 g3>
+      1 <g3 b3 d4>
+    }
+  }
+}
+
+voice bass {
+  \\instrument bass_synth
+  \\mf
+  repeat 3 {
+    4 a1 a1 e2 a2
+    4 f1 f1 c2 f2
+    4 c2 c2 g2 c3
+    4 g1 g1 d2 g2
+  }
+  4 a1 a1 e2 a2
+  4 f1 f1 c2 f2
+  4 c2 c2 g2 c3
+  2 g1 -> a1
+}
+
+// ---------- LEAD ----------
+voice melody {
+  \\instrument lead_synth
+  \\mp
+  with reverb(2, 1.8, 0.5) {
+    /// Question phrase
+    2 r 2 e5
+    4 d5 c5 b4 a4
+    2 r 4 a4 c5
+    4 e5 d5 c5 b4
+    /// Answer with a swell
+    ramp(\\mp, \\mf) {
+      4 a4 c5 e5 g5
+      4 a5 g5 e5 c5
+    }
+    \\mf
+    4 d5 c5 b4 a4
+    1 c5
+    /// Rise
+    4 e5 g5 a5 c6
+    4 b5 a5 g5 e5
+    4 d5 e5 g5 a5
+    1 g5
+    /// Resolve with a descending eighth-note run
+    8 a5 g5 e5 d5 c5 b4 a4 g4
+    1 a4
+    1 a4
+    1 r
+  }
+}`,
+
   scale: `\\version "2.0"
 \\tempo 120
 \\key c4 major
