@@ -25,6 +25,7 @@ export class Composition {
   private readonly setTimeoutFn: (cb: () => void, ms: number) => unknown;
   private readonly clearTimeoutFn: (handle: unknown) => void;
   private endedListeners: ((info: { totalDurationSec: number }) => void)[] = [];
+  private playStartTime = 0;
 
   constructor(
     private readonly ir: CompositionIR,
@@ -94,6 +95,7 @@ export class Composition {
 
     const startOffset = 0.05; // small lead time for setup
     const voiceStartTime = this.ctx.currentTime + startOffset;
+    this.playStartTime = voiceStartTime;
     const fromBeat = opts.from ?? 0;
 
     this.scheduleIteration(voiceStartTime, fromBeat);
@@ -148,6 +150,26 @@ export class Composition {
     for (const player of this.players) player.stop();
     this.players.length = 0;
     this._state = "stopped";
+  }
+
+  async update(newIR: CompositionIR): Promise<void> {
+    if (this._state !== "playing" && this._state !== "paused") {
+      // Just swap; no need to reschedule
+      (this as unknown as { ir: CompositionIR }).ir = newIR;
+      return;
+    }
+    // Compute current beat from elapsed audio time
+    const elapsedSec = this.ctx.currentTime - this.playStartTime;
+    const tempo = this.ir.tempo;
+    const currentBeat = elapsedSec / (4 * (60 / tempo));
+    // Stop active players
+    for (const player of this.players) player.stop();
+    this.players.length = 0;
+    // Swap IR (use unknown cast to bypass readonly)
+    (this as unknown as { ir: CompositionIR }).ir = newIR;
+    // Re-anchor: reschedule from the *new* IR starting at the current beat
+    // (events with startBeat < currentBeat are skipped by scheduleIteration's filter)
+    this.scheduleIteration(this.ctx.currentTime + 0.05, currentBeat);
   }
 
   onEnded(listener: (info: { totalDurationSec: number }) => void): () => void {
