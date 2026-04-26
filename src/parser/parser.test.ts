@@ -276,3 +276,43 @@ describe("parse — errors", () => {
     expect(c.body[0]).toMatchObject({ kind: "Detune", cents: 5 });
   });
 });
+
+describe("parse — Phase 1 follow-ups", () => {
+  it("4 c4 d e f -> InheritedPitchLetter for d, e, f", () => {
+    const c = parse(lex("4 c4 d e f"));
+    expect(c.body).toHaveLength(4);
+    const second = c.body[1];
+    if (second?.kind !== "Note") throw new Error();
+    expect(second.pitch.kind).toBe("InheritedPitchLetter");
+    if (second.pitch.kind === "InheritedPitchLetter") {
+      expect(second.pitch.letter).toBe("d");
+    }
+  });
+
+  it("inherited pitch with sharp: 4 c4 d#", () => {
+    const c = parse(lex("4 c4 d#"));
+    const note = c.body[1];
+    if (note?.kind !== "Note") throw new Error();
+    if (note.pitch.kind !== "InheritedPitchLetter") throw new Error();
+    expect(note.pitch.accidental).toBe("#");
+  });
+
+  it("arp(c4+7) parses pitch arith arg", () => {
+    const c = parse(lex("arp(c4+7)"));
+    const call = c.body[0];
+    if (call?.kind !== "Call") throw new Error();
+    expect(call.args).toHaveLength(1);
+    const arg = call.args[0];
+    if (arg?.kind !== "PitchArg") throw new Error();
+    expect(arg.value.kind).toBe("PitchArith");
+  });
+
+  it("f(^3) parses scale-degree arg", () => {
+    const c = parse(lex("f(^3)"));
+    const call = c.body[0];
+    if (call?.kind !== "Call") throw new Error();
+    const arg = call.args[0];
+    if (arg?.kind !== "PitchArg") throw new Error();
+    expect(arg.value.kind).toBe("ScaleDegree");
+  });
+});

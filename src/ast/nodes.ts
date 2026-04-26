@@ -124,6 +124,11 @@ export type NoteEvent = {
   annotations: Annotation[];
   repeat?: number;
   span: SourceSpan;
+  effectiveDynamic?: number; // gain 0..1, set by sticky lowering
+  effectiveInstrument?: string; // instrument name, set by sticky lowering
+  fxChain?: Call[]; // effects applied to this event, set by lowerEffects
+  envelope?: Call; // envelope applied to this event, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale (default 1.0), set by lowerEffects
 };
 
 export type ChordEvent = {
@@ -134,6 +139,11 @@ export type ChordEvent = {
   annotations: Annotation[];
   repeat?: number;
   span: SourceSpan;
+  effectiveDynamic?: number; // gain 0..1, set by sticky lowering
+  effectiveInstrument?: string; // instrument name, set by sticky lowering
+  fxChain?: Call[]; // effects applied to this event, set by lowerEffects
+  envelope?: Call; // envelope applied to this event, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale (default 1.0), set by lowerEffects
 };
 
 export type SlideEvent = {
@@ -141,6 +151,9 @@ export type SlideEvent = {
   source: NoteEvent;
   destination: NoteEvent;
   span: SourceSpan;
+  fxChain?: Call[]; // effects applied to source and destination, set by lowerEffects
+  envelope?: Call; // envelope applied to source and destination, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale, set by lowerEffects
 };
 
 export type RestEvent = {
@@ -149,6 +162,11 @@ export type RestEvent = {
   modifiers: ArticulationMark[];
   annotations: Annotation[];
   span: SourceSpan;
+  effectiveDynamic?: number; // gain 0..1, set by sticky lowering
+  effectiveInstrument?: string; // instrument name, set by sticky lowering
+  fxChain?: Call[]; // effects applied to this event, set by lowerEffects
+  envelope?: Call; // envelope applied to this event, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale (default 1.0), set by lowerEffects
 };
 
 export type SustainEvent = { kind: "Sustain"; pitch: PitchTerm; span: SourceSpan };
@@ -181,7 +199,7 @@ export type AnnotatedBlock = {
 
 // ----- Pitch terms -----
 
-export type PitchTerm = AbsolutePitch | ScaleDegree | PitchArith | ParamRef;
+export type PitchTerm = AbsolutePitch | ScaleDegree | PitchArith | ParamRef | InheritedPitchLetter;
 
 export type AbsolutePitch = {
   kind: "Pitch";
@@ -209,6 +227,13 @@ export type PitchArith = {
 export type ParamRef = {
   kind: "ParamRef";
   name: string;
+  span: SourceSpan;
+};
+
+export type InheritedPitchLetter = {
+  kind: "InheritedPitchLetter";
+  letter: NoteLetter;
+  accidental?: Accidental;
   span: SourceSpan;
 };
 

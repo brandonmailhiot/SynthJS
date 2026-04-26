@@ -36,3 +36,17 @@ export {
   ValidationError,
   formatError,
 } from "./errors.js";
+
+// Compile API
+import { type CompileOptions, compile, compileSync } from "./semantic/pipeline.js";
+export { compile, compileSync, type CompileOptions };
+export type {
+  CompositionIR,
+  VoiceTimeline,
+  TimelineEvent,
+  EnvelopeSpec,
+  EffectInvocation,
+  InstrumentSpec,
+  AnnotationData,
+  Diagnostic,
+} from "./ir/nodes.js";

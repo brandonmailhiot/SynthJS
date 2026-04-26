@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0-alpha.1] — 2026-04-26
+
+### Added
+- **Semantic resolution pass** (`resolve.ts`): symbol table construction, cycle detection, effect/envelope/annotation/instrument validation with did-you-mean suggestions.
+- **Scale-degree lowering** (`lower-pitch.ts`): `^N` scale degrees resolved to absolute `AbsolutePitch` nodes against active `\key` directive; supports all seven modes.
+- **Pitch arithmetic** (`lower-pitch.ts`): `c4+7`, `a4-3`, and chained forms resolved to absolute pitches.
+- **Parameterized motif inlining** (`lower-pitch.ts`): `arp(root) = ...` definitions expanded at call sites with pitch-term substitution.
+- **Sticky-octave / inherited-pitch-letter lowering** (`lower-sticky.ts`): octave and letter inheritance across consecutive notes.
+- **Scope flattening** (`lower-effects.ts`): `with`, `envelope`, `tuplet`, and `ramp` wrapper nodes replaced with per-event metadata tags (`fxChain`, `envelope`, `durationScale`, `effectiveDynamic`).
+- **Repeat expansion** (`expand-repeats.ts`): `repeat N { ... }` blocks unrolled into flat event sequences.
+- **Meter validation** (`validate-meter.ts`): bar-line beat counting with `\time` awareness, producing warning diagnostics.
+- **IR emission** (`ir/emit.ts`): lowers fully-resolved AST to `CompositionIR` (timeline events with Hz frequencies, gain, articulation, fx chain, envelope, annotations, and `slideTo`).
+- **`compile()` public API** (`src/index.ts`): single-call entry point from source string to `CompositionIR`.
+- **Did-you-mean diagnostics** (`did-you-mean.ts`): Levenshtein-based suggestions on unknown effects, envelopes, annotations, instruments, motifs, and modes.
+- **Module import resolution** (`resolve.ts` + `module-loader.ts`): `\use "path"`, `\use "path" as alias`, and `\use "path" (a, b)` selective imports; `resolveWithImports()` async API.
+- **Semantic pipeline** (`pipeline.ts`): orchestrates all passes in order and exposes `compilePipeline()`.
+
 ## [2.0.0-alpha.0] — 2026-04-26
 
 ### Added

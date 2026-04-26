@@ -16,6 +16,7 @@ import type {
   EnvelopeExpr,
   Event,
   IdentArg,
+  InheritedPitchLetter,
   InstrumentDef,
   InstrumentDirective,
   InstrumentField,
@@ -25,6 +26,7 @@ import type {
   NoteEvent,
   NumberArg,
   ParamRef,
+  PitchArg,
   PitchArith,
   PitchTerm,
   RampExpr,
@@ -44,7 +46,7 @@ import type {
 import { ParseError, type SourceSpan } from "../errors.js";
 import type { Token, TokenKind } from "../lexer/token.js";
 import { type Mode, isMode } from "../modes.js";
-import { parsePitchString } from "../pitch.js";
+import { type Accidental, isNoteLetter, parsePitchString } from "../pitch.js";
 
 // Keywords that are parsed as identifiers but treated structurally
 const KEYWORDS = new Set([
@@ -563,6 +565,10 @@ class Parser {
       if (tok.value === "tuplet") return this.parseTuplet();
       if (tok.value === "ramp") return this.parseRamp();
       if (tok.value === "r") return this.parseRest(undefined);
+      // Single note letter (a-g) without octave = inherited pitch letter
+      // (but not if followed by '(' which would make it a function call)
+      if (isNoteLetter(tok.value) && !this.check("LParen", 1))
+        return this.parsePitchEvent(undefined);
       return this.parseCallOrRef();
     }
 
@@ -808,9 +814,49 @@ class Parser {
       return this.parseScaleDegree();
     }
 
-    // Identifier = param ref (not a keyword)
+    // Identifier = inherited pitch letter (a-g) or param ref (not a keyword)
     if (this.check("Identifier") && !KEYWORDS.has(this.peek().value)) {
       const tok = this.advance();
+      if (isNoteLetter(tok.value)) {
+        const letter = tok.value;
+        let accidental: Accidental | undefined;
+        let endSpan = tok.span;
+
+        // Consume optional accidental
+        if (this.check("Hash")) {
+          this.advance(); // consume first '#'
+          endSpan = this.peekPrev().span;
+          if (this.check("Hash")) {
+            this.advance(); // consume second '#'
+            endSpan = this.peekPrev().span;
+            accidental = "##";
+          } else {
+            accidental = "#";
+          }
+        } else if (this.check("Identifier") && this.peek().value === "b") {
+          this.advance(); // consume first 'b'
+          endSpan = this.peekPrev().span;
+          if (this.check("Identifier") && this.peek().value === "b") {
+            this.advance(); // consume second 'b'
+            endSpan = this.peekPrev().span;
+            accidental = "bb";
+          } else {
+            accidental = "b";
+          }
+        } else if (this.check("Identifier") && this.peek().value === "n") {
+          this.advance();
+          endSpan = this.peekPrev().span;
+          accidental = "n";
+        }
+
+        const base: InheritedPitchLetter = {
+          kind: "InheritedPitchLetter",
+          letter,
+          span: this.spanRange(tok.span, endSpan),
+          ...(accidental !== undefined && { accidental }),
+        };
+        return this.parseArithTail(base);
+      }
       const base: ParamRef = { kind: "ParamRef", name: tok.value, span: tok.span };
       return this.parseArithTail(base);
     }
@@ -1033,12 +1079,24 @@ class Parser {
       return { kind: "StringArg", value: tok.value, span: tok.span } as StringArg;
     }
 
+    if (tok.kind === "Caret") {
+      const degree = this.parseScaleDegree();
+      const value = this.parseArithTail(degree);
+      return { kind: "PitchArg", value, span: value.span } as PitchArg;
+    }
+
     if (tok.kind === "Pitch") {
       const pitch = this.parsePitch();
-      return { kind: "PitchArg", value: pitch, span: pitch.span };
+      const value = this.parseArithTail(pitch);
+      return { kind: "PitchArg", value, span: value.span } as PitchArg;
     }
 
     if (tok.kind === "Identifier") {
+      // Single note letter a-g: emit as PitchArg wrapping InheritedPitchLetter
+      if (isNoteLetter(tok.value)) {
+        const pitchTerm = this.parsePitchTerm();
+        return { kind: "PitchArg", value: pitchTerm, span: pitchTerm.span } as PitchArg;
+      }
       this.advance();
       return { kind: "IdentArg", name: tok.value, span: tok.span } as IdentArg;
     }
