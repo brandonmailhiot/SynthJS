@@ -44,7 +44,12 @@ export class VoicePlayer {
       const audioStart = voiceStartTime + beatsToSeconds(event.startBeat, tempo);
       const baseSeconds = beatsToSeconds(event.durationBeats, tempo);
       const { playDuration, gainBoost } = applyArticulation(event.articulation, baseSeconds);
-      const peakGain = Math.min(1.0, event.gain * gainBoost);
+      // Equal-power normalization across chord pitches so an N-note chord
+      // doesn't sum to N× amplitude. 1-note event = no scaling. 4-note chord
+      // = 0.5× per pitch.
+      const pitchCount = Math.max(1, event.frequencies.length);
+      const polyScale = 1 / Math.sqrt(pitchCount);
+      const peakGain = Math.min(1.0, event.gain * gainBoost) * polyScale;
 
       // Schedule oscillators (one per frequency)
       const oscillators: OscillatorNodeLike[] = [];
@@ -74,13 +79,15 @@ export class VoicePlayer {
         event,
       });
 
-      // Schedule start/stop via scheduler
+      // Schedule start/stop via scheduler. Tail of 5 ms past play duration so
+      // the envelope's release ramp finishes before the oscillator hard-stops
+      // (prevents clicks at note boundaries).
       scheduler.enqueue({
         audioTime: audioStart,
         dispatch: (when) => {
           for (const osc of oscillators) {
             osc.start(when);
-            osc.stop(when + playDuration);
+            osc.stop(when + playDuration + 0.005);
           }
         },
       });
