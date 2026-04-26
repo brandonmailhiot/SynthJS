@@ -522,6 +522,18 @@ class Parser {
       const cents = this.parseSignedNumber();
       return { kind: "DetuneField", cents, span: tok.span };
     }
+    if (val === "pitch_sweep") {
+      this.advance();
+      const semitones = this.parseSignedNumber();
+      const duration = this.parseNumber();
+      const endSpan = this.peekPrev().span;
+      return {
+        kind: "PitchSweepField",
+        semitones,
+        duration,
+        span: this.spanRange(tok.span, endSpan),
+      };
+    }
     throw new ParseError(`unknown instrument field '${val}'`, tok.span);
   }
 

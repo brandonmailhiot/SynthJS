@@ -207,6 +207,22 @@ describe("emit IR — instrument", () => {
     ]);
   });
 
+  it("pitch_sweep field captured in IR", () => {
+    const src =
+      "instrument define kick { oscillator sine pitch_sweep 12 0.05 envelope percussive(0.005, 0.4) }\n\\instrument kick\n4 c2";
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.pitchSweep).toEqual({ semitones: 12, duration: 0.05 });
+  });
+
+  it("pitch_sweep with negative semitones (rising sweep)", () => {
+    const src =
+      "instrument define rise { oscillator sawtooth pitch_sweep -7 0.1 }\n\\instrument rise\n4 c4";
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.pitchSweep).toEqual({ semitones: -7, duration: 0.1 });
+  });
+
   it("multi-filter instrument cascades in declared order", () => {
     const src =
       "instrument define chain { oscillator noise filter highpass(500, 0.7) filter bandpass(2000, 1.0) filter lowpass(8000, 0.7) }\n\\instrument chain\n4 c4";

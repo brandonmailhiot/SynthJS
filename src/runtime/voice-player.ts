@@ -98,6 +98,16 @@ export class VoicePlayer {
           for (const freqParam of oscRig.frequencies) {
             applySlide(freqParam, freq, slideTarget, audioStart, playDuration);
           }
+        } else if (event.instrument.pitchSweep !== undefined) {
+          // Pitch envelope: exponential sweep from start offset to nominal
+          // pitch over `duration` seconds, on every tonal layer.
+          const sweep = event.instrument.pitchSweep;
+          const startFreq = freq * 2 ** (sweep.semitones / 12);
+          const sweepEnd = Math.min(playDuration, sweep.duration);
+          for (const freqParam of oscRig.frequencies) {
+            freqParam.setValueAtTime(startFreq, audioStart);
+            freqParam.exponentialRampToValueAtTime(freq, audioStart + sweepEnd);
+          }
         }
         oscillators.push(oscRig.source);
       }
