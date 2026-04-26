@@ -129,3 +129,17 @@ export {
   type OfflineAudioContextLike,
   type RenderOptions,
 } from "./tools/render-wav.js";
+
+// Services
+export {
+  getDiagnostics,
+  type ServiceDiagnostic,
+  type DiagnosticSeverity,
+} from "./services/diagnostics.js";
+export {
+  offsetToPosition,
+  positionToOffset,
+  spanToRange,
+  type Position,
+  type Range,
+} from "./services/position.js";
