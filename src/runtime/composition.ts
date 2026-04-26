@@ -24,6 +24,7 @@ export class Composition {
   private loopHandles: unknown[] = [];
   private readonly setTimeoutFn: (cb: () => void, ms: number) => unknown;
   private readonly clearTimeoutFn: (handle: unknown) => void;
+  private endedListeners: ((info: { totalDurationSec: number }) => void)[] = [];
 
   constructor(
     private readonly ir: CompositionIR,
@@ -60,7 +61,7 @@ export class Composition {
     return max;
   }
 
-  private scheduleIteration(iterStartTime: number, fromBeat: number = 0): void {
+  private scheduleIteration(iterStartTime: number, fromBeat = 0): void {
     const voiceOutput = this.ctx.createGain();
     voiceOutput.connect(this.ctx.destination);
     for (const voice of this.ir.voices) {
@@ -98,8 +99,9 @@ export class Composition {
     this.scheduleIteration(voiceStartTime, fromBeat);
     this.scheduler.start();
 
+    const duration = this.computeCompositionDuration();
+
     if (opts.loop) {
-      const duration = this.computeCompositionDuration();
       let iter = 1;
       const armNext = () => {
         if (this._state !== "playing") return;
@@ -111,6 +113,18 @@ export class Composition {
       // Arm the first re-schedule near the end of iteration 0
       const firstHandle = this.setTimeoutFn(armNext, Math.max(50, duration * 1000 - 100));
       this.loopHandles.push(firstHandle);
+    } else {
+      // Emit ended after the composition finishes
+      const handle = this.setTimeoutFn(
+        () => {
+          if (this._state === "playing") {
+            this._state = "stopped";
+            this.emitEnded(duration);
+          }
+        },
+        duration * 1000 + 50,
+      );
+      this.loopHandles.push(handle);
     }
   }
 
@@ -134,6 +148,17 @@ export class Composition {
     for (const player of this.players) player.stop();
     this.players.length = 0;
     this._state = "stopped";
+  }
+
+  onEnded(listener: (info: { totalDurationSec: number }) => void): () => void {
+    this.endedListeners.push(listener);
+    return () => {
+      this.endedListeners = this.endedListeners.filter((l) => l !== listener);
+    };
+  }
+
+  private emitEnded(totalDurationSec: number): void {
+    for (const l of this.endedListeners) l({ totalDurationSec });
   }
 
   async destroy(): Promise<void> {

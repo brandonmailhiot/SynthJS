@@ -273,7 +273,7 @@ describe("Composition — loop", () => {
     await comp.play({ loop: true });
     const oscCountAfterIter0 = ctx.history.filter((h) => h.method === "createOscillator").length;
     // Invoke the captured callback to simulate timer firing
-    capturedCb?.();
+    (capturedCb as (() => void) | null)?.();
     const oscCountAfterIter1 = ctx.history.filter((h) => h.method === "createOscillator").length;
     expect(oscCountAfterIter1).toBeGreaterThan(oscCountAfterIter0);
   });
@@ -308,9 +308,117 @@ describe("Composition — loop", () => {
     comp.stop();
     const oscCountAfterStop = ctx.history.filter((h) => h.method === "createOscillator").length;
     // Fire the callback even though we've already stopped — should be no-op
-    capturedCb?.();
+    (capturedCb as (() => void) | null)?.();
     expect(ctx.history.filter((h) => h.method === "createOscillator").length).toBe(
       oscCountAfterStop,
     );
+  });
+});
+
+describe("Composition — ended event", () => {
+  it("onEnded fires after duration elapses when not looping", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 10;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const fired: { totalDurationSec: number }[] = [];
+    comp.onEnded((info) => fired.push(info));
+    await comp.play();
+    // Simulate timer firing
+    (capturedCb as (() => void) | null)?.();
+    expect(fired).toHaveLength(1);
+    expect(fired[0]?.totalDurationSec).toBeGreaterThanOrEqual(0);
+    expect(comp.state).toBe("stopped");
+  });
+
+  it("stop() before end suppresses the ended event", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeClearTimeout = vi.fn();
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 77;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: fakeClearTimeout,
+    });
+    const fired: unknown[] = [];
+    comp.onEnded(() => fired.push(true));
+    await comp.play();
+    comp.stop(); // clears the handle
+    expect(fakeClearTimeout).toHaveBeenCalledWith(77);
+    // Even if the cb fires (e.g., race), state is stopped so emitEnded is skipped
+    (capturedCb as (() => void) | null)?.();
+    expect(fired).toHaveLength(0);
+  });
+
+  it("loop:true does not arm the ended timeout", async () => {
+    const ctx = new MockAudioContext();
+    const calls: number[] = [];
+    const fakeSetTimeout = vi.fn().mockImplementation((_cb: () => void, ms: number) => {
+      calls.push(ms);
+      return 1;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const fired: unknown[] = [];
+    comp.onEnded(() => fired.push(true));
+    await comp.play({ loop: true });
+    // With loop, the ended callback is never registered, so no +50ms call
+    const endedCalls = calls.filter((ms) => ms % 1000 === 50);
+    expect(endedCalls).toHaveLength(0);
+    expect(fired).toHaveLength(0);
+  });
+
+  it("multiple onEnded listeners all fire", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 10;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const results: string[] = [];
+    comp.onEnded(() => results.push("a"));
+    comp.onEnded(() => results.push("b"));
+    await comp.play();
+    (capturedCb as (() => void) | null)?.();
+    expect(results).toEqual(["a", "b"]);
+  });
+
+  it("unsubscribe function removes the listener", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 10;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const fired: unknown[] = [];
+    const unsub = comp.onEnded(() => fired.push(true));
+    unsub(); // remove before play ends
+    await comp.play();
+    (capturedCb as (() => void) | null)?.();
+    expect(fired).toHaveLength(0);
   });
 });
