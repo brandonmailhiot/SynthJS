@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { EffectInvocation } from "../ir/nodes.js";
-import { buildEffect, createReverbBuffer, makeDistortionCurve } from "./effects.js";
+import {
+  DEFAULT_EFFECT_ARGS,
+  buildEffect,
+  createReverbBuffer,
+  makeDistortionCurve,
+} from "./effects.js";
 import { MockAudioContext } from "./mock-audio-context.js";
 
 const fx = (
@@ -107,5 +112,59 @@ describe("buildEffect — unknown", () => {
   it("throws for unknown effect", () => {
     const ctx = new MockAudioContext();
     expect(() => buildEffect(ctx, fx("xyz"))).toThrow();
+  });
+});
+
+describe("DEFAULT_EFFECT_ARGS — defaults activate when args are empty", () => {
+  it("gain with no args uses default level 1.0", () => {
+    const ctx = new MockAudioContext();
+    const node = buildEffect(ctx, { name: "gain", args: { positional: [], named: {} } });
+    expect((node as unknown as { gain: { value: number } }).gain.value).toBe(1.0);
+  });
+
+  it("reverb with no args uses default seconds 1.0 → buffer length = sampleRate", () => {
+    const ctx = new MockAudioContext();
+    const node = buildEffect(ctx, { name: "reverb", args: { positional: [], named: {} } });
+    const buf = (node as unknown as { buffer: { length: number } }).buffer;
+    expect(buf).not.toBeNull();
+    expect(buf.length).toBe(ctx.sampleRate * DEFAULT_EFFECT_ARGS.reverb.seconds);
+  });
+
+  it("delay with no args uses default seconds 0.25", () => {
+    const ctx = new MockAudioContext();
+    const node = buildEffect(ctx, { name: "delay", args: { positional: [], named: {} } });
+    expect((node as unknown as { delayTime: { value: number } }).delayTime.value).toBe(
+      DEFAULT_EFFECT_ARGS.delay.seconds,
+    );
+  });
+
+  it("filter with no args uses default cutoff 1000 and type lowpass", () => {
+    const ctx = new MockAudioContext();
+    const node = buildEffect(ctx, { name: "filter", args: { positional: [], named: {} } });
+    expect((node as unknown as { frequency: { value: number } }).frequency.value).toBe(
+      DEFAULT_EFFECT_ARGS.filter.cutoff,
+    );
+    expect((node as unknown as { type: string }).type).toBe(DEFAULT_EFFECT_ARGS.filter.type);
+  });
+
+  it("distortion with no args uses default amount 0", () => {
+    const ctx = new MockAudioContext();
+    const node = buildEffect(ctx, { name: "distortion", args: { positional: [], named: {} } });
+    const curve = (node as unknown as { curve: Float32Array }).curve;
+    // With amount=0, curve midpoint (x=0) should be 0
+    expect(curve).not.toBeNull();
+    const mid = Math.floor(curve.length / 2);
+    expect(curve[mid]).toBeCloseTo(0, 5);
+  });
+
+  it("compressor with no args uses default threshold -24 and ratio 12", () => {
+    const ctx = new MockAudioContext();
+    const node = buildEffect(ctx, { name: "compressor", args: { positional: [], named: {} } });
+    expect((node as unknown as { threshold: { value: number } }).threshold.value).toBe(
+      DEFAULT_EFFECT_ARGS.compressor.threshold,
+    );
+    expect((node as unknown as { ratio: { value: number } }).ratio.value).toBe(
+      DEFAULT_EFFECT_ARGS.compressor.ratio,
+    );
   });
 });
