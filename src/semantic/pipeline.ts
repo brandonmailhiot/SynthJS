@@ -1,9 +1,9 @@
+import type { Composition, TopLevel, UseDecl } from "../ast/nodes.js";
 import { emitIR } from "../ir/emit.js";
 import type { CompositionIR } from "../ir/nodes.js";
 import { lex } from "../lexer/lexer.js";
 import { parse } from "../parser/parser.js";
 import { getStdlibSource, isStdlibPath } from "../stdlib/index.js";
-import type { Composition, TopLevel, UseDecl } from "../ast/nodes.js";
 import { expandRepeats } from "./expand-repeats.js";
 import { lowerEffects } from "./lower-effects.js";
 import { lowerPitch } from "./lower-pitch.js";
@@ -33,7 +33,7 @@ function inlineStdlibImports(ast: Composition): Composition {
 
   if (userUses.length > 0) {
     throw new Error(
-      `compileSync does not support relative \\use imports (only @stdlib/...). Use compile() instead.`,
+      "compileSync does not support relative \\use imports (only @stdlib/...). Use compile() instead.",
     );
   }
 

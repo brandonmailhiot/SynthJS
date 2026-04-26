@@ -160,7 +160,11 @@ async function runRender(args: string[]): Promise<number> {
   const ir = tryCompile(source, inPath ?? "stdin");
   if (!ir) return 1;
 
-  let OfflineAudioContextCtor: new (channels: number, length: number, sampleRate: number) => unknown;
+  let OfflineAudioContextCtor: new (
+    channels: number,
+    length: number,
+    sampleRate: number,
+  ) => unknown;
   try {
     // Dynamic import via runtime string to avoid build-time type resolution.
     const modName = "node-web-audio-api";

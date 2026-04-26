@@ -15,7 +15,7 @@ major_scale(c4)`);
 4 c4
 triad_major(c4)`);
     const events = ir.voices[0]?.events;
-    expect(events && events.length).toBeGreaterThan(0);
+    expect(events?.length).toBeGreaterThan(0);
     // Should include a chord (3 frequencies)
     const chordEv = events?.find((e) => e.frequencies.length === 3);
     expect(chordEv).toBeDefined();

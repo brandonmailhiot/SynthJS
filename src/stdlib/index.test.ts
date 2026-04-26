@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STDLIB, isStdlibPath, getStdlibSource } from "./index.js";
+import { STDLIB, getStdlibSource, isStdlibPath } from "./index.js";
 
 describe("STDLIB registry", () => {
   it("contains all five stdlib modules", () => {
@@ -34,9 +34,9 @@ describe("STDLIB registry", () => {
     const { lex } = await import("../lexer/lexer.js");
     const { parse } = await import("../parser/parser.js");
     for (const path of Object.keys(STDLIB)) {
-      const src = getStdlibSource(path);
-      expect(src).toBeDefined();
-      expect(() => parse(lex(src!))).not.toThrow();
+      const src = getStdlibSource(path) ?? "";
+      expect(src).not.toBe("");
+      expect(() => parse(lex(src))).not.toThrow();
     }
   });
 });

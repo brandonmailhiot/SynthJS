@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SynthJS — Live Editor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>SynthJS</h1>
+    <p>Web-native music DSL. Edit source. Press Play.</p>
+  </header>
+  <main>
+    <div class="controls-row">
+      <label class="examples">Examples:
+        <select id="examples">
+          <option value="scale">C Major Scale</option>
+          <option value="chords">Chord Progression</option>
+          <option value="two-voice">Two Voices</option>
+          <option value="custom-instrument">Custom Instrument</option>
+          <option value="slide">Slide Chain</option>
+          <option value="dynamics">Dynamics &amp; Articulation</option>
+        </select>
+      </label>
+      <div class="buttons">
+        <button id="play">▶ Play</button>
+        <button id="stop">■ Stop</button>
+      </div>
+    </div>
+    <textarea id="source" rows="20" spellcheck="false"></textarea>
+    <div id="diagnostics" aria-live="polite"></div>
+    <p class="hint">Output is muted until first user gesture (browser policy). Click Play to allow audio.</p>
+  </main>
+  <footer>
+    <p>SynthJS v2 — <a href="https://github.com/brandonmailhiot/SynthJS">GitHub</a></p>
+  </footer>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
