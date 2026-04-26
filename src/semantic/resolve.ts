@@ -320,6 +320,14 @@ function validateInstrumentDef(def: InstrumentDef): void {
       case "DetuneField":
         // No validation needed
         break;
+      case "PitchSweepField":
+        if (field.duration < 0) {
+          throw new ResolveError(
+            `pitch_sweep duration must be non-negative, got ${field.duration}`,
+            field.span,
+          );
+        }
+        break;
     }
   }
 }

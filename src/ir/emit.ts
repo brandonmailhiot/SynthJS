@@ -27,6 +27,7 @@ import type {
   InstrumentSpec,
   OscillatorKind,
   OscillatorLayer,
+  PitchSweep,
   TimelineEvent,
   VoiceTimeline,
 } from "./nodes.js";
@@ -131,6 +132,7 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
   let envelope: EnvelopeSpec | undefined;
   const filters: FilterSpec[] = [];
   let detune: number | undefined;
+  let pitchSweep: PitchSweep | undefined;
 
   for (const field of def.fields) {
     switch (field.kind) {
@@ -158,6 +160,9 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
       case "DetuneField":
         detune = field.cents;
         break;
+      case "PitchSweepField":
+        pitchSweep = { semitones: field.semitones, duration: field.duration };
+        break;
     }
   }
 
@@ -166,6 +171,7 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
   const spec: InstrumentSpec = { name: def.name, oscillators, filters };
   if (envelope !== undefined) spec.envelope = envelope;
   if (detune !== undefined) spec.detune = detune;
+  if (pitchSweep !== undefined) spec.pitchSweep = pitchSweep;
   return spec;
 }
 

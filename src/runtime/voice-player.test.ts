@@ -111,6 +111,74 @@ describe("VoicePlayer — slide", () => {
   });
 });
 
+describe("VoicePlayer — pitch sweep", () => {
+  it("schedules exponential ramp from offset pitch to nominal", () => {
+    const kickInstrument: InstrumentSpec = {
+      name: "kick",
+      oscillators: [{ kind: "sine" }],
+      filters: [],
+      pitchSweep: { semitones: 12, duration: 0.05 },
+    };
+    const ev = noteEvent({
+      frequencies: [110],
+      durationBeats: 0.5,
+      instrument: kickInstrument,
+    });
+    const { ctx, scheduler, player } = setup([ev]);
+    player.schedule();
+    scheduler.flush(100);
+    const oscRec = ctx.history.find((h) => h.method === "createOscillator");
+    const freqHist = (
+      (oscRec?.result as { frequency: unknown }).frequency as unknown as { history: unknown[] }
+    ).history;
+    // Start at 220 Hz (110 * 2^(12/12) = octave up), ramp to 110 Hz at start + 0.05s
+    expect(freqHist).toContainEqual({
+      method: "param",
+      name: "frequency",
+      op: "setValueAtTime",
+      value: 220,
+      time: 0,
+    });
+    expect(freqHist).toContainEqual({
+      method: "param",
+      name: "frequency",
+      op: "exponentialRampToValueAtTime",
+      value: 110,
+      time: 0.05,
+    });
+  });
+
+  it("slide takes precedence over pitch_sweep", () => {
+    const inst: InstrumentSpec = {
+      name: "rise",
+      oscillators: [{ kind: "sine" }],
+      filters: [],
+      pitchSweep: { semitones: 12, duration: 0.05 },
+    };
+    const ev = noteEvent({
+      frequencies: [220],
+      slideTo: [440],
+      durationBeats: 0.5,
+      instrument: inst,
+    });
+    const { ctx, scheduler, player } = setup([ev]);
+    player.schedule();
+    scheduler.flush(100);
+    const oscRec = ctx.history.find((h) => h.method === "createOscillator");
+    const freqHist = (
+      (oscRec?.result as { frequency: unknown }).frequency as unknown as { history: unknown[] }
+    ).history;
+    // Slide writes setValueAtTime(220, 0) + linearRampToValueAtTime(440, ...);
+    // pitch_sweep would have written exponentialRampToValueAtTime — must not be present.
+    expect(freqHist).not.toContainEqual(
+      expect.objectContaining({ op: "exponentialRampToValueAtTime" }),
+    );
+    expect(freqHist).toContainEqual(
+      expect.objectContaining({ op: "linearRampToValueAtTime", value: 440 }),
+    );
+  });
+});
+
 describe("VoicePlayer — annotations", () => {
   it("@chance(0) skips the event", () => {
     const ev = noteEvent({

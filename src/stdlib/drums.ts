@@ -1,9 +1,10 @@
 export const DRUMS_SOURCE = `\\version "2.0"
 
-/// Kick drum — low sine, fast attack, fast decay
+/// Kick drum — low sine with fast pitch drop for the boom
 instrument define kick_drum {
   oscillator sine
-  envelope percussive(0.001, 0.15)
+  envelope percussive(0.001, 0.18)
+  pitch_sweep 24 0.05
   detune -1200
 }
 
@@ -30,53 +31,55 @@ instrument define hat_open {
 
 /// ============================================================
 /// 808-style kit — vintage Roland TR-808 character via stacks
-/// + filter cascades. Drop-in replacements for the noise/sine
-/// variants above. The original 808 used pitch-envelope sweeps
-/// for kick and toms which this DSL does not yet support, so
-/// those pieces are static-pitch approximations.
+/// + filter cascades + pitch sweeps. Drop-in replacements for
+/// the noise/sine variants above.
 /// ============================================================
 
-/// 808-style bass drum — sine body + sub layer, lowpassed.
-/// Play at a low pitch (c2, a1) and let the percussive envelope
-/// shape the boom. Lacks the iconic 808 pitch sweep.
+/// 808-style bass drum — sine body + sub layer, lowpassed,
+/// with fast 2-octave pitch drop for the iconic 808 boom.
 instrument define bass_drum_808 {
   oscillator sine
   oscillator sine -7
-  envelope percussive(0.002, 0.45)
-  filter lowpass(120, 1.0)
+  envelope percussive(0.002, 0.5)
+  pitch_sweep 24 0.06
+  filter lowpass(150, 1.0)
   detune -1200
 }
 
 /// 808-style snare — two detuned triangles for tonal body
 /// stacked with noise for the wire rattle. Bandpass focuses the
-/// snap. Play at c4/d4.
+/// snap. Pitch drop on the tonal layers makes the body smack.
 instrument define snare_drum_808 {
   oscillator triangle -1200
   oscillator triangle -1500
   oscillator noise
   envelope percussive(0.001, 0.15)
+  pitch_sweep 7 0.03
   filter highpass(800, 0.7)
   filter bandpass(2000, 1.5)
 }
 
-/// 808-style low tom — sine, deep
+/// 808-style low tom — sine with octave pitch drop
 instrument define tom_low_808 {
   oscillator sine -800
-  envelope percussive(0.005, 0.45)
+  envelope percussive(0.005, 0.5)
+  pitch_sweep 12 0.08
   filter lowpass(800, 1.0)
 }
 
-/// 808-style mid tom — sine, mid
+/// 808-style mid tom — sine with octave pitch drop
 instrument define tom_mid_808 {
   oscillator sine -400
-  envelope percussive(0.005, 0.4)
+  envelope percussive(0.005, 0.45)
+  pitch_sweep 12 0.07
   filter lowpass(1000, 1.0)
 }
 
-/// 808-style high tom — sine, high
+/// 808-style high tom — sine with octave pitch drop
 instrument define tom_high_808 {
   oscillator sine -100
-  envelope percussive(0.005, 0.35)
+  envelope percussive(0.005, 0.4)
+  pitch_sweep 12 0.06
   filter lowpass(1200, 1.0)
 }
 

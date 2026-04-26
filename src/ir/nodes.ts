@@ -47,12 +47,22 @@ export type OscillatorLayer = {
 
 export type FilterSpec = { type: string; cutoff: number; q: number };
 
+export type PitchSweep = {
+  // Semitones offset above the note's nominal pitch at the start of the sweep.
+  // Positive = start sharp, sweep down to nominal (kick boom).
+  // Negative = start flat, sweep up to nominal (rising effect).
+  semitones: number;
+  // Duration of the sweep in seconds.
+  duration: number;
+};
+
 export type InstrumentSpec = {
   name: string; // primitive or custom name
   oscillators: OscillatorLayer[]; // length >= 1; single primitive = length-1 array
   envelope?: EnvelopeSpec; // from custom instrument body
   filters: FilterSpec[]; // length 0+; chained source -> f1 -> f2 -> ... -> output
   detune?: number; // instrument-level cents (applied to every layer)
+  pitchSweep?: PitchSweep; // optional pitch envelope; applies to all tonal layers
 };
 
 export type AnnotationData = {
