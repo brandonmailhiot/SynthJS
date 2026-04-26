@@ -124,6 +124,8 @@ export type NoteEvent = {
   annotations: Annotation[];
   repeat?: number;
   span: SourceSpan;
+  effectiveDynamic?: number; // gain 0..1, set by sticky lowering
+  effectiveInstrument?: string; // instrument name, set by sticky lowering
 };
 
 export type ChordEvent = {
@@ -134,6 +136,8 @@ export type ChordEvent = {
   annotations: Annotation[];
   repeat?: number;
   span: SourceSpan;
+  effectiveDynamic?: number; // gain 0..1, set by sticky lowering
+  effectiveInstrument?: string; // instrument name, set by sticky lowering
 };
 
 export type SlideEvent = {
@@ -149,6 +153,8 @@ export type RestEvent = {
   modifiers: ArticulationMark[];
   annotations: Annotation[];
   span: SourceSpan;
+  effectiveDynamic?: number; // gain 0..1, set by sticky lowering
+  effectiveInstrument?: string; // instrument name, set by sticky lowering
 };
 
 export type SustainEvent = { kind: "Sustain"; pitch: PitchTerm; span: SourceSpan };
