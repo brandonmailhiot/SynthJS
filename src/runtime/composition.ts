@@ -10,7 +10,7 @@ export type CompositionOptions = {
   random?: () => number;
 };
 
-export type CompositionState = "idle" | "playing" | "stopped";
+export type CompositionState = "idle" | "playing" | "paused" | "stopped";
 
 export class Composition {
   private readonly ctx: AudioContextLike;
@@ -79,8 +79,20 @@ export class Composition {
     // resolve immediately since lookahead scheduling is fire-and-forget.
   }
 
-  stop(): void {
+  async pause(): Promise<void> {
     if (this._state !== "playing") return;
+    await this.ctx.suspend();
+    this._state = "paused";
+  }
+
+  async resume(): Promise<void> {
+    if (this._state !== "paused") return;
+    await this.ctx.resume();
+    this._state = "playing";
+  }
+
+  stop(): void {
+    if (this._state !== "playing" && this._state !== "paused") return;
     this.scheduler.stop();
     for (const player of this.players) player.stop();
     this.players.length = 0;

@@ -162,6 +162,57 @@ describe("Composition — diagnostics", () => {
   });
 });
 
+describe("Composition — pause/resume", () => {
+  it("pause from playing transitions to paused and calls ctx.suspend", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    expect(comp.state).toBe("playing");
+    await comp.pause();
+    expect(comp.state).toBe("paused");
+    expect(ctx.history.some((h) => h.method === "suspend")).toBe(true);
+  });
+
+  it("resume from paused transitions to playing and calls ctx.resume", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    await comp.pause();
+    const resumeCountBefore = ctx.history.filter((h) => h.method === "resume").length;
+    await comp.resume();
+    expect(comp.state).toBe("playing");
+    const resumeCountAfter = ctx.history.filter((h) => h.method === "resume").length;
+    expect(resumeCountAfter).toBe(resumeCountBefore + 1);
+  });
+
+  it("pause when not playing is a no-op (state stays idle)", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.pause(); // state is idle, not playing
+    expect(comp.state).toBe("idle");
+    expect(ctx.history.some((h) => h.method === "suspend")).toBe(false);
+  });
+
+  it("resume when not paused is a no-op (state stays playing)", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    const resumeCountBefore = ctx.history.filter((h) => h.method === "resume").length;
+    await comp.resume(); // state is playing, not paused
+    expect(comp.state).toBe("playing");
+    expect(ctx.history.filter((h) => h.method === "resume").length).toBe(resumeCountBefore);
+  });
+
+  it("stop from paused transitions to stopped", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    await comp.pause();
+    comp.stop();
+    expect(comp.state).toBe("stopped");
+  });
+});
+
 describe("Composition — onCue", () => {
   it("forwards onCue to VoicePlayer", async () => {
     const cued: string[] = [];
