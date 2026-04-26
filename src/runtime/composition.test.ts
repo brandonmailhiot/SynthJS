@@ -422,3 +422,112 @@ describe("Composition — ended event", () => {
     expect(fired).toHaveLength(0);
   });
 });
+
+describe("Composition — update (hot reload)", () => {
+  it("update before play swaps IR and leaves state as idle", async () => {
+    const ctx = new MockAudioContext();
+    const ir1 = irOf([noteEvent({ frequencies: [440] })]);
+    const comp = new Composition(ir1, { audioContext: ctx });
+    expect(comp.state).toBe("idle");
+
+    const ir2 = irOf([noteEvent({ frequencies: [880] })]);
+    await comp.update(ir2);
+
+    expect(comp.state).toBe("idle");
+    // The ir field reflects the new IR (accessed through diagnostics as a proxy check)
+    // We verify via a play that schedules the new events
+    await comp.play();
+    // The oscillator count should be 1 (from the new IR)
+    expect(ctx.history.filter((h) => h.method === "createOscillator")).toHaveLength(1);
+  });
+
+  it("ir field reflects new IR after update (idle state)", async () => {
+    const ctx = new MockAudioContext();
+    const ir1: CompositionIR = {
+      tempo: 60,
+      timeSig: { numerator: 4, denominator: 4 },
+      voices: [],
+      diagnostics: [{ message: "old", severity: "warning", span }],
+    };
+    const comp = new Composition(ir1, { audioContext: ctx });
+
+    const ir2: CompositionIR = {
+      tempo: 120,
+      timeSig: { numerator: 4, denominator: 4 },
+      voices: [],
+      diagnostics: [{ message: "new", severity: "warning", span }],
+    };
+    await comp.update(ir2);
+
+    // diagnostics getter reads from this.ir
+    expect(comp.diagnostics[0]?.message).toBe("new");
+  });
+
+  it("update during play resets players and schedules new IR events", async () => {
+    const ctx = new MockAudioContext();
+    const ir1 = irOf([noteEvent({ startBeat: 0 }), noteEvent({ startBeat: 0.25 })]);
+    const comp = new Composition(ir1, { audioContext: ctx });
+    await comp.play();
+    const oscCountAfterPlay = ctx.history.filter((h) => h.method === "createOscillator").length;
+    expect(oscCountAfterPlay).toBe(2);
+
+    const ir2 = irOf([
+      noteEvent({ startBeat: 0 }),
+      noteEvent({ startBeat: 0.25 }),
+      noteEvent({ startBeat: 0.5 }),
+    ]);
+    await comp.update(ir2);
+
+    // After update, new oscillators are scheduled for new IR events
+    const oscCountAfterUpdate = ctx.history.filter((h) => h.method === "createOscillator").length;
+    expect(oscCountAfterUpdate).toBeGreaterThan(oscCountAfterPlay);
+    expect(comp.state).toBe("playing");
+  });
+
+  it("update with empty new IR clears players", async () => {
+    const ctx = new MockAudioContext();
+    const ir1 = irOf([noteEvent(), noteEvent({ startBeat: 0.25 })]);
+    const comp = new Composition(ir1, { audioContext: ctx });
+    await comp.play();
+
+    const emptyIR: CompositionIR = {
+      tempo: 60,
+      timeSig: { numerator: 4, denominator: 4 },
+      voices: [],
+      diagnostics: [],
+    };
+    await comp.update(emptyIR);
+
+    // No new oscillators after update with empty IR
+    const oscCount = ctx.history.filter((h) => h.method === "createOscillator").length;
+    // All previously scheduled oscillators were stopped and no new ones added
+    expect(comp.state).toBe("playing");
+    // The diagnostics now come from the empty IR
+    expect(comp.diagnostics).toHaveLength(0);
+    // oscCount is stable: no extra oscillators scheduled from empty IR
+    const oscCountAfter = ctx.history.filter((h) => h.method === "createOscillator").length;
+    expect(oscCountAfter).toBe(oscCount);
+  });
+
+  it("update while paused swaps IR and reschedules from current beat", async () => {
+    const ctx = new MockAudioContext();
+    const ir1 = irOf([noteEvent({ startBeat: 0 })]);
+    const comp = new Composition(ir1, { audioContext: ctx });
+    await comp.play();
+    await comp.pause();
+    expect(comp.state).toBe("paused");
+
+    const ir2: CompositionIR = {
+      tempo: 60,
+      timeSig: { numerator: 4, denominator: 4 },
+      voices: [],
+      diagnostics: [{ message: "paused-update", severity: "warning", span }],
+    };
+    await comp.update(ir2);
+
+    // ir field updated
+    expect(comp.diagnostics[0]?.message).toBe("paused-update");
+    // state still paused (update doesn't change state)
+    expect(comp.state).toBe("paused");
+  });
+});

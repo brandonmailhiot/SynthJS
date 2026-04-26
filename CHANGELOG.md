@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0-alpha.4] — 2026-04-26
+
+### Added
+- **JSON IR export (`exportJson`)** (`src/tools/export-json.ts`): serialises a `CompositionIR` to JSON with optional pretty-printing and source-span inclusion.
+- **Canonical source formatter (`format`)** (`src/tools/format.ts`): reformats SynthJS source to a canonical style (consistent indentation, normalised whitespace, version hoisting).
+- **MIDI export (`exportMidi`)** (`src/tools/export-midi.ts`): converts a `CompositionIR` to a standard MIDI file (`Uint8Array`) with tempo, program-change, and note-on/note-off events.
+- **WAV offline render (`renderToWav`, `audioBufferToWav`)** (`src/tools/render-wav.ts`): offline Web Audio rendering of a composition to a 44.1 kHz PCM WAV buffer.
+- **Doc generator (`generateDocs`)** (`src/tools/gen-docs.ts`): extracts `///` doc comments from bindings, voices, and instrument definitions and emits a Markdown reference page.
+- **Hot reload (`Composition.update`)** (`src/runtime/composition.ts`): replaces the active `CompositionIR` mid-playback, rescheduling voices from the current transport position.
+- **`synth` CLI binary** (`src/cli/main.ts`): command-line interface with subcommands:
+  - `fmt [path] [-i]` — format source in-place or to stdout
+  - `check [path]` — parse and compile, exit 1 on errors
+  - `json [path] [--include-spans] [--compact]` — emit IR as JSON
+  - `midi <input> -o <output>` — export to MIDI file
+  - `doc [path] [--title T] [-o <output>]` — generate Markdown docs
+  - `help` — display usage
+
 ## [2.0.0-alpha.3] — 2026-04-26
 
 ### Added

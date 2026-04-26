@@ -104,6 +104,12 @@ export type {
   Diagnostic,
 } from "./ir/nodes.js";
 
+// Tools
+export { exportJson, type JsonExportOptions } from "./tools/export-json.js";
+export { exportMidi } from "./tools/export-midi.js";
+export { generateDocs, type GenDocsOptions } from "./tools/gen-docs.js";
+export { format } from "./tools/format.js";
+
 // Runtime API
 export {
   Composition,
@@ -112,3 +118,11 @@ export {
 } from "./runtime/composition.js";
 export type { AudioContextLike, AudioNodeLike, AudioParamLike } from "./runtime/audio-context.js";
 export { MockAudioContext } from "./runtime/mock-audio-context.js"; // useful for users writing tests
+
+// WAV offline render
+export {
+  audioBufferToWav,
+  renderToWav,
+  type OfflineAudioContextLike,
+  type RenderOptions,
+} from "./tools/render-wav.js";
