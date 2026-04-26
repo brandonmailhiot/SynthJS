@@ -126,6 +126,9 @@ export type NoteEvent = {
   span: SourceSpan;
   effectiveDynamic?: number; // gain 0..1, set by sticky lowering
   effectiveInstrument?: string; // instrument name, set by sticky lowering
+  fxChain?: Call[]; // effects applied to this event, set by lowerEffects
+  envelope?: Call; // envelope applied to this event, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale (default 1.0), set by lowerEffects
 };
 
 export type ChordEvent = {
@@ -138,6 +141,9 @@ export type ChordEvent = {
   span: SourceSpan;
   effectiveDynamic?: number; // gain 0..1, set by sticky lowering
   effectiveInstrument?: string; // instrument name, set by sticky lowering
+  fxChain?: Call[]; // effects applied to this event, set by lowerEffects
+  envelope?: Call; // envelope applied to this event, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale (default 1.0), set by lowerEffects
 };
 
 export type SlideEvent = {
@@ -145,6 +151,9 @@ export type SlideEvent = {
   source: NoteEvent;
   destination: NoteEvent;
   span: SourceSpan;
+  fxChain?: Call[]; // effects applied to source and destination, set by lowerEffects
+  envelope?: Call; // envelope applied to source and destination, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale, set by lowerEffects
 };
 
 export type RestEvent = {
@@ -155,6 +164,9 @@ export type RestEvent = {
   span: SourceSpan;
   effectiveDynamic?: number; // gain 0..1, set by sticky lowering
   effectiveInstrument?: string; // instrument name, set by sticky lowering
+  fxChain?: Call[]; // effects applied to this event, set by lowerEffects
+  envelope?: Call; // envelope applied to this event, set by lowerEffects
+  durationScale?: number; // multiplicative duration scale (default 1.0), set by lowerEffects
 };
 
 export type SustainEvent = { kind: "Sustain"; pitch: PitchTerm; span: SourceSpan };
