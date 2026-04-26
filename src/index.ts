@@ -143,3 +143,4 @@ export {
   type Position,
   type Range,
 } from "./services/position.js";
+export { getHover, type HoverInfo } from "./services/hover.js";
