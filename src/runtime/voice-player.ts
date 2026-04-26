@@ -2,7 +2,7 @@ import type { InstrumentSpec, TimelineEvent, VoiceTimeline } from "../ir/nodes.j
 import { applyArticulation } from "./articulation.js";
 import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
 import { buildEnvelope } from "./envelope.js";
-import { buildFxChain } from "./fx-chain.js";
+import { buildFxChainNodes } from "./fx-chain.js";
 import { type SampleBuffers, type Sourceish, buildOscillator } from "./oscillator.js";
 import type { LookaheadScheduler } from "./scheduler.js";
 import { applySlide } from "./slide.js";
@@ -61,6 +61,22 @@ export class VoicePlayer {
     const { ctx, voice, tempo, voiceStartTime, voiceOutput, scheduler, onCue, random } = this.opts;
     const rng = random ?? Math.random;
     const sampleBuffers = this.opts.sampleBuffers;
+    // Per-voice fxChain cache — events that share an identical fx spec route
+    // through the same convolver/delay/etc. Without this, each event would
+    // build a fresh ConvolverNode and impulse response, exploding node counts
+    // on busy compositions and starving the audio thread.
+    const fxChainCache = new Map<string, AudioNodeLike>();
+    const getFxInput = (event: TimelineEvent): AudioNodeLike => {
+      if (event.fxChain.length === 0) return voiceOutput;
+      const key = JSON.stringify(event.fxChain);
+      const cached = fxChainCache.get(key);
+      if (cached) return cached;
+      const built = buildFxChainNodes(ctx, event.fxChain);
+      if (!built) return voiceOutput;
+      built.output.connect(voiceOutput);
+      fxChainCache.set(key, built.input);
+      return built.input;
+    };
 
     for (const event of voice.events) {
       // Apply @chance gate
@@ -103,8 +119,7 @@ export class VoicePlayer {
         );
         const envRig = buildEnvelope(ctx, event.envelope, audioStart, playDuration, peakGain);
         oscRig.output.connect(envRig.input);
-        const fxOut = buildFxChain(ctx, event.fxChain, envRig.output);
-        fxOut.connect(voiceOutput);
+        envRig.output.connect(getFxInput(event));
         // Slide? Only meaningful for tonal oscillators. With stacks, every
         // tonal layer slides in lockstep so detune offsets are preserved.
         const slideTarget = event.slideTo?.[i];
