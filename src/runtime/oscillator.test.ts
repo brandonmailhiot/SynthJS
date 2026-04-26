@@ -259,6 +259,52 @@ describe("buildOscillator — oscillator stack", () => {
     expect(gainCalls).toHaveLength(2);
   });
 
+  it("sample layer creates buffer source with playbackRate from rootHz ratio", () => {
+    const ctx = new MockAudioContext();
+    const buf = ctx.createBuffer(1, 100, 44100);
+    const buffers = new Map([["kick.wav", buf]]);
+    buildOscillator(
+      ctx,
+      baseInstrument({
+        oscillators: [{ kind: "sample", samplePath: "kick.wav", rootHz: 220 }],
+      }),
+      440, // playing one octave up from rootHz
+      0,
+      1,
+      buffers,
+    );
+    // createBufferSource should have been called for the sample layer
+    const sourceRecs = ctx.history.filter((h) => h.method === "createBufferSource");
+    expect(sourceRecs.length).toBeGreaterThan(0);
+    const source = sourceRecs[sourceRecs.length - 1]?.result as {
+      buffer: unknown;
+      playbackRate: { value: number };
+    };
+    expect(source.buffer).toBe(buf);
+    expect(source.playbackRate.value).toBeCloseTo(2.0); // 440 / 220
+  });
+
+  it("sample layer without rootHz plays at rate 1.0 (drum-style)", () => {
+    const ctx = new MockAudioContext();
+    const buf = ctx.createBuffer(1, 100, 44100);
+    const buffers = new Map([["clap.wav", buf]]);
+    buildOscillator(
+      ctx,
+      baseInstrument({
+        oscillators: [{ kind: "sample", samplePath: "clap.wav" }],
+      }),
+      880,
+      0,
+      1,
+      buffers,
+    );
+    const sourceRecs = ctx.history.filter((h) => h.method === "createBufferSource");
+    const source = sourceRecs[sourceRecs.length - 1]?.result as {
+      playbackRate: { value: number };
+    };
+    expect(source.playbackRate.value).toBe(1.0);
+  });
+
   it("layer without envelope connects directly to summing gain", () => {
     const ctx = new MockAudioContext();
     buildOscillator(

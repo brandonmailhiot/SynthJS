@@ -38,12 +38,15 @@ export type EffectInvocation = {
   args: { positional: (number | string)[]; named?: Record<string, number | string> };
 };
 
-export type OscillatorKind = "sine" | "square" | "sawtooth" | "triangle" | "noise";
+export type OscillatorKind = "sine" | "square" | "sawtooth" | "triangle" | "noise" | "sample";
 
 export type OscillatorLayer = {
   kind: OscillatorKind;
   detune?: number; // per-layer detune in cents (additive with InstrumentSpec.detune)
   envelope?: EnvelopeSpec; // per-layer gain envelope (1.0-peak; multiplied with master)
+  // Sample-specific (kind === "sample" only):
+  samplePath?: string; // URL or path to the audio file
+  rootHz?: number; // recorded pitch in Hz; playbackRate = freq/rootHz
 };
 
 export type FilterSpec = { type: string; cutoff: number; q: number };

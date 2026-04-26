@@ -17,6 +17,8 @@ export interface AudioContextLike {
   resume(): Promise<void>;
   suspend(): Promise<void>;
   close(): Promise<void>;
+
+  decodeAudioData(buffer: ArrayBuffer): Promise<AudioBufferLike>;
 }
 
 export interface AudioNodeLike {
@@ -111,6 +113,7 @@ export function adaptAudioContext(ctx: AudioContext): AudioContextLike {
     "resume",
     "suspend",
     "close",
+    "decodeAudioData",
   ];
   for (const m of required) {
     if (typeof (ctx as unknown as Record<string, unknown>)[m] !== "function") {

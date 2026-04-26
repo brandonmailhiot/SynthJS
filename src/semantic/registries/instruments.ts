@@ -1,4 +1,4 @@
-const PRIMITIVES = new Set(["sine", "square", "sawtooth", "triangle", "noise"]);
+const PRIMITIVES = new Set(["sine", "square", "sawtooth", "triangle", "noise", "sample"]);
 const ENVELOPES = new Set(["adsr", "linear", "percussive"]);
 const FILTERS = new Set(["lowpass", "highpass", "bandpass", "notch"]);
 

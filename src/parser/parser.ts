@@ -46,7 +46,7 @@ import type {
 import { ParseError, type SourceSpan } from "../errors.js";
 import type { Token, TokenKind } from "../lexer/token.js";
 import { type Mode, isMode } from "../modes.js";
-import { type Accidental, isNoteLetter, parsePitchString } from "../pitch.js";
+import { type Accidental, computeFrequency, isNoteLetter, parsePitchString } from "../pitch.js";
 
 // Keywords that are parsed as identifiers but treated structurally
 const KEYWORDS = new Set([
@@ -493,11 +493,28 @@ class Parser {
       this.advance();
       const kindTok = this.expect("Identifier", "expected oscillator kind");
       // `oscillator <kind> [<signed-int>] [{ envelope <call> }]`
+      // or `oscillator sample("path") [root <pitch>] [<signed-int>] [{ envelope <call> }]`
       // Per-layer modifiers go inside the optional braces to avoid ambiguity
       // with the instrument-level `envelope` field that may follow.
       let detune: number | undefined;
       let envelope: Call | undefined;
+      let samplePath: string | undefined;
+      let root: AbsolutePitch | undefined;
       let endSpan = kindTok.span;
+      if (kindTok.value === "sample") {
+        this.expect("LParen", "expected '(' after sample");
+        const pathTok = this.expect("String", "expected sample path string");
+        const rparen = this.expect("RParen", "expected ')' after sample path");
+        samplePath = pathTok.value;
+        endSpan = rparen.span;
+        // Optional `root <pitch>`
+        const next = this.peek();
+        if (next.kind === "Identifier" && next.value === "root") {
+          this.advance();
+          root = this.parsePitch();
+          endSpan = root.span;
+        }
+      }
       if (this.check("Minus") || this.check("Plus") || this.check("IntLiteral")) {
         detune = this.parseSignedNumber();
         endSpan = this.peekPrev().span;
@@ -526,6 +543,8 @@ class Parser {
       };
       if (detune !== undefined) field.detune = detune;
       if (envelope !== undefined) field.envelope = envelope;
+      if (samplePath !== undefined) field.samplePath = samplePath;
+      if (root !== undefined) field.root = root;
       return field;
     }
     if (val === "envelope") {

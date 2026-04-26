@@ -1,5 +1,6 @@
 import type { CompositionIR, Diagnostic, TimelineEvent } from "../ir/nodes.js";
 import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
+import { type SampleBuffers, type SampleFetcher, preloadSamples } from "./sample-preload.js";
 import { LookaheadScheduler, type SchedulerOptions } from "./scheduler.js";
 import { beatsToSeconds } from "./time.js";
 import { VoicePlayer } from "./voice-player.js";
@@ -11,6 +12,7 @@ export type CompositionOptions = {
   random?: () => number;
   setTimeout?: (cb: () => void, ms: number) => unknown;
   clearTimeout?: (handle: unknown) => void;
+  sampleFetcher?: SampleFetcher; // override default fetch-based sample loader
 };
 
 export type CompositionState = "idle" | "playing" | "paused" | "stopped";
@@ -27,6 +29,8 @@ export class Composition {
   private endedListeners: ((info: { totalDurationSec: number }) => void)[] = [];
   private playStartTime = 0;
   private masterInput: AudioNodeLike | null = null;
+  private sampleBuffers: SampleBuffers = new Map();
+  private samplesLoaded = false;
 
   constructor(
     private readonly ir: CompositionIR,
@@ -101,6 +105,7 @@ export class Composition {
         voiceStartTime: iterStartTime,
         voiceOutput,
         scheduler: this.scheduler,
+        sampleBuffers: this.sampleBuffers,
         ...(this.opts.onCue ? { onCue: this.opts.onCue } : {}),
         ...(this.opts.random ? { random: this.opts.random } : {}),
       });
@@ -115,6 +120,13 @@ export class Composition {
 
     if (this.ctx.state === "suspended") {
       await this.ctx.resume();
+    }
+
+    // Preload sample buffers on first play. Cached for the life of the
+    // Composition so subsequent loops/replays don't re-fetch.
+    if (!this.samplesLoaded) {
+      this.sampleBuffers = await preloadSamples(this.ir, this.ctx, this.opts.sampleFetcher);
+      this.samplesLoaded = true;
     }
 
     const startOffset = 0.05; // small lead time for setup

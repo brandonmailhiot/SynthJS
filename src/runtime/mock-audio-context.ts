@@ -123,6 +123,10 @@ export class MockAudioContext implements AudioContextLike {
     this.history.push({ method: "close" });
     this.state = "closed";
   }
+  async decodeAudioData(_buffer: ArrayBuffer): Promise<AudioBufferLike> {
+    // Mocks return a 1-second silent stub buffer.
+    return new MockAudioBuffer(1, this.sampleRate, this.sampleRate);
+  }
 }
 
 class MockAudioParam implements AudioParamLike {

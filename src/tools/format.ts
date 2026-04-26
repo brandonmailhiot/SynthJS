@@ -277,10 +277,12 @@ function printInstrumentDef(n: InstrumentDef, depth: number): string {
 function printInstrumentField(f: InstrumentField, depth: number): string {
   switch (f.kind) {
     case "Oscillator": {
-      const head =
-        f.detune !== undefined && f.detune !== 0
-          ? `oscillator ${f.value} ${formatNumber(f.detune)}`
+      let head =
+        f.value === "sample" && f.samplePath !== undefined
+          ? `oscillator sample("${f.samplePath}")`
           : `oscillator ${f.value}`;
+      if (f.root !== undefined) head += ` root ${printAbsolutePitch(f.root)}`;
+      if (f.detune !== undefined && f.detune !== 0) head += ` ${formatNumber(f.detune)}`;
       if (f.envelope !== undefined) {
         const innerIndent = indent(depth + 1);
         return [

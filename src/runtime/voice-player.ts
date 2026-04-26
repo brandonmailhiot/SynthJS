@@ -3,7 +3,7 @@ import { applyArticulation } from "./articulation.js";
 import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
 import { buildEnvelope } from "./envelope.js";
 import { buildFxChain } from "./fx-chain.js";
-import { type Sourceish, buildOscillator } from "./oscillator.js";
+import { type SampleBuffers, type Sourceish, buildOscillator } from "./oscillator.js";
 import type { LookaheadScheduler } from "./scheduler.js";
 import { applySlide } from "./slide.js";
 import { beatsToSeconds } from "./time.js";
@@ -42,6 +42,7 @@ export type VoicePlayerOptions = {
   voiceStartTime: number;
   voiceOutput: AudioNodeLike;
   scheduler: LookaheadScheduler;
+  sampleBuffers?: SampleBuffers; // preloaded sample buffers keyed by path
   onCue?: (cue: { name: string; audioTime: number; event: TimelineEvent }) => void;
   random?: () => number; // injectable for tests; defaults to Math.random
 };
@@ -59,6 +60,7 @@ export class VoicePlayer {
 
     const { ctx, voice, tempo, voiceStartTime, voiceOutput, scheduler, onCue, random } = this.opts;
     const rng = random ?? Math.random;
+    const sampleBuffers = this.opts.sampleBuffers;
 
     for (const event of voice.events) {
       // Apply @chance gate
@@ -91,7 +93,14 @@ export class VoicePlayer {
       for (let i = 0; i < event.frequencies.length; i++) {
         const freq = event.frequencies[i];
         if (typeof freq !== "number") continue;
-        const oscRig = buildOscillator(ctx, event.instrument, freq, audioStart, playDuration);
+        const oscRig = buildOscillator(
+          ctx,
+          event.instrument,
+          freq,
+          audioStart,
+          playDuration,
+          sampleBuffers,
+        );
         const envRig = buildEnvelope(ctx, event.envelope, audioStart, playDuration, peakGain);
         oscRig.output.connect(envRig.input);
         const fxOut = buildFxChain(ctx, event.fxChain, envRig.output);
