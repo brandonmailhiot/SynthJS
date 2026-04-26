@@ -307,6 +307,9 @@ function validateInstrumentDef(def: InstrumentDef): void {
             suggestion ?? undefined,
           );
         }
+        if (field.envelope !== undefined) {
+          validateEnvelope(field.envelope);
+        }
         break;
       }
       case "EnvelopeField": {

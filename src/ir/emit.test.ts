@@ -223,6 +223,17 @@ describe("emit IR — instrument", () => {
     expect(ev?.instrument.pitchSweep).toEqual({ semitones: -7, duration: 0.1 });
   });
 
+  it("per-layer envelope captured into layer", () => {
+    const src =
+      "instrument define snare { oscillator triangle { envelope percussive(0.001, 0.05) } oscillator noise { envelope percussive(0.001, 0.005) } }\n\\instrument snare\n4 c4";
+    const ir = compile(src);
+    const ev = ir.voices[0]?.events[0];
+    expect(ev?.instrument.oscillators).toEqual([
+      { kind: "triangle", envelope: { kind: "percussive", args: [0.001, 0.05] } },
+      { kind: "noise", envelope: { kind: "percussive", args: [0.001, 0.005] } },
+    ]);
+  });
+
   it("multi-filter instrument cascades in declared order", () => {
     const src =
       "instrument define chain { oscillator noise filter highpass(500, 0.7) filter bandpass(2000, 1.0) filter lowpass(8000, 0.7) }\n\\instrument chain\n4 c4";

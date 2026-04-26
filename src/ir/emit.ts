@@ -139,6 +139,7 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
       case "Oscillator": {
         const layer: OscillatorLayer = { kind: field.value as OscillatorKind };
         if (field.detune !== undefined && field.detune !== 0) layer.detune = field.detune;
+        if (field.envelope !== undefined) layer.envelope = callToEnvelopeSpec(field.envelope);
         oscillators.push(layer);
         break;
       }

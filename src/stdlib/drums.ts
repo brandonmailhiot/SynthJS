@@ -35,27 +35,37 @@ instrument define hat_open {
 /// the noise/sine variants above.
 /// ============================================================
 
-/// 808-style bass drum — sine body + sub layer, lowpassed,
-/// with fast 2-octave pitch drop for the iconic 808 boom.
+/// 808-style bass drum — sine body + sub layer with a separate
+/// short noise click layer for the attack transient. Pitch drop
+/// gives the iconic 808 boom.
 instrument define bass_drum_808 {
   oscillator sine
   oscillator sine -7
+  oscillator noise {
+    envelope percussive(0.0005, 0.005)
+  }
   envelope percussive(0.002, 0.5)
   pitch_sweep 24 0.06
-  filter lowpass(150, 1.0)
+  filter lowpass(220, 1.0)
   detune -1200
 }
 
-/// 808-style snare — two detuned triangles for tonal body
-/// stacked with noise for the wire rattle. Bandpass focuses the
-/// snap. Pitch drop on the tonal layers makes the body smack.
+/// 808-style snare — two detuned triangles for tonal body with
+/// short envelope, plus longer noise tail for the wire rattle.
+/// Per-layer envelopes balance body snap and wire sustain.
 instrument define snare_drum_808 {
-  oscillator triangle -1200
-  oscillator triangle -1500
-  oscillator noise
-  envelope percussive(0.001, 0.15)
+  oscillator triangle -1200 {
+    envelope percussive(0.001, 0.05)
+  }
+  oscillator triangle -1500 {
+    envelope percussive(0.001, 0.05)
+  }
+  oscillator noise {
+    envelope percussive(0.001, 0.18)
+  }
+  envelope percussive(0.001, 0.2)
   pitch_sweep 7 0.03
-  filter highpass(800, 0.7)
+  filter highpass(400, 0.7)
   filter bandpass(2000, 1.5)
 }
 
@@ -83,11 +93,24 @@ instrument define tom_high_808 {
   filter lowpass(1200, 1.0)
 }
 
-/// 808-style hand clap — bandpassed noise burst. Lacks the
-/// authentic four-burst envelope shape of the original.
+/// 808-style hand clap — four staggered noise bursts. Per-layer
+/// envelopes use increasing attack times to delay each burst's
+/// peak; the last burst has a longer tail for the canonical 808
+/// "shhh" trail. Bandpass focuses the spectrum.
 instrument define clap_808 {
-  oscillator noise
-  envelope percussive(0.005, 0.08)
+  oscillator noise {
+    envelope percussive(0.0005, 0.005)
+  }
+  oscillator noise {
+    envelope percussive(0.012, 0.005)
+  }
+  oscillator noise {
+    envelope percussive(0.024, 0.005)
+  }
+  oscillator noise {
+    envelope percussive(0.036, 0.05)
+  }
+  envelope percussive(0.001, 0.25)
   filter bandpass(1500, 2.0)
 }
 

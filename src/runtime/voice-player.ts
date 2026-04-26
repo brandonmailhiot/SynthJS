@@ -86,7 +86,7 @@ export class VoicePlayer {
       for (let i = 0; i < event.frequencies.length; i++) {
         const freq = event.frequencies[i];
         if (typeof freq !== "number") continue;
-        const oscRig = buildOscillator(ctx, event.instrument, freq);
+        const oscRig = buildOscillator(ctx, event.instrument, freq, audioStart, playDuration);
         const envRig = buildEnvelope(ctx, event.envelope, audioStart, playDuration, peakGain);
         oscRig.output.connect(envRig.input);
         const fxOut = buildFxChain(ctx, event.fxChain, envRig.output);
