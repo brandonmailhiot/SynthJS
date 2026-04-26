@@ -69,7 +69,7 @@ instrument define snare_drum_808 {
   envelope percussive(0.001, 0.2)
   pitch_sweep 7 0.03
   filter bandpass(1500, 1.0)
-  gain 2.5
+  gain 5
 }
 
 /// 808-style low tom — sine with octave pitch drop
