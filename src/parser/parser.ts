@@ -569,6 +569,12 @@ class Parser {
       // (but not if followed by '(' which would make it a function call)
       if (isNoteLetter(tok.value) && !this.check("LParen", 1))
         return this.parsePitchEvent(undefined);
+      // ParamRef with pitch arithmetic: ident '+/-' int → pitch event
+      if (
+        (this.check("Plus", 1) || this.check("Minus", 1)) &&
+        this.check("IntLiteral", 2)
+      )
+        return this.parsePitchEvent(undefined);
       return this.parseCallOrRef();
     }
 

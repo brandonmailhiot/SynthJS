@@ -2,6 +2,7 @@ import type { Composition, UseDecl } from "../ast/nodes.js";
 import { ResolveError } from "../errors.js";
 import { lex } from "../lexer/lexer.js";
 import { parse } from "../parser/parser.js";
+import { getStdlibSource, isStdlibPath } from "../stdlib/index.js";
 
 export type FileResolver = (path: string) => Promise<string>;
 
@@ -18,7 +19,10 @@ export type LoadResult = LoadedModule & {
 export class ModuleLoader {
   private cache = new Map<string, LoadedModule>();
 
-  constructor(private readonly resolveFile: FileResolver) {}
+  constructor(
+    private readonly resolveFile: FileResolver,
+    private readonly opts: { useStdlib?: boolean } = {},
+  ) {}
 
   async load(entryPath: string): Promise<LoadResult> {
     const visiting = new Set<string>();
@@ -43,7 +47,12 @@ export class ModuleLoader {
     }
     visiting.add(path);
 
-    const src = await this.resolveFile(path);
+    let src: string;
+    if (this.opts.useStdlib !== false && isStdlibPath(path)) {
+      src = getStdlibSource(path) ?? "";
+    } else {
+      src = await this.resolveFile(path);
+    }
     const ast = parse(lex(src));
     const useDecls = ast.body.filter((n): n is UseDecl => n.kind === "UseDecl");
     const imports = useDecls.map((u) => ({
