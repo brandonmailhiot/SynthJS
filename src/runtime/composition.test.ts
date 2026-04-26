@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { CompositionIR, InstrumentSpec, TimelineEvent } from "../ir/nodes.js";
 import { Composition } from "./composition.js";
 import { MockAudioContext } from "./mock-audio-context.js";
@@ -162,6 +162,57 @@ describe("Composition — diagnostics", () => {
   });
 });
 
+describe("Composition — pause/resume", () => {
+  it("pause from playing transitions to paused and calls ctx.suspend", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    expect(comp.state).toBe("playing");
+    await comp.pause();
+    expect(comp.state).toBe("paused");
+    expect(ctx.history.some((h) => h.method === "suspend")).toBe(true);
+  });
+
+  it("resume from paused transitions to playing and calls ctx.resume", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    await comp.pause();
+    const resumeCountBefore = ctx.history.filter((h) => h.method === "resume").length;
+    await comp.resume();
+    expect(comp.state).toBe("playing");
+    const resumeCountAfter = ctx.history.filter((h) => h.method === "resume").length;
+    expect(resumeCountAfter).toBe(resumeCountBefore + 1);
+  });
+
+  it("pause when not playing is a no-op (state stays idle)", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.pause(); // state is idle, not playing
+    expect(comp.state).toBe("idle");
+    expect(ctx.history.some((h) => h.method === "suspend")).toBe(false);
+  });
+
+  it("resume when not paused is a no-op (state stays playing)", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    const resumeCountBefore = ctx.history.filter((h) => h.method === "resume").length;
+    await comp.resume(); // state is playing, not paused
+    expect(comp.state).toBe("playing");
+    expect(ctx.history.filter((h) => h.method === "resume").length).toBe(resumeCountBefore);
+  });
+
+  it("stop from paused transitions to stopped", async () => {
+    const ctx = new MockAudioContext();
+    const comp = new Composition(irOf([noteEvent()]), { audioContext: ctx });
+    await comp.play();
+    await comp.pause();
+    comp.stop();
+    expect(comp.state).toBe("stopped");
+  });
+});
+
 describe("Composition — onCue", () => {
   it("forwards onCue to VoicePlayer", async () => {
     const cued: string[] = [];
@@ -178,5 +229,196 @@ describe("Composition — onCue", () => {
     // Since we set lookahead to 100 seconds, the start() call's initial flush should
     // dispatch the cue.
     expect(cued).toEqual(["hit"]);
+  });
+});
+
+describe("Composition — loop", () => {
+  it("play({ loop: true }) calls setTimeout to arm next iteration", async () => {
+    const ctx = new MockAudioContext();
+    const fakeSetTimeout = vi.fn().mockReturnValue(42);
+    const fakeClearTimeout = vi.fn();
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: fakeClearTimeout,
+    });
+    await comp.play({ loop: true });
+    expect(fakeSetTimeout).toHaveBeenCalled();
+  });
+
+  it("play({ loop: true }) schedules iteration 0 oscillators immediately", async () => {
+    const ctx = new MockAudioContext();
+    const fakeSetTimeout = vi.fn().mockReturnValue(42);
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    await comp.play({ loop: true });
+    expect(ctx.history.filter((h) => h.method === "createOscillator")).toHaveLength(1);
+  });
+
+  it("setTimeout callback schedules next iteration's oscillators", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 42;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    await comp.play({ loop: true });
+    const oscCountAfterIter0 = ctx.history.filter((h) => h.method === "createOscillator").length;
+    // Invoke the captured callback to simulate timer firing
+    (capturedCb as (() => void) | null)?.();
+    const oscCountAfterIter1 = ctx.history.filter((h) => h.method === "createOscillator").length;
+    expect(oscCountAfterIter1).toBeGreaterThan(oscCountAfterIter0);
+  });
+
+  it("stop() clears pending loop handles", async () => {
+    const ctx = new MockAudioContext();
+    const fakeSetTimeout = vi.fn().mockReturnValue(99);
+    const fakeClearTimeout = vi.fn();
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: fakeClearTimeout,
+    });
+    await comp.play({ loop: true });
+    comp.stop();
+    expect(fakeClearTimeout).toHaveBeenCalledWith(99);
+  });
+
+  it("armNext is a no-op when state is not playing (after stop)", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 42;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    await comp.play({ loop: true });
+    comp.stop();
+    const oscCountAfterStop = ctx.history.filter((h) => h.method === "createOscillator").length;
+    // Fire the callback even though we've already stopped — should be no-op
+    (capturedCb as (() => void) | null)?.();
+    expect(ctx.history.filter((h) => h.method === "createOscillator").length).toBe(
+      oscCountAfterStop,
+    );
+  });
+});
+
+describe("Composition — ended event", () => {
+  it("onEnded fires after duration elapses when not looping", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 10;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const fired: { totalDurationSec: number }[] = [];
+    comp.onEnded((info) => fired.push(info));
+    await comp.play();
+    // Simulate timer firing
+    (capturedCb as (() => void) | null)?.();
+    expect(fired).toHaveLength(1);
+    expect(fired[0]?.totalDurationSec).toBeGreaterThanOrEqual(0);
+    expect(comp.state).toBe("stopped");
+  });
+
+  it("stop() before end suppresses the ended event", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeClearTimeout = vi.fn();
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 77;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: fakeClearTimeout,
+    });
+    const fired: unknown[] = [];
+    comp.onEnded(() => fired.push(true));
+    await comp.play();
+    comp.stop(); // clears the handle
+    expect(fakeClearTimeout).toHaveBeenCalledWith(77);
+    // Even if the cb fires (e.g., race), state is stopped so emitEnded is skipped
+    (capturedCb as (() => void) | null)?.();
+    expect(fired).toHaveLength(0);
+  });
+
+  it("loop:true does not arm the ended timeout", async () => {
+    const ctx = new MockAudioContext();
+    const calls: number[] = [];
+    const fakeSetTimeout = vi.fn().mockImplementation((_cb: () => void, ms: number) => {
+      calls.push(ms);
+      return 1;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const fired: unknown[] = [];
+    comp.onEnded(() => fired.push(true));
+    await comp.play({ loop: true });
+    // With loop, the ended callback is never registered, so no +50ms call
+    const endedCalls = calls.filter((ms) => ms % 1000 === 50);
+    expect(endedCalls).toHaveLength(0);
+    expect(fired).toHaveLength(0);
+  });
+
+  it("multiple onEnded listeners all fire", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 10;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const results: string[] = [];
+    comp.onEnded(() => results.push("a"));
+    comp.onEnded(() => results.push("b"));
+    await comp.play();
+    (capturedCb as (() => void) | null)?.();
+    expect(results).toEqual(["a", "b"]);
+  });
+
+  it("unsubscribe function removes the listener", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 10;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    const fired: unknown[] = [];
+    const unsub = comp.onEnded(() => fired.push(true));
+    unsub(); // remove before play ends
+    await comp.play();
+    (capturedCb as (() => void) | null)?.();
+    expect(fired).toHaveLength(0);
   });
 });

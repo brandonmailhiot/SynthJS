@@ -16,13 +16,15 @@ describe("buildFxChain", () => {
     expect(out).toBe(src);
   });
 
-  it("single effect: source connects to effect; effect returned", () => {
+  it("single effect: source connects to effect's input; effect output returned", () => {
     const ctx = new MockAudioContext();
     const src = ctx.createGain();
     const out = buildFxChain(ctx, [fx("gain", [0.5])], src);
+    // For simple effects, input === output, so out is the effect node
     expect(out).not.toBe(src);
     const srcHist = (src as unknown as { history: { method: string; target: object }[] }).history;
     expect(srcHist[0]?.method).toBe("connect");
+    // src connects to effect.input which equals effect.output for simple effects
     expect(srcHist[0]?.target).toBe(out);
   });
 
@@ -58,5 +60,20 @@ describe("buildFxChain", () => {
     const src = ctx.createGain();
     const out = buildFxChain(ctx, [fx("gain", [0.5])], src);
     expect((out as unknown as { gain: { value: number } }).gain.value).toBe(0.5);
+  });
+
+  it("chorus in chain connects source to chorus input, returns chorus output", () => {
+    const ctx = new MockAudioContext();
+    const src = ctx.createGain();
+    const out = buildFxChain(ctx, [fx("chorus", [0.5, 0.002, 0.5])], src);
+    // chorus has compound input/output — out is not the source
+    expect(out).not.toBe(src);
+    // out is the chorus output gain node
+    expect((out as unknown as { gain: object }).gain).toBeDefined();
+    // src should have connected to a node (chorus input)
+    const srcHist = (src as unknown as { history: { method: string; target: object }[] }).history;
+    expect(srcHist[0]?.method).toBe("connect");
+    // The target of src's connect is the chorus input, which is NOT the output
+    expect(srcHist[0]?.target).not.toBe(out);
   });
 });

@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.0-alpha.3] — 2026-04-26
+
+### Added
+- **Improved reverb impulse** (`effects.ts`): 5 ms fade-in, correlated noise via EMA, exponential decay, and decay clamping for a more natural-sounding reverb tail.
+- **Sample-rate-aware distortion curve** (`effects.ts`): waveshaper curve length now derived from `AudioContext.sampleRate` instead of a fixed constant.
+- **Centralized `DEFAULT_EFFECT_ARGS` table** (`effects.ts`): single source of truth for all effect default parameters; eliminates per-call magic numbers.
+- **`buildEffect` returns `{ input, output }`** (`effects.ts`): compound node pair to correctly expose both endpoints for multi-node effects such as chorus.
+- **Chorus dry/wet mix** (`effects.ts`): chorus effect now sums dry signal with the modulated wet signal for correct blending behaviour.
+- **`Composition.currentEvent`** (`composition.ts`): reflects the currently active `TimelineEvent` by comparing `AudioContext.currentTime` against scheduled event windows.
+- **`Composition.pause()` / `Composition.resume()`** (`composition.ts`): suspends and resumes `AudioContext` to pause and resume playback mid-performance.
+- **`Composition.play({ loop: true })`** (`composition.ts`): when the `loop` option is set the composition restarts automatically once the final event has ended.
+- **`Composition.onEnded(listener)`** (`composition.ts`): event-subscription API that fires once playback reaches the end (after the last scheduled note plus release tail).
+
 ## [2.0.0-alpha.2] — 2026-04-26
 
 ### Added

@@ -8,11 +8,11 @@ export function buildFxChain(
   source: AudioNodeLike,
 ): AudioNodeLike {
   if (fxChain.length === 0) return source;
-  let current = source;
+  let currentOutput = source;
   for (const effect of fxChain) {
     const node = buildEffect(ctx, effect);
-    current.connect(node);
-    current = node;
+    currentOutput.connect(node.input);
+    currentOutput = node.output;
   }
-  return current;
+  return currentOutput;
 }

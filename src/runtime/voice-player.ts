@@ -22,7 +22,7 @@ export type VoicePlayerOptions = {
 export class VoicePlayer {
   private activeOscillators: OscillatorNodeLike[] = [];
   private scheduledFlag = false;
-  private currentEventRef: TimelineEvent | null = null;
+  private eventTimeline: { audioStart: number; audioEnd: number; event: TimelineEvent }[] = [];
 
   constructor(private readonly opts: VoicePlayerOptions) {}
 
@@ -67,6 +67,13 @@ export class VoicePlayer {
       // Track active oscillators for stop()
       this.activeOscillators.push(...oscillators);
 
+      // Build timeline entry for currentEvent lookup
+      this.eventTimeline.push({
+        audioStart,
+        audioEnd: audioStart + playDuration,
+        event,
+      });
+
       // Schedule start/stop via scheduler
       scheduler.enqueue({
         audioTime: audioStart,
@@ -75,7 +82,6 @@ export class VoicePlayer {
             osc.start(when);
             osc.stop(when + playDuration);
           }
-          this.currentEventRef = event;
         },
       });
 
@@ -103,9 +109,16 @@ export class VoicePlayer {
       }
     }
     this.activeOscillators = [];
+    this.eventTimeline = [];
   }
 
   get currentEvent(): TimelineEvent | null {
-    return this.currentEventRef;
+    const now = this.opts.ctx.currentTime;
+    for (const entry of this.eventTimeline) {
+      if (entry.audioStart <= now && now < entry.audioEnd) {
+        return entry.event;
+      }
+    }
+    return null;
   }
 }
