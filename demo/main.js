@@ -83,18 +83,39 @@ voice bass {
   4 g1 g1 d2 g2
 }
 
-// Kick on every other quarter
-voice drums {
-  \\instrument kick_drum
+// 808 kick on 1 and 3
+voice kick {
+  \\instrument bass_drum_808
   \\f
   repeat 8 { 4 c2 r c2 r }
 }
 
-// Closed hi-hat on every eighth
+// 808 snare backbeat on 2 and 4
+voice snare {
+  \\instrument snare_drum_808
+  \\mf
+  repeat 8 { 4 r d3 r d3 }
+}
+
+// 808 closed hats on every eighth
 voice hats {
-  \\instrument hat_closed
+  \\instrument hat_closed_808
   \\p
-  repeat 32 { 8 c5 c5 }
+  repeat 32 { 8 f6 f6 }
+}
+
+// 808 open hat accent at end of each bar
+voice hat_open {
+  \\instrument hat_open_808
+  \\mp
+  repeat 8 { 2 r 4 r 8 r f6 }
+}
+
+// 808 cowbell — sparse syncopated accent
+voice perc {
+  \\instrument cowbell_808
+  \\mp
+  repeat 4 { 2 r 4 r g5 }
 }
 
 // Bell melody — sparse first half, fills out second half
