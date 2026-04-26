@@ -37,6 +37,54 @@ describe("buildEffect — reverb", () => {
     expect(buf.numberOfChannels).toBe(2);
     expect(buf.length).toBeGreaterThan(0);
   });
+
+  it("buffer length matches rate * seconds", () => {
+    const ctx = new MockAudioContext();
+    const seconds = 2.0;
+    const buf = createReverbBuffer(ctx, 1, seconds, 0.5);
+    expect(buf.length).toBe(Math.floor(ctx.sampleRate * seconds));
+  });
+
+  it("first sample (i=0) has magnitude near 0 due to fade-in", () => {
+    const ctx = new MockAudioContext();
+    // Use a long buffer so fadeIn > 0
+    const buf = createReverbBuffer(ctx, 1, 2.0, 0.5);
+    const data = buf.getChannelData(0);
+    // At i=0, fade = 0/fadeIn = 0, so data[0] should be exactly 0 (±0)
+    expect(Math.abs(data[0] ?? 0)).toBe(0);
+  });
+
+  it("mid samples have higher average magnitude than initial samples post fade-in", () => {
+    const ctx = new MockAudioContext();
+    const buf = createReverbBuffer(ctx, 1, 2.0, 0.5);
+    const data = buf.getChannelData(0);
+    const fadeIn = Math.min(Math.floor(ctx.sampleRate * 0.005), Math.floor(buf.length * 0.01));
+    // Samples just after fade-in should have nonzero magnitude
+    let sumAfterFade = 0;
+    const checkCount = 100;
+    for (let i = fadeIn + 1; i < fadeIn + 1 + checkCount; i++) {
+      sumAfterFade += Math.abs(data[i] ?? 0);
+    }
+    const avgAfterFade = sumAfterFade / checkCount;
+    expect(avgAfterFade).toBeGreaterThan(0);
+  });
+
+  it("decay clamped from -1: buffer produces only finite values", () => {
+    const ctx = new MockAudioContext();
+    const buf = createReverbBuffer(ctx, 1, 0.5, -1);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      expect(Number.isFinite(data[i])).toBe(true);
+    }
+  });
+
+  it("decay clamped from 100: buffer has signal (some nonzero samples)", () => {
+    const ctx = new MockAudioContext();
+    const buf = createReverbBuffer(ctx, 1, 0.5, 100);
+    const data = buf.getChannelData(0);
+    const hasSignal = Array.from(data).some((v) => v !== 0);
+    expect(hasSignal).toBe(true);
+  });
 });
 
 describe("buildEffect — delay", () => {

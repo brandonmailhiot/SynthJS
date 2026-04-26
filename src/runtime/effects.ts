@@ -1,5 +1,5 @@
 import type { EffectInvocation } from "../ir/nodes.js";
-import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
+import type { AudioBufferLike, AudioContextLike, AudioNodeLike } from "./audio-context.js";
 
 export const DEFAULT_EFFECT_ARGS = {
   gain: { level: 1.0 },
@@ -66,14 +66,22 @@ export function createReverbBuffer(
   channels: number,
   seconds: number,
   decay: number,
-) {
+): AudioBufferLike {
   const rate = ctx.sampleRate;
   const length = Math.max(1, Math.floor(rate * seconds));
   const buffer = ctx.createBuffer(channels, length, rate);
+  const fadeIn = Math.min(Math.floor(rate * 0.005), Math.floor(length * 0.01));
+  const safeDecay = Math.max(0.1, Math.min(10, decay));
   for (let c = 0; c < channels; c++) {
     const data = buffer.getChannelData(c);
+    let prev = 0;
     for (let i = 0; i < length; i++) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** decay;
+      const raw = Math.random() * 2 - 1;
+      const sample = prev * 0.3 + raw * 0.7;
+      prev = sample;
+      const fade = i < fadeIn && fadeIn > 0 ? i / fadeIn : 1;
+      const env = Math.exp((-safeDecay * i) / length);
+      data[i] = sample * env * fade;
     }
   }
   return buffer;
