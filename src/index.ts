@@ -118,3 +118,11 @@ export {
 } from "./runtime/composition.js";
 export type { AudioContextLike, AudioNodeLike, AudioParamLike } from "./runtime/audio-context.js";
 export { MockAudioContext } from "./runtime/mock-audio-context.js"; // useful for users writing tests
+
+// WAV offline render
+export {
+  audioBufferToWav,
+  renderToWav,
+  type OfflineAudioContextLike,
+  type RenderOptions,
+} from "./tools/render-wav.js";
