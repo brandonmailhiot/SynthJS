@@ -307,6 +307,9 @@ function validateInstrumentDef(def: InstrumentDef): void {
             suggestion ?? undefined,
           );
         }
+        if (field.envelope !== undefined) {
+          validateEnvelope(field.envelope);
+        }
         break;
       }
       case "EnvelopeField": {
@@ -326,6 +329,11 @@ function validateInstrumentDef(def: InstrumentDef): void {
             `pitch_sweep duration must be non-negative, got ${field.duration}`,
             field.span,
           );
+        }
+        break;
+      case "GainField":
+        if (field.factor < 0) {
+          throw new ResolveError(`gain must be non-negative, got ${field.factor}`, field.span);
         }
         break;
     }

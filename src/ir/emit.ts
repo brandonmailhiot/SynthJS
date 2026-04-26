@@ -133,12 +133,14 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
   const filters: FilterSpec[] = [];
   let detune: number | undefined;
   let pitchSweep: PitchSweep | undefined;
+  let gain: number | undefined;
 
   for (const field of def.fields) {
     switch (field.kind) {
       case "Oscillator": {
         const layer: OscillatorLayer = { kind: field.value as OscillatorKind };
         if (field.detune !== undefined && field.detune !== 0) layer.detune = field.detune;
+        if (field.envelope !== undefined) layer.envelope = callToEnvelopeSpec(field.envelope);
         oscillators.push(layer);
         break;
       }
@@ -163,6 +165,9 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
       case "PitchSweepField":
         pitchSweep = { semitones: field.semitones, duration: field.duration };
         break;
+      case "GainField":
+        gain = field.factor;
+        break;
     }
   }
 
@@ -172,6 +177,7 @@ function expandInstrumentDef(def: InstrumentDef): InstrumentSpec {
   if (envelope !== undefined) spec.envelope = envelope;
   if (detune !== undefined) spec.detune = detune;
   if (pitchSweep !== undefined) spec.pitchSweep = pitchSweep;
+  if (gain !== undefined) spec.gain = gain;
   return spec;
 }
 

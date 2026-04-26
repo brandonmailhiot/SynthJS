@@ -8,6 +8,7 @@ import type {
   GainNodeLike,
   OscillatorNodeLike,
 } from "./audio-context.js";
+import { buildEnvelope } from "./envelope.js";
 
 /**
  * The runtime treats noise as a sound source that quacks like an oscillator
@@ -76,6 +77,8 @@ export function buildOscillator(
   ctx: AudioContextLike,
   instrument: InstrumentSpec,
   frequency: number,
+  audioStart = 0,
+  playDuration = 1,
 ): OscillatorRig {
   const layers = instrument.oscillators;
   const instrumentDetune = instrument.detune ?? 0;
@@ -89,7 +92,16 @@ export function buildOscillator(
   const frequencies: AudioParamLike[] = [];
   for (const layer of layers) {
     const ln = buildLayer(ctx, layer, frequency, instrumentDetune);
-    ln.output.connect(summing);
+    // Per-layer envelope wraps just this layer with peakGain=1.0 so the master
+    // envelope (applied in voice-player) handles final amplitude. Multiplicative
+    // when both are present.
+    let layerOutput: AudioNodeLike = ln.output;
+    if (layer.envelope !== undefined) {
+      const env = buildEnvelope(ctx, layer.envelope, audioStart, playDuration, 1.0);
+      layerOutput.connect(env.input);
+      layerOutput = env.output;
+    }
+    layerOutput.connect(summing);
     sources.push(ln.source);
     if (ln.frequencyParam) frequencies.push(ln.frequencyParam);
   }

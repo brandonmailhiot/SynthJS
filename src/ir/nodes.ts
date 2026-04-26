@@ -43,6 +43,7 @@ export type OscillatorKind = "sine" | "square" | "sawtooth" | "triangle" | "nois
 export type OscillatorLayer = {
   kind: OscillatorKind;
   detune?: number; // per-layer detune in cents (additive with InstrumentSpec.detune)
+  envelope?: EnvelopeSpec; // per-layer gain envelope (1.0-peak; multiplied with master)
 };
 
 export type FilterSpec = { type: string; cutoff: number; q: number };
@@ -63,6 +64,7 @@ export type InstrumentSpec = {
   filters: FilterSpec[]; // length 0+; chained source -> f1 -> f2 -> ... -> output
   detune?: number; // instrument-level cents (applied to every layer)
   pitchSweep?: PitchSweep; // optional pitch envelope; applies to all tonal layers
+  gain?: number; // post-compensation amplitude multiplier; default 1.0
 };
 
 export type AnnotationData = {

@@ -239,4 +239,35 @@ describe("buildOscillator — oscillator stack", () => {
     expect(filterRecs).toHaveLength(2);
     expect(rig.output).toBe(filterRecs[1]?.result);
   });
+
+  it("per-layer envelope inserts a Gain node between layer and sum", () => {
+    const ctx = new MockAudioContext();
+    buildOscillator(
+      ctx,
+      baseInstrument({
+        oscillators: [
+          { kind: "sine" },
+          { kind: "noise", envelope: { kind: "percussive", args: [0.001, 0.005] } },
+        ],
+      }),
+      440,
+      0,
+      0.5,
+    );
+    // One summing gain (always) + one per-layer envelope gain = 2 createGain calls.
+    const gainCalls = ctx.history.filter((h) => h.method === "createGain");
+    expect(gainCalls).toHaveLength(2);
+  });
+
+  it("layer without envelope connects directly to summing gain", () => {
+    const ctx = new MockAudioContext();
+    buildOscillator(
+      ctx,
+      baseInstrument({ oscillators: [layer("sawtooth"), layer("sawtooth")] }),
+      440,
+    );
+    // Only the summing gain — no per-layer envelopes.
+    const gainCalls = ctx.history.filter((h) => h.method === "createGain");
+    expect(gainCalls).toHaveLength(1);
+  });
 });

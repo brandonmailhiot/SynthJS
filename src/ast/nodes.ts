@@ -74,11 +74,18 @@ export type InstrumentDef = {
 };
 
 export type InstrumentField =
-  | { kind: "Oscillator"; value: string; detune?: number; span: SourceSpan }
+  | {
+      kind: "Oscillator";
+      value: string;
+      detune?: number;
+      envelope?: Call;
+      span: SourceSpan;
+    }
   | { kind: "EnvelopeField"; call: Call; span: SourceSpan }
   | { kind: "FilterField"; call: Call; span: SourceSpan }
   | { kind: "DetuneField"; cents: number; span: SourceSpan }
-  | { kind: "PitchSweepField"; semitones: number; duration: number; span: SourceSpan };
+  | { kind: "PitchSweepField"; semitones: number; duration: number; span: SourceSpan }
+  | { kind: "GainField"; factor: number; span: SourceSpan };
 
 // ----- Expressions -----
 

@@ -492,12 +492,32 @@ class Parser {
     if (val === "oscillator") {
       this.advance();
       const kindTok = this.expect("Identifier", "expected oscillator kind");
-      // Optional per-layer detune: `oscillator <kind> <signed-int>`
+      // `oscillator <kind> [<signed-int>] [{ envelope <call> }]`
+      // Per-layer modifiers go inside the optional braces to avoid ambiguity
+      // with the instrument-level `envelope` field that may follow.
       let detune: number | undefined;
+      let envelope: Call | undefined;
       let endSpan = kindTok.span;
       if (this.check("Minus") || this.check("Plus") || this.check("IntLiteral")) {
         detune = this.parseSignedNumber();
         endSpan = this.peekPrev().span;
+      }
+      if (this.check("LBrace")) {
+        this.advance(); // consume {
+        while (!this.check("RBrace") && !this.check("Eof")) {
+          const inner = this.peek();
+          if (inner.kind !== "Identifier") {
+            throw new ParseError(`expected per-layer modifier, got ${inner.kind}`, inner.span);
+          }
+          if (inner.value === "envelope") {
+            this.advance();
+            envelope = this.parseCall();
+          } else {
+            throw new ParseError(`unknown per-layer modifier '${inner.value}'`, inner.span);
+          }
+        }
+        const close = this.expect("RBrace", "expected '}' in oscillator modifier block");
+        endSpan = close.span;
       }
       const field: InstrumentField = {
         kind: "Oscillator",
@@ -505,6 +525,7 @@ class Parser {
         span: this.spanRange(tok.span, endSpan),
       };
       if (detune !== undefined) field.detune = detune;
+      if (envelope !== undefined) field.envelope = envelope;
       return field;
     }
     if (val === "envelope") {
@@ -531,6 +552,16 @@ class Parser {
         kind: "PitchSweepField",
         semitones,
         duration,
+        span: this.spanRange(tok.span, endSpan),
+      };
+    }
+    if (val === "gain") {
+      this.advance();
+      const factor = this.parseNumber();
+      const endSpan = this.peekPrev().span;
+      return {
+        kind: "GainField",
+        factor,
         span: this.spanRange(tok.span, endSpan),
       };
     }

@@ -276,10 +276,21 @@ function printInstrumentDef(n: InstrumentDef, depth: number): string {
 
 function printInstrumentField(f: InstrumentField, depth: number): string {
   switch (f.kind) {
-    case "Oscillator":
-      return f.detune !== undefined && f.detune !== 0
-        ? `${indent(depth)}oscillator ${f.value} ${formatNumber(f.detune)}`
-        : `${indent(depth)}oscillator ${f.value}`;
+    case "Oscillator": {
+      const head =
+        f.detune !== undefined && f.detune !== 0
+          ? `oscillator ${f.value} ${formatNumber(f.detune)}`
+          : `oscillator ${f.value}`;
+      if (f.envelope !== undefined) {
+        const innerIndent = indent(depth + 1);
+        return [
+          `${indent(depth)}${head} {`,
+          `${innerIndent}envelope ${printCall(f.envelope)}`,
+          `${indent(depth)}}`,
+        ].join("\n");
+      }
+      return `${indent(depth)}${head}`;
+    }
     case "EnvelopeField":
       return `${indent(depth)}envelope ${printCall(f.call)}`;
     case "FilterField":
@@ -288,6 +299,8 @@ function printInstrumentField(f: InstrumentField, depth: number): string {
       return `${indent(depth)}detune ${formatNumber(f.cents)}`;
     case "PitchSweepField":
       return `${indent(depth)}pitch_sweep ${formatNumber(f.semitones)} ${formatNumber(f.duration)}`;
+    case "GainField":
+      return `${indent(depth)}gain ${formatNumber(f.factor)}`;
   }
 }
 
