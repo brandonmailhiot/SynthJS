@@ -1,0 +1,4 @@
+\version "2.0"
+\tempo 90
+
+4 c4 d e f g a b c5 d e f

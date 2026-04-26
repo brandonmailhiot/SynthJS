@@ -1,0 +1,5 @@
+\version "2.0"
+\tempo 120
+\time 4/4
+
+4 c4 d e | 4 g a b c5 |
