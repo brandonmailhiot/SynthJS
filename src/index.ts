@@ -104,6 +104,10 @@ export type {
   Diagnostic,
 } from "./ir/nodes.js";
 
+// Tools
+export { exportJson, type JsonExportOptions } from "./tools/export-json.js";
+export { generateDocs, type GenDocsOptions } from "./tools/gen-docs.js";
+
 // Runtime API
 export {
   Composition,
