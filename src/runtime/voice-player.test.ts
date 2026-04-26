@@ -160,15 +160,64 @@ describe("VoicePlayer — stop", () => {
   });
 });
 
-describe("VoicePlayer — currentEvent", () => {
-  it("currentEvent updates after dispatch", () => {
-    const e1 = noteEvent({ startBeat: 0 });
-    const e2 = noteEvent({ startBeat: 0.5 });
-    const { scheduler, player } = setup([e1, e2]);
-    player.schedule();
+describe("VoicePlayer — currentEvent (timeline-based)", () => {
+  it("is null before schedule() is called", () => {
+    const { player } = setup([noteEvent({ startBeat: 0 })]);
     expect(player.currentEvent).toBeNull();
-    scheduler.flush(100);
-    expect(player.currentEvent).toBe(e2); // last dispatched event
+  });
+
+  it("is null after schedule() when ctx.currentTime is before audioStart", () => {
+    // tempo=60, beat 0 → audioStart = voiceStartTime + 0 = 0
+    // durationBeats=0.25 at tempo 60 → playDuration = 0.25*4*(60/60) = 1s
+    // ctx.currentTime = 0 which equals audioStart (not yet null since start <= now < end)
+    // let's use startBeat=1 so audioStart = 4s, currentTime=0 → before window
+    const { ctx, player } = setup([noteEvent({ startBeat: 1 })]);
+    player.schedule();
+    // ctx.currentTime is 0, audioStart for beat 1 = 4s
+    expect(ctx.currentTime).toBe(0);
+    expect(player.currentEvent).toBeNull();
+  });
+
+  it("returns event when ctx.currentTime is inside the event window", () => {
+    const ev = noteEvent({ startBeat: 0, durationBeats: 0.25 });
+    // tempo=60: audioStart=0, playDuration = 0.25*4*1 = 1s, audioEnd=1s
+    const { ctx, player } = setup([ev]);
+    player.schedule();
+    (ctx as { currentTime: number }).currentTime = 0.5; // inside [0, 1)
+    expect(player.currentEvent).toBe(ev);
+  });
+
+  it("returns null when ctx.currentTime is at or after audioEnd", () => {
+    const ev = noteEvent({ startBeat: 0, durationBeats: 0.25 });
+    // audioEnd = 1s (playDuration after staccato etc may vary; durationBeats=0.25 at tempo 60 = 1s)
+    const { ctx, player } = setup([ev]);
+    player.schedule();
+    (ctx as { currentTime: number }).currentTime = 1.0; // exactly at audioEnd → not < audioEnd
+    expect(player.currentEvent).toBeNull();
+  });
+
+  it("returns the active event among multiple events by matching time window", () => {
+    // tempo=60: beat 0 → audioStart=0, dur=0.25→1s; beat 0.5 → audioStart=2s, dur=0.25→1s
+    const e1 = noteEvent({ startBeat: 0, durationBeats: 0.25 });
+    const e2 = noteEvent({ startBeat: 0.5, durationBeats: 0.25 });
+    const { ctx, player } = setup([e1, e2]);
+    player.schedule();
+
+    (ctx as { currentTime: number }).currentTime = 0.3; // inside e1 window [0, 1)
+    expect(player.currentEvent).toBe(e1);
+
+    (ctx as { currentTime: number }).currentTime = 2.5; // inside e2 window [2, 3)
+    expect(player.currentEvent).toBe(e2);
+  });
+
+  it("returns null after stop() clears the timeline", () => {
+    const ev = noteEvent({ startBeat: 0, durationBeats: 0.25 });
+    const { ctx, player } = setup([ev]);
+    player.schedule();
+    (ctx as { currentTime: number }).currentTime = 0.5;
+    expect(player.currentEvent).toBe(ev);
+    player.stop();
+    expect(player.currentEvent).toBeNull();
   });
 });
 
