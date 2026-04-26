@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { CompositionIR, InstrumentSpec, TimelineEvent } from "../ir/nodes.js";
 import { Composition } from "./composition.js";
 import { MockAudioContext } from "./mock-audio-context.js";
@@ -229,5 +229,88 @@ describe("Composition — onCue", () => {
     // Since we set lookahead to 100 seconds, the start() call's initial flush should
     // dispatch the cue.
     expect(cued).toEqual(["hit"]);
+  });
+});
+
+describe("Composition — loop", () => {
+  it("play({ loop: true }) calls setTimeout to arm next iteration", async () => {
+    const ctx = new MockAudioContext();
+    const fakeSetTimeout = vi.fn().mockReturnValue(42);
+    const fakeClearTimeout = vi.fn();
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: fakeClearTimeout,
+    });
+    await comp.play({ loop: true });
+    expect(fakeSetTimeout).toHaveBeenCalled();
+  });
+
+  it("play({ loop: true }) schedules iteration 0 oscillators immediately", async () => {
+    const ctx = new MockAudioContext();
+    const fakeSetTimeout = vi.fn().mockReturnValue(42);
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    await comp.play({ loop: true });
+    expect(ctx.history.filter((h) => h.method === "createOscillator")).toHaveLength(1);
+  });
+
+  it("setTimeout callback schedules next iteration's oscillators", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 42;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    await comp.play({ loop: true });
+    const oscCountAfterIter0 = ctx.history.filter((h) => h.method === "createOscillator").length;
+    // Invoke the captured callback to simulate timer firing
+    capturedCb?.();
+    const oscCountAfterIter1 = ctx.history.filter((h) => h.method === "createOscillator").length;
+    expect(oscCountAfterIter1).toBeGreaterThan(oscCountAfterIter0);
+  });
+
+  it("stop() clears pending loop handles", async () => {
+    const ctx = new MockAudioContext();
+    const fakeSetTimeout = vi.fn().mockReturnValue(99);
+    const fakeClearTimeout = vi.fn();
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: fakeClearTimeout,
+    });
+    await comp.play({ loop: true });
+    comp.stop();
+    expect(fakeClearTimeout).toHaveBeenCalledWith(99);
+  });
+
+  it("armNext is a no-op when state is not playing (after stop)", async () => {
+    const ctx = new MockAudioContext();
+    let capturedCb: (() => void) | null = null;
+    const fakeSetTimeout = vi.fn().mockImplementation((cb: () => void) => {
+      capturedCb = cb;
+      return 42;
+    });
+    const comp = new Composition(irOf([noteEvent()]), {
+      audioContext: ctx,
+      setTimeout: fakeSetTimeout,
+      clearTimeout: vi.fn(),
+    });
+    await comp.play({ loop: true });
+    comp.stop();
+    const oscCountAfterStop = ctx.history.filter((h) => h.method === "createOscillator").length;
+    // Fire the callback even though we've already stopped — should be no-op
+    capturedCb?.();
+    expect(ctx.history.filter((h) => h.method === "createOscillator").length).toBe(
+      oscCountAfterStop,
+    );
   });
 });
