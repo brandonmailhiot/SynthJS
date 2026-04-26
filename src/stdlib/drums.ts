@@ -28,6 +28,33 @@ instrument define hat_open {
   filter bandpass(11000, 12)
 }
 
+/// 808-style closed hi-hat — six inharmonic square waves through a high
+/// bandpass cascade. Metallic, vintage character. Play around f6/g6.
+instrument define hat_closed_808 {
+  oscillator square -1019
+  oscillator square -337
+  oscillator square
+  oscillator square 599
+  oscillator square 654
+  oscillator square 1336
+  envelope percussive(0.0005, 0.012)
+  filter highpass(7000, 0.7)
+  filter bandpass(10000, 6)
+}
+
+/// 808-style open hi-hat — same square stack, longer decay
+instrument define hat_open_808 {
+  oscillator square -1019
+  oscillator square -337
+  oscillator square
+  oscillator square 599
+  oscillator square 654
+  oscillator square 1336
+  envelope percussive(0.0005, 0.18)
+  filter highpass(7000, 0.7)
+  filter bandpass(10000, 6)
+}
+
 /// Tom (low) — sine pitched down
 instrument define tom_low {
   oscillator sine

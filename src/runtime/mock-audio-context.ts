@@ -14,15 +14,21 @@ import type {
 } from "./audio-context.js";
 
 export type MockEvent =
-  | { method: "createOscillator" }
-  | { method: "createGain" }
-  | { method: "createBiquadFilter" }
-  | { method: "createConvolver" }
-  | { method: "createDelay"; maxDelayTime?: number }
-  | { method: "createWaveShaper" }
-  | { method: "createDynamicsCompressor" }
-  | { method: "createBuffer"; channels: number; length: number; sampleRate: number }
-  | { method: "createBufferSource" }
+  | { method: "createOscillator"; result: OscillatorNodeLike }
+  | { method: "createGain"; result: GainNodeLike }
+  | { method: "createBiquadFilter"; result: BiquadFilterNodeLike }
+  | { method: "createConvolver"; result: ConvolverNodeLike }
+  | { method: "createDelay"; maxDelayTime?: number; result: DelayNodeLike }
+  | { method: "createWaveShaper"; result: WaveShaperNodeLike }
+  | { method: "createDynamicsCompressor"; result: DynamicsCompressorNodeLike }
+  | {
+      method: "createBuffer";
+      channels: number;
+      length: number;
+      sampleRate: number;
+      result: AudioBufferLike;
+    }
+  | { method: "createBufferSource"; result: AudioBufferSourceNodeLike }
   | { method: "resume" }
   | { method: "suspend" }
   | { method: "close" };
@@ -57,44 +63,53 @@ export class MockAudioContext implements AudioContextLike {
   }
 
   createOscillator(): OscillatorNodeLike {
-    this.history.push({ method: "createOscillator" });
-    return new MockOscillatorNode();
+    const result = new MockOscillatorNode();
+    this.history.push({ method: "createOscillator", result });
+    return result;
   }
   createGain(): GainNodeLike {
-    this.history.push({ method: "createGain" });
-    return new MockGainNode();
+    const result = new MockGainNode();
+    this.history.push({ method: "createGain", result });
+    return result;
   }
   createBiquadFilter(): BiquadFilterNodeLike {
-    this.history.push({ method: "createBiquadFilter" });
-    return new MockBiquadFilterNode();
+    const result = new MockBiquadFilterNode();
+    this.history.push({ method: "createBiquadFilter", result });
+    return result;
   }
   createConvolver(): ConvolverNodeLike {
-    this.history.push({ method: "createConvolver" });
-    return new MockConvolverNode();
+    const result = new MockConvolverNode();
+    this.history.push({ method: "createConvolver", result });
+    return result;
   }
   createDelay(maxDelayTime?: number): DelayNodeLike {
+    const result = new MockDelayNode();
     this.history.push(
       maxDelayTime !== undefined
-        ? { method: "createDelay", maxDelayTime }
-        : { method: "createDelay" },
+        ? { method: "createDelay", maxDelayTime, result }
+        : { method: "createDelay", result },
     );
-    return new MockDelayNode();
+    return result;
   }
   createWaveShaper(): WaveShaperNodeLike {
-    this.history.push({ method: "createWaveShaper" });
-    return new MockWaveShaperNode();
+    const result = new MockWaveShaperNode();
+    this.history.push({ method: "createWaveShaper", result });
+    return result;
   }
   createDynamicsCompressor(): DynamicsCompressorNodeLike {
-    this.history.push({ method: "createDynamicsCompressor" });
-    return new MockDynamicsCompressorNode();
+    const result = new MockDynamicsCompressorNode();
+    this.history.push({ method: "createDynamicsCompressor", result });
+    return result;
   }
   createBuffer(channels: number, length: number, sampleRate: number): AudioBufferLike {
-    this.history.push({ method: "createBuffer", channels, length, sampleRate });
-    return new MockAudioBuffer(channels, length, sampleRate);
+    const result = new MockAudioBuffer(channels, length, sampleRate);
+    this.history.push({ method: "createBuffer", channels, length, sampleRate, result });
+    return result;
   }
   createBufferSource(): AudioBufferSourceNodeLike {
-    this.history.push({ method: "createBufferSource" });
-    return new MockAudioBufferSourceNode();
+    const result = new MockAudioBufferSourceNode();
+    this.history.push({ method: "createBufferSource", result });
+    return result;
   }
   async resume(): Promise<void> {
     this.history.push({ method: "resume" });

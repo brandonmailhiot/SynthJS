@@ -17,7 +17,7 @@ import { beatsToSeconds } from "./time.js";
 //   noise    — full-spectrum random; very loud unless tightly band-limited
 // These factors normalize the apparent volume so swapping `\instrument`
 // doesn't change overall level.
-const OSC_LOUDNESS: Record<InstrumentSpec["oscillator"], number> = {
+const OSC_LOUDNESS: Record<string, number> = {
   sine: 1.0,
   triangle: 0.95,
   sawtooth: 0.55,
@@ -25,8 +25,14 @@ const OSC_LOUDNESS: Record<InstrumentSpec["oscillator"], number> = {
   noise: 0.3,
 };
 
+// For stacked instruments: equal-power summing is already handled by the
+// 1/sqrt(N) gain on the summing node in buildOscillator, so total perceived
+// loudness ≈ loudness of a single layer of the dominant kind. We use the
+// first layer's kind as the loudness reference.
 function oscillatorLoudness(spec: InstrumentSpec): number {
-  return OSC_LOUDNESS[spec.oscillator] ?? 1.0;
+  const first = spec.oscillators[0];
+  if (!first) return 1.0;
+  return OSC_LOUDNESS[first.kind] ?? 1.0;
 }
 
 export type VoicePlayerOptions = {
@@ -85,10 +91,13 @@ export class VoicePlayer {
         oscRig.output.connect(envRig.input);
         const fxOut = buildFxChain(ctx, event.fxChain, envRig.output);
         fxOut.connect(voiceOutput);
-        // Slide? Only meaningful for tonal oscillators.
+        // Slide? Only meaningful for tonal oscillators. With stacks, every
+        // tonal layer slides in lockstep so detune offsets are preserved.
         const slideTarget = event.slideTo?.[i];
-        if (slideTarget !== undefined && oscRig.frequency) {
-          applySlide(oscRig.frequency, freq, slideTarget, audioStart, playDuration);
+        if (slideTarget !== undefined) {
+          for (const freqParam of oscRig.frequencies) {
+            applySlide(freqParam, freq, slideTarget, audioStart, playDuration);
+          }
         }
         oscillators.push(oscRig.source);
       }

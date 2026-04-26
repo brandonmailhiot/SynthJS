@@ -492,11 +492,20 @@ class Parser {
     if (val === "oscillator") {
       this.advance();
       const kindTok = this.expect("Identifier", "expected oscillator kind");
-      return {
+      // Optional per-layer detune: `oscillator <kind> <signed-int>`
+      let detune: number | undefined;
+      let endSpan = kindTok.span;
+      if (this.check("Minus") || this.check("Plus") || this.check("IntLiteral")) {
+        detune = this.parseSignedNumber();
+        endSpan = this.peekPrev().span;
+      }
+      const field: InstrumentField = {
         kind: "Oscillator",
         value: kindTok.value,
-        span: this.spanRange(tok.span, kindTok.span),
+        span: this.spanRange(tok.span, endSpan),
       };
+      if (detune !== undefined) field.detune = detune;
+      return field;
     }
     if (val === "envelope") {
       this.advance();

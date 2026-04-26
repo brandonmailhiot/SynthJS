@@ -5,8 +5,9 @@ import { MockAudioContext } from "./mock-audio-context.js";
 describe("MockAudioContext", () => {
   it("records createOscillator", () => {
     const ctx = new MockAudioContext();
-    ctx.createOscillator();
-    expect(ctx.history).toEqual([{ method: "createOscillator" }]);
+    const osc = ctx.createOscillator();
+    expect(ctx.history).toHaveLength(1);
+    expect(ctx.history[0]).toMatchObject({ method: "createOscillator", result: osc });
   });
 
   it("creates gain nodes that record connect", () => {
