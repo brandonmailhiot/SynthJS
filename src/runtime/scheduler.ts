@@ -26,9 +26,11 @@ export class LookaheadScheduler {
   ) {
     this.lookahead = opts.lookaheadSeconds ?? 0.025;
     this.interval = opts.intervalMs ?? 100;
-    this.setIntervalFn =
-      opts.setInterval ?? (globalThis.setInterval as (cb: () => void, ms: number) => unknown);
-    this.clearIntervalFn = opts.clearInterval ?? (globalThis.clearInterval as (h: unknown) => void);
+    // Wrap globalThis.setInterval/clearInterval in arrow functions so the call
+    // site doesn't depend on `this` binding (browsers throw "Illegal invocation"
+    // when these are invoked as detached methods).
+    this.setIntervalFn = opts.setInterval ?? ((cb, ms) => globalThis.setInterval(cb, ms));
+    this.clearIntervalFn = opts.clearInterval ?? ((h) => globalThis.clearInterval(h as number));
   }
 
   enqueue(event: ScheduledEvent): void {

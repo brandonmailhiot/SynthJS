@@ -1,5 +1,5 @@
 import type { CompositionIR, Diagnostic, TimelineEvent } from "../ir/nodes.js";
-import type { AudioContextLike } from "./audio-context.js";
+import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
 import { LookaheadScheduler, type SchedulerOptions } from "./scheduler.js";
 import { beatsToSeconds } from "./time.js";
 import { VoicePlayer } from "./voice-player.js";
@@ -26,6 +26,7 @@ export class Composition {
   private readonly clearTimeoutFn: (handle: unknown) => void;
   private endedListeners: ((info: { totalDurationSec: number }) => void)[] = [];
   private playStartTime = 0;
+  private masterInput: AudioNodeLike | null = null;
 
   constructor(
     private readonly ir: CompositionIR,
@@ -44,10 +45,11 @@ export class Composition {
       this.ownsContext = true;
     }
     this.scheduler = new LookaheadScheduler(this.ctx, opts.scheduler);
-    this.setTimeoutFn =
-      opts.setTimeout ?? (globalThis.setTimeout as (cb: () => void, ms: number) => unknown);
-    this.clearTimeoutFn =
-      opts.clearTimeout ?? (globalThis.clearTimeout as (handle: unknown) => void);
+    // Wrap globalThis.setTimeout/clearTimeout in arrow functions so call site
+    // doesn't depend on `this` binding (browsers throw "Illegal invocation"
+    // when invoked as detached methods).
+    this.setTimeoutFn = opts.setTimeout ?? ((cb, ms) => globalThis.setTimeout(cb, ms));
+    this.clearTimeoutFn = opts.clearTimeout ?? ((h) => globalThis.clearTimeout(h as number));
   }
 
   private computeCompositionDuration(): number {
@@ -62,9 +64,31 @@ export class Composition {
     return max;
   }
 
+  /**
+   * Build a per-Composition master output chain: headroom gain → soft limiter →
+   * destination. Prevents inter-voice / inter-event clipping when many notes
+   * sum at once. Created lazily and reused across loop iterations.
+   *
+   *   voice → masterInput (headroom 0.7) → compressor → destination
+   */
+  private getMasterInput(): AudioNodeLike {
+    if (this.masterInput) return this.masterInput;
+    const headroom = this.ctx.createGain();
+    headroom.gain.value = 0.5;
+    const limiter = this.ctx.createDynamicsCompressor();
+    limiter.threshold.value = -6; // dB; engages well below 0 dBFS for smoother transients
+    limiter.ratio.value = 12;
+    limiter.attack.value = 0.003; // 3 ms — fast enough to catch peaks, slow enough to avoid pumping
+    limiter.release.value = 0.15;
+    headroom.connect(limiter);
+    limiter.connect(this.ctx.destination);
+    this.masterInput = headroom;
+    return headroom;
+  }
+
   private scheduleIteration(iterStartTime: number, fromBeat = 0): void {
     const voiceOutput = this.ctx.createGain();
-    voiceOutput.connect(this.ctx.destination);
+    voiceOutput.connect(this.getMasterInput());
     for (const voice of this.ir.voices) {
       const filteredVoice = {
         ...voice,
