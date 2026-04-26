@@ -160,8 +160,15 @@ function detectCycles(bindings: Map<string, Binding>): void {
     const refs = collectDirectRefs(binding);
     // Only keep refs to other bindings (ignore instrument refs, etc.)
     const edges = new Set<string>();
+    const isParameterized = binding.params !== undefined && binding.params.length > 0;
     for (const r of refs) {
-      if (bindings.has(r)) edges.add(r);
+      if (!bindings.has(r)) continue;
+      // Parameterized bindings may contain a call to themselves as a call site
+      // embedded by the parser (e.g. `arp(root) = ... \narp(c4)`). This is not
+      // a true recursive cycle — it represents an inlined call with concrete args
+      // and is resolved at lower-pitch time. Skip self-loops for parameterized bindings.
+      if (isParameterized && r === name) continue;
+      edges.add(r);
     }
     graph.set(name, edges);
   }
