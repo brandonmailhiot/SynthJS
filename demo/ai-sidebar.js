@@ -5,7 +5,7 @@ import {
   buildUserMessage,
   compileSync,
   diffLines,
-  extractDslBlock,
+  extractAllDslBlocks,
   formatDiff,
   isTruncated,
   mergeBlocks,
@@ -239,17 +239,32 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     cancelBtn.hidden = true;
     abort = null;
 
-    const aiBlock = extractDslBlock(collected);
-    if (!aiBlock) {
+    const aiBlocks = extractAllDslBlocks(collected);
+    if (aiBlocks.length === 0) {
       setStatus("model did not return a fenced ```synth block");
       return;
     }
     let truncated = isTruncated(collected);
 
-    // Splice the AI's partial output into the current composition by named
-    // block. Saves the model from regenerating unchanged voices on every
-    // turn — only the requested edits flow through the LLM.
-    let merge = mergeBlocks(currentSource, aiBlock);
+    // Splice each AI-emitted block into the current composition by named
+    // block. Some smaller models emit multiple ```synth blocks instead of
+    // one — merge them sequentially so no edits are lost. Saves the model
+    // from regenerating unchanged voices on every turn.
+    const applyAllBlocks = (base, blocks) => {
+      let text = base;
+      const replaced = [];
+      const added = [];
+      let skipped = 0;
+      for (const b of blocks) {
+        const m = mergeBlocks(text, b);
+        text = m.text;
+        replaced.push(...m.replaced);
+        added.push(...m.added);
+        skipped += m.skipped;
+      }
+      return { text, replaced, added, skipped };
+    };
+    let merge = applyAllBlocks(currentSource, aiBlocks);
     let proposed = merge.text;
     const summary = [];
     if (merge.replaced.length) summary.push(`replaced ${merge.replaced.join(", ")}`);
@@ -285,9 +300,9 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
           streamEl.textContent = collected + "\n\n--- AUTO-FIX ---\n" + fixed;
           streamEl.scrollTop = streamEl.scrollHeight;
         }
-        const fixedBlock = extractDslBlock(fixed);
-        if (fixedBlock) {
-          merge = mergeBlocks(currentSource, fixedBlock);
+        const fixedBlocks = extractAllDslBlocks(fixed);
+        if (fixedBlocks.length > 0) {
+          merge = applyAllBlocks(currentSource, fixedBlocks);
           proposed = merge.text;
           truncated = isTruncated(fixed);
           try {

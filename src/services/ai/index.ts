@@ -6,6 +6,7 @@ export {
   buildSystemPrompt,
   buildUserMessage,
   extractDslBlock,
+  extractAllDslBlocks,
   isTruncated,
   type BuildPromptArgs,
 } from "./prompt-builder.js";

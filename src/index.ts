@@ -158,6 +158,7 @@ export {
   buildSystemPrompt,
   buildUserMessage,
   extractDslBlock,
+  extractAllDslBlocks,
   isTruncated,
   type BuildPromptArgs,
   diffLines,

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildPrompt, extractDslBlock, isTruncated } from "./prompt-builder.js";
+import {
+  buildPrompt,
+  extractAllDslBlocks,
+  extractDslBlock,
+  isTruncated,
+} from "./prompt-builder.js";
 
 describe("buildPrompt", () => {
   it("includes the grammar primer + examples + instruction", () => {
@@ -55,6 +60,22 @@ describe("extractDslBlock", () => {
   it("recovers a partial block when output truncates without a closing fence", () => {
     const truncated = "Here:\n```synth\nvoice m {\n  4 c4 d4";
     expect(extractDslBlock(truncated)).toBe("voice m {\n  4 c4 d4");
+  });
+});
+
+describe("extractAllDslBlocks", () => {
+  it("returns every fenced block in the order they appear", () => {
+    const out = "```synth\nvoice a { 4 c4 }\n```\nthen\n```synth\nvoice b { 4 d4 }\n```";
+    expect(extractAllDslBlocks(out)).toEqual(["voice a { 4 c4 }", "voice b { 4 d4 }"]);
+  });
+
+  it("appends a trailing open-ended block when the stream truncates", () => {
+    const out = "```synth\nvoice a { 4 c4 }\n```\n```synth\nvoice b { 4 d4";
+    expect(extractAllDslBlocks(out)).toEqual(["voice a { 4 c4 }", "voice b { 4 d4"]);
+  });
+
+  it("returns empty when no fence is present", () => {
+    expect(extractAllDslBlocks("plain prose")).toEqual([]);
   });
 });
 

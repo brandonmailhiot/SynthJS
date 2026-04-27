@@ -87,9 +87,15 @@ export function buildUserMessage({
       `User-provided reference (treat as the new baseline):\n\`\`\`synth\n${reference.trim()}\n\`\`\``,
     );
   }
-  parts.push(
-    `Task: ${instruction.trim()}\n\nReturn ONLY the voices, instrument defs, or directives that need to change for this request — wrapped in a single \`\`\`synth fenced block. Do NOT repeat unchanged voices or instruments. The host will splice your changes into the current composition by name. If you must introduce a brand-new voice or instrument, just write it out; the host will append it. Each block stays self-contained: voice { … }, instrument define { … }, \\tempo N, \\time N/D, \\key …, \\use "…".`,
-  );
+  const rules = [
+    "Return ONLY the voices, instrument defs, or directives that need to change for this request — wrapped in a single ```synth fenced block.",
+    "Do NOT repeat unchanged voices or instruments.",
+    "When the user asks to modify a named voice or instrument, REPLACE THAT EXISTING NAME — do not invent a new name like `*_melancholic` or `*_v2`. The host splices by name, so a new name appends as a new voice instead of replacing the old one.",
+    "Emit exactly ONE ```synth block. Do not split your answer into multiple fenced blocks.",
+    'Each top-level item must be self-contained: voice NAME { … }, instrument define NAME { … }, \\tempo N, \\time N/D, \\key …, \\use "…".',
+    "Do not nest \\version or \\use inside an instrument define or a voice block.",
+  ].join(" ");
+  parts.push(`Task: ${instruction.trim()}\n\n${rules}`);
   return parts.join("\n\n");
 }
 
@@ -103,21 +109,45 @@ export function buildPrompt(args: BuildPromptArgs): string {
 }
 
 /**
- * Extract the first \`\`\`synth code block from the model's output. Tolerates
- * extra prose on either side and tags like \`\`\`synthjs / \`\`\`. When the
- * output is truncated mid-block (no closing fence — common when the model
- * hits its token budget), returns everything after the opening fence so the
- * caller can decide whether to accept the partial result. Returns null only
- * when no opening fence appears at all.
+ * Extract every \`\`\`synth-tagged fenced block from the model's output. Some
+ * smaller models emit multiple consecutive blocks instead of consolidating
+ * into one; the host merges each block in order via `mergeBlocks` so no
+ * content is lost. Tolerates labels \`\`\`synth / \`\`\`synthjs / \`\`\` and
+ * unfenced trailing content (treated as the last open-ended block).
+ *
+ * Returns an empty array when no fence appears at all.
+ */
+export function extractAllDslBlocks(output: string): string[] {
+  const blocks: string[] = [];
+  const closed = /```(?:synth(?:js)?|)?\s*\n([\s\S]*?)\n```/g;
+  let lastEnd = 0;
+  let match: RegExpExecArray | null;
+  while (true) {
+    match = closed.exec(output);
+    if (!match) break;
+    if (match[1] !== undefined) blocks.push(match[1].trim());
+    lastEnd = match.index + match[0].length;
+  }
+  // Tail: open-ended block after the last close (e.g. truncated stream).
+  const tail = output.slice(lastEnd);
+  const open = tail.match(/```(?:synth(?:js)?|)?\s*\n([\s\S]+)$/);
+  if (open?.[1] !== undefined) {
+    const tailBlock = open[1].trim();
+    if (tailBlock.length > 0) blocks.push(tailBlock);
+  }
+  return blocks;
+}
+
+/**
+ * Convenience — concatenates every fenced block returned by
+ * `extractAllDslBlocks` into a single DSL string. Used by callers that
+ * still want a single payload (e.g. when the host parses + splices once).
+ * Returns null when the output contains no fenced block.
  */
 export function extractDslBlock(output: string): string | null {
-  // First try a fully-closed block.
-  const closed = output.match(/```(?:synth(?:js)?|)?\s*\n([\s\S]*?)\n```/);
-  if (closed?.[1] !== undefined) return closed[1].trim();
-  // Fall back to an open-ended block — recovers truncated streams.
-  const open = output.match(/```(?:synth(?:js)?|)?\s*\n([\s\S]+)$/);
-  if (open?.[1] !== undefined) return open[1].trim();
-  return null;
+  const blocks = extractAllDslBlocks(output);
+  if (blocks.length === 0) return null;
+  return blocks.join("\n\n");
 }
 
 /** True when the supplied output ends without a closing fence — useful for
