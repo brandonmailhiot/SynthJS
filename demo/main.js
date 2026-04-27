@@ -183,11 +183,13 @@ voice pluck {
   16 c4 e4 g4 c5 e5 g5 c6 g5 e5 c5 g4 e4 c4 e4 g4 c5
   16 g4 b4 d5 g5 b5 d6 g6 d6 b5 g5 d5 b4 g4 b4 d5 g5
   16 d4 f#4 a4 d5 f#5 a5 d6 a5 f#5 d5 a4 f#4 d4 f#4 a4 d5
-  /// Phrase D (bars 21-24) — staggered 16ths cooling into a rest
-  16 b5 r g5 r e5 r b4 g4 e4 g4 b4 r e5 r g5 r
-  16 g5 r e5 r c5 r g4 e4 c4 e4 g4 r c5 r e5 r
-  16 d5 r b4 r g4 r d4 b3 g3 b3 d4 r g4 r b4 r
-  1 e3
+  /// Phrase D (bars 21-24) — dense descending/ascending 16ths
+  /// climbing to g6 peak, then silent so the lead's chromatic
+  /// stab in bar 24 lands without competition.
+  16 e5 d5 b4 g4 e4 g4 b4 e5 g5 e5 b4 g4 e4 g4 b4 e5
+  16 c5 e5 g5 c5 e5 g5 c6 g5 e5 c5 g4 e4 c4 e4 g4 c5
+  16 d5 g5 b5 d6 b5 g5 d5 g5 b5 d6 g6 d6 b5 g5 d5 g5
+  1 r
 }
 
 // ---------- LEAD ----------
