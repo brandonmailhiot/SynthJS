@@ -1,6 +1,7 @@
 export type { AIProvider, ChatMessage, CompleteOptions } from "./provider.js";
 export { completeText } from "./provider.js";
 export { WebLLMProvider, type WebLLMProviderOptions } from "./webllm-provider.js";
+export { GroqProvider, type GroqProviderOptions } from "./groq-provider.js";
 export {
   buildPrompt,
   buildSystemPrompt,

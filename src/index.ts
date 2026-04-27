@@ -154,6 +154,8 @@ export {
   type CompleteOptions,
   WebLLMProvider,
   type WebLLMProviderOptions,
+  GroqProvider,
+  type GroqProviderOptions,
   buildPrompt,
   buildSystemPrompt,
   buildUserMessage,

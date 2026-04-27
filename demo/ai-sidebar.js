@@ -1,5 +1,6 @@
 import {
   Composition,
+  GroqProvider,
   WebLLMProvider,
   buildSystemPrompt,
   buildUserMessage,
@@ -10,6 +11,8 @@ import {
   isTruncated,
   mergeBlocks,
 } from "synth-javascript";
+
+const GROQ_KEY_STORAGE = "synthjs.ai.groqKey";
 
 /**
  * Mounts the AI sidebar inside `parent`. Caller passes in editor handles so
@@ -28,13 +31,22 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       <label class="field">
         <span class="field-label">provider</span>
         <select id="ai-provider">
-          <option value="webllm">WebLLM (browser, offline)</option>
-          <option value="groq" disabled>Groq — coming soon</option>
+          <option value="webllm">WebLLM (browser, offline · Llama 3.2 3B)</option>
+          <option value="groq">Groq (Llama 3.3 70B — needs free API key)</option>
           <option value="anthropic" disabled>Anthropic — coming soon</option>
           <option value="openai" disabled>OpenAI — coming soon</option>
         </select>
       </label>
-      <p class="ai-status" id="ai-status">model not loaded — first request will download ~1.5 GB</p>
+      <label class="field" id="ai-key-field" hidden>
+        <span class="field-label">groq api key</span>
+        <input
+          id="ai-api-key"
+          type="password"
+          autocomplete="off"
+          placeholder="gsk_… (get one free at console.groq.com)"
+        />
+      </label>
+      <p class="ai-status" id="ai-status">webllm selected — first request downloads ~1.5 GB</p>
     </div>
     <textarea
       id="ai-input"
@@ -97,6 +109,9 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   `;
 
   const statusEl = parent.querySelector("#ai-status");
+  const providerEl = parent.querySelector("#ai-provider");
+  const keyFieldEl = parent.querySelector("#ai-key-field");
+  const apiKeyEl = parent.querySelector("#ai-api-key");
   const inputEl = parent.querySelector("#ai-input");
   const sendBtn = parent.querySelector("#ai-send");
   const cancelBtn = parent.querySelector("#ai-cancel");
@@ -115,6 +130,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
 
   let provider = new WebLLMProvider();
   let abort = null;
+  let groqKey = "";
   let lastBefore = null;
   let lastAfter = null;
   let lastDiff = null;
@@ -126,6 +142,50 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   const setStatus = (text) => {
     statusEl.textContent = text;
   };
+
+  // Restore the user's Groq API key (if any) from previous sessions. Stored
+  // in localStorage; never sent anywhere except api.groq.com.
+  try {
+    groqKey = localStorage.getItem(GROQ_KEY_STORAGE) ?? "";
+  } catch {}
+  apiKeyEl.value = groqKey;
+
+  const refreshProvider = () => {
+    const sel = providerEl.value;
+    if (sel === "webllm") {
+      keyFieldEl.hidden = true;
+      provider = new WebLLMProvider();
+      setStatus(
+        provider.isReady()
+          ? "webllm ready (Llama 3.2 3B in browser)"
+          : "webllm selected — first request downloads ~1.5 GB",
+      );
+    } else if (sel === "groq") {
+      keyFieldEl.hidden = false;
+      if (!groqKey) {
+        setStatus("paste your free Groq API key (console.groq.com) to enable");
+        provider = new WebLLMProvider();
+        return;
+      }
+      provider = new GroqProvider({ apiKey: groqKey });
+      setStatus("groq ready (Llama 3.3 70B via api.groq.com)");
+    }
+  };
+
+  providerEl.addEventListener("change", refreshProvider);
+  apiKeyEl.addEventListener("change", () => {
+    groqKey = apiKeyEl.value.trim();
+    try {
+      if (groqKey) localStorage.setItem(GROQ_KEY_STORAGE, groqKey);
+      else localStorage.removeItem(GROQ_KEY_STORAGE);
+    } catch {}
+    refreshProvider();
+  });
+  // If a key was already saved, default to Groq on next load.
+  if (groqKey) {
+    providerEl.value = "groq";
+    refreshProvider();
+  }
 
   const stopPreview = async () => {
     if (previewStopTimer !== null) {
