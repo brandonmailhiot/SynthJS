@@ -25,10 +25,19 @@ export type WebLLMProviderOptions = {
    * library and pass the module here directly.
    */
   webllmSpecifier?: string;
+  /**
+   * Override the context window size (in tokens). WebLLM defaults to 4096
+   * for many models, which is too tight for our DSL workflow once the
+   * grammar primer + composition + auto-continue assistant feedback are
+   * stacked together. Default 16384 leaves comfortable headroom while
+   * staying well below browser memory limits.
+   */
+  contextWindowSize?: number;
 };
 
 const DEFAULT_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
 const DEFAULT_SPECIFIER = "@mlc-ai/web-llm";
+const DEFAULT_CONTEXT_WINDOW = 16384;
 
 type ChatChunk = {
   choices?: { delta?: { content?: string } }[];
@@ -53,7 +62,8 @@ type ChatEngine = {
 type WebLLMModule = {
   CreateMLCEngine: (
     modelId: string,
-    callbacks?: { initProgressCallback?: (p: { progress: number; text: string }) => void },
+    engineConfig?: { initProgressCallback?: (p: { progress: number; text: string }) => void },
+    chatOpts?: { context_window_size?: number; sliding_window_size?: number },
   ) => Promise<ChatEngine>;
 };
 
@@ -63,12 +73,14 @@ export class WebLLMProvider implements AIProvider {
 
   private readonly modelId: string;
   private readonly specifier: string;
+  private readonly contextWindowSize: number;
   private engine: ChatEngine | null = null;
   private preparing: Promise<void> | null = null;
 
   constructor(opts: WebLLMProviderOptions = {}) {
     this.modelId = opts.model ?? DEFAULT_MODEL;
     this.specifier = opts.webllmSpecifier ?? DEFAULT_SPECIFIER;
+    this.contextWindowSize = opts.contextWindowSize ?? DEFAULT_CONTEXT_WINDOW;
   }
 
   isReady(): boolean {
@@ -97,10 +109,14 @@ export class WebLLMProvider implements AIProvider {
       if (this.preparing) return this.preparing;
       this.preparing = (async () => {
         const mod = (await import(/* @vite-ignore */ this.specifier)) as WebLLMModule;
-        this.engine = await mod.CreateMLCEngine(this.modelId, {
-          initProgressCallback: (p) =>
-            queue(p.text || `loading… ${(p.progress * 100).toFixed(0)}%`),
-        });
+        this.engine = await mod.CreateMLCEngine(
+          this.modelId,
+          {
+            initProgressCallback: (p) =>
+              queue(p.text || `loading… ${(p.progress * 100).toFixed(0)}%`),
+          },
+          { context_window_size: this.contextWindowSize },
+        );
       })();
       return this.preparing;
     };
