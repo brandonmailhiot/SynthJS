@@ -8,7 +8,6 @@ import {
   extractDslBlock,
   formatDiff,
   isTruncated,
-  isolateIR,
 } from "synth-javascript";
 
 /**
@@ -119,7 +118,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     }
   };
 
-  const playRange = async (source, lineRange) => {
+  const playFull = async (source) => {
     await stopPreview();
     let ir;
     try {
@@ -128,13 +127,8 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       setStatus(`compile failed: ${err?.message ?? err}`);
       return;
     }
-    if (lineRange) {
-      try {
-        ir = isolateIR(ir, { lineRange });
-      } catch {}
-    }
     if (!ir.voices.length || ir.voices.every((v) => v.events.length === 0)) {
-      setStatus("nothing to play in the changed range");
+      setStatus("composition has no playable events");
       return;
     }
     previewComposition = new Composition(ir);
@@ -197,10 +191,10 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       setStatus("generating…");
       for await (const chunk of provider.chat(messages, {
         signal: abort.signal,
-        // Compositions are long — multiple voices times many lines. Give the
-        // model enough headroom for a full revision; WebLLM's default is
-        // tighter than the model's actual context allows.
-        maxTokens: 4096,
+        // Full multi-voice revisions are long. Llama-3.2-3B's context
+        // allows much more than the prior cap; give it real headroom so
+        // the assistant doesn't cut off mid-voice.
+        maxTokens: 8192,
         temperature: 0.7,
       })) {
         collected += chunk;
@@ -255,16 +249,14 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
 
   listenBeforeBtn.addEventListener("click", () => {
     if (lastBefore === null) return;
-    const range = lastDiff?.oldRange ?? null;
-    setStatus(range ? `previewing before · lines ${range[0]}-${range[1]}` : "previewing before");
-    playRange(lastBefore, range);
+    setStatus("previewing the original composition");
+    playFull(lastBefore);
   });
 
   listenAfterBtn.addEventListener("click", () => {
     if (lastAfter === null) return;
-    const range = lastDiff?.newRange ?? null;
-    setStatus(range ? `previewing after · lines ${range[0]}-${range[1]}` : "previewing after");
-    playRange(lastAfter, range);
+    setStatus("previewing the proposed composition");
+    playFull(lastAfter);
   });
 
   stopPreviewBtn.addEventListener("click", () => {
