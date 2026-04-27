@@ -61,7 +61,7 @@ voice kick {
   \\instrument kick_drum
   \\f
   repeat 4 { 1 r }
-  repeat 20 { 4 c2 c2 c2 c2 }
+  repeat 20 { 4 c2 c c c }
 }
 
 voice snare {
@@ -70,23 +70,23 @@ voice snare {
   /// Bars 1-7: silent
   repeat 7 { 1 r }
   /// Bar 8: 16th-note drum roll into the drop
-  16 r r r r r r r r d3 d3 d3 d3 d3 d3 d3 d3
+  16 r r r r r r r r d3 d d d d d d d
   /// Bars 9-24: backbeat on 2 and 4
-  repeat 16 { 4 r d3 r d3 }
+  repeat 16 { 4 r d3 r d }
 }
 
 voice clap {
   \\instrument clap_808
   \\mp
   repeat 8 { 1 r }
-  repeat 16 { 4 r d3 r d3 }
+  repeat 16 { 4 r d3 r d }
 }
 
 voice hats {
   \\instrument hat_closed_808
   \\mp
   repeat 4 { 1 r }
-  repeat 20 { 8 r f6 r f6 r f6 r f6 }
+  repeat 20 { 8 r f6 r f r f r f }
 }
 
 voice openhat {
@@ -105,24 +105,24 @@ voice pad {
   with reverb(2, 1.8, 0.5) {
     \\mp
     /// Intro chord wash
-    1 <e3 g3 b3>
-    1 <c3 e3 g3>
-    1 <g3 b3 d4>
-    1 <d3 f#3 a3>
+    1 <e3 g b>
+    1 <c3 e g>
+    1 <g3 b d4>
+    1 <d3 f# a>
     /// Build — staccato stabs, dynamics ramp
     ramp(\\mp, \\f) {
-      4 <e3 g3 b3>. r <e3 g3 b3>. r
-      4 <c3 e3 g3>. r <c3 e3 g3>. r
-      4 <g3 b3 d4>. r <g3 b3 d4>. r
-      4 <d3 f#3 a3>. r <d3 f#3 a3>. r
+      4 <e3 g b>. r <e3 g b>. r
+      4 <c3 e g>. r <c3 e g>. r
+      4 <g3 b d4>. r <g3 b d4>. r
+      4 <d3 f# a>. r <d3 f# a>. r
     }
     /// Drop — sustained chords
     \\mf
     repeat 4 {
-      1 <e3 g3 b3>
-      1 <c3 e3 g3>
-      1 <g3 b3 d4>
-      1 <d3 f#3 a3>
+      1 <e3 g b>
+      1 <c3 e g>
+      1 <g3 b d4>
+      1 <d3 f# a>
     }
   }
 }
@@ -134,28 +134,28 @@ voice bass {
   1 r
   1 r
   2 e2 r
-  4 e2 r e2 r
+  4 e2 r e r
   /// Build — quarter pulses ramping into eighth syncopation
   ramp(\\mp, \\f) {
-    4 c2 c2 c2 c2
-    4 g2 g2 g2 g2
-    8 e1 r e2 e2 e1 r e2 e2
-    8 d1 r d2 d2 d1 d2 a2 b2
+    4 c2 c c c
+    4 g2 g g g
+    8 e1 r e2 e e1 r e2 e
+    8 d1 r d2 d d1 d2 a b
   }
   /// Drop A — bars 9-16: syncopated sub + body
   \\f
   repeat 2 {
-    8 e1 r e2 e2 e1 r e2 e2
-    8 c1 r c2 c2 c1 r c2 c2
-    8 g1 r g2 g2 g1 r g2 g2
-    8 d1 r d2 d2 d1 r d2 d2
+    8 e1 r e2 e e1 r e2 e
+    8 c1 r c2 c c1 r c2 c
+    8 g1 r g2 g g1 r g2 g
+    8 d1 r d2 d d1 r d2 d
   }
   /// Drop B — bars 17-24: walking line, passing tones, octave jumps
   repeat 2 {
-    8 e1 e2 g2 e2 e1 e2 b2 a2
-    8 c1 c2 e2 c2 c1 c2 g2 e2
-    8 g1 g2 d3 g2 g1 g2 b2 a2
-    8 d1 d2 f#2 d2 d1 d2 a2 g2
+    8 e1 e2 g e e1 e2 b a
+    8 c1 c2 e c c1 c2 g e
+    8 g1 g2 d3 g2 g1 g2 b a
+    8 d1 d2 f# d d1 d2 a g
   }
 }
 
@@ -165,31 +165,31 @@ voice pluck {
   repeat 6 { 1 r }
   /// Bars 7-8: sneak in with sparse 16th figures (build fill)
   \\mp
-  16 r r e4 g4 r r b4 e5 r r b4 g4 r r e4 g4
-  16 r r c5 b4 g4 e4 r r r r d5 b4 g4 e4 r r
+  16 r r e4 g r r b e5 r r b4 g r r e g
+  16 r r c5 b4 g e r r r r d5 b4 g e r r
   /// Phrase A (bars 9-12) — ascending 16th flurry, climbs each chord
   \\mf
-  16 e4 g4 b4 e5 b4 g4 e4 g4 b4 e5 g5 e5 b4 g4 e4 g4
-  16 c4 e4 g4 c5 g4 e4 c4 e4 g4 c5 e5 c5 g4 e4 c4 e4
-  16 g4 b4 d5 g5 d5 b4 g4 b4 d5 g5 b5 g5 d5 b4 g4 b4
-  16 d4 f#4 a4 d5 a4 f#4 d4 f#4 a4 d5 f#5 d5 a4 f#4 d4 f#4
+  16 e4 g b e5 b4 g e g b e5 g e b4 g e g
+  16 c4 e g c5 g4 e c e g c5 e c g4 e c e
+  16 g4 b d5 g d b4 g b d5 g b g d b4 g b
+  16 d4 f# a d5 a4 f# d f# a d5 f# d a4 f# d f#
   /// Phrase B (bars 13-16) — call-and-response with 16th + rest gaps
-  16 e5 d5 b4 g4 r r e5 d5 b4 g4 r r e5 d5 b4 g4
-  16 c5 b4 g4 e4 r r c5 b4 g4 e4 r r c5 b4 g4 e4
-  16 d5 b4 g4 d4 r r d5 b4 g4 d4 r r g5 d5 b4 g4
-  16 a4 f#4 d4 a3 r r a4 f#4 d4 a3 r r d5 a4 f#4 d4
+  16 e5 d b4 g r r e5 d b4 g r r e5 d b4 g
+  16 c5 b4 g e r r c5 b4 g e r r c5 b4 g e
+  16 d5 b4 g d r r d5 b4 g d r r g5 d b4 g
+  16 a4 f# d a3 r r a4 f# d a3 r r d5 a4 f# d
   /// Phrase C (bars 17-20) — peak flurry, octave climb to top
-  16 e4 g4 b4 e5 g5 b5 e6 b5 g5 e5 b4 g4 e4 g4 b4 e5
-  16 c4 e4 g4 c5 e5 g5 c6 g5 e5 c5 g4 e4 c4 e4 g4 c5
-  16 g4 b4 d5 g5 b5 d6 g6 d6 b5 g5 d5 b4 g4 b4 d5 g5
-  16 d4 f#4 a4 d5 f#5 a5 d6 a5 f#5 d5 a4 f#4 d4 f#4 a4 d5
-  /// Phrase D (bars 21-24) — dense descending/ascending 16ths
-  /// climbing to g6 peak, then silent so the lead's chromatic
-  /// stab in bar 24 lands without competition.
-  16 e5 d5 b4 g4 e4 g4 b4 e5 g5 e5 b4 g4 e4 g4 b4 e5
-  16 c5 e5 g5 c5 e5 g5 c6 g5 e5 c5 g4 e4 c4 e4 g4 c5
-  16 d5 g5 b5 d6 b5 g5 d5 g5 b5 d6 g6 d6 b5 g5 d5 g5
-  1 r
+  16 e4 g b e5 g b e6 b5 g e b4 g e g b e5
+  16 c4 e g c5 e g c6 g5 e c g4 e c e g c5
+  16 g4 b d5 g b d6 g6 d b5 g d b4 g b d5 g
+  16 d4 f# a d5 f# a d6 a5 f# d a4 f# d f# a d5
+  /// Phrase D (bars 21-24) — dense 16th figures, peak at g6, then a
+  /// chromatic descent that mirrors the lead's chromatic ascent and
+  /// resolves on e4 (Em root). Lead peaks high, pluck lands low.
+  16 e5 d b4 g e g b e5 g e b4 g e g b e5
+  16 c5 e g c e g c6 g5 e c g4 e c e g c5
+  16 d5 g b d6 b5 g d g b d6 g6 d b5 g d g
+  16 e5 d# d c# c b4 a# a g# g f# f e r r r
 }
 
 // ---------- LEAD ----------
@@ -199,21 +199,21 @@ voice lead {
     repeat 12 { 1 r }
     \\mf
     /// Hook A — syncopated entry, descending answer
-    8 r b4 r b4 4 d5 e5
-    8 e5 d5 b4 a4 4 g4 a4
-    8 r d5 r d5 4 g5 8 e5 d5
-    4 a5 g5 8 e5 d5 b4 a4
+    8 r b4 r b 4 d5 e
+    8 e5 d b4 a 4 g a
+    8 r d5 r d 4 g 8 e d
+    4 a5 g 8 e d b4 a
     /// Hook B — climb to peak, slide back, descending run
-    4 b4 a4 g4 e4
-    8 g4 a4 b4 c5 d5 e5 g5 a5
+    4 b4 a g e
+    8 g4 a b c5 d e g a
     1 b5 -> e5
-    8 a5 g5 e5 d5 c5 b4 a4 g4
+    8 a5 g e d c b4 a g
     /// Tail — rising stutter, slide accent, chromatic spike to peak,
     /// then sudden silence while pluck + bass carry the resolution.
-    8 r b4 r d5 4 e5 g5
-    8 r e5 r g5 4 b5 a5
-    2 b5 -> g5 2 a5
-    16 g5 a5 b5 c6 c#6 d6 d#6 e6 r r r r r r r r
+    8 r b4 r d5 4 e g
+    8 r e5 r g 4 b a
+    2 b5 -> g5 2 a
+    16 g5 a b c6 c# d d# e r r r r r r r r
   }
 }`,
 
