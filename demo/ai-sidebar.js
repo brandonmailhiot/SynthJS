@@ -6,6 +6,7 @@ import {
   diffLines,
   extractDslBlock,
   formatDiff,
+  isTruncated,
   isolateIR,
 } from "synth-javascript";
 
@@ -186,7 +187,10 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       setStatus("generating…");
       for await (const chunk of provider.complete(prompt, {
         signal: abort.signal,
-        maxTokens: 1024,
+        // Compositions are long — multiple voices times many lines. Give the
+        // model enough headroom for a full revision; WebLLM's default is
+        // tighter than the model's actual context allows.
+        maxTokens: 4096,
         temperature: 0.7,
       })) {
         collected += chunk;
@@ -213,14 +217,23 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       setStatus("model did not return a fenced ```synth block");
       return;
     }
+    const truncated = isTruncated(collected);
 
     // Validate: make sure it compiles. If not, surface diagnostics so the
     // musician can decide whether to accept anyway.
     try {
       compileSync(proposed);
-      setStatus("proposal compiles cleanly");
+      setStatus(
+        truncated
+          ? "proposal compiles, but output was truncated — try splitting the request or raising the token budget"
+          : "proposal compiles cleanly",
+      );
     } catch (err) {
-      setStatus(`proposal does not compile: ${err?.message ?? err}`);
+      setStatus(
+        truncated
+          ? `proposal truncated and did not compile: ${err?.message ?? err}`
+          : `proposal does not compile: ${err?.message ?? err}`,
+      );
     }
 
     showDiff(currentSource, proposed);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPrompt, extractDslBlock } from "./prompt-builder.js";
+import { buildPrompt, extractDslBlock, isTruncated } from "./prompt-builder.js";
 
 describe("buildPrompt", () => {
   it("includes the grammar primer + examples + instruction", () => {
@@ -50,5 +50,22 @@ describe("extractDslBlock", () => {
 
   it("returns null when no fence is present", () => {
     expect(extractDslBlock("just prose")).toBeNull();
+  });
+
+  it("recovers a partial block when output truncates without a closing fence", () => {
+    const truncated = "Here:\n```synth\nvoice m {\n  4 c4 d4";
+    expect(extractDslBlock(truncated)).toBe("voice m {\n  4 c4 d4");
+  });
+});
+
+describe("isTruncated", () => {
+  it("flags a partial block missing its closing fence", () => {
+    expect(isTruncated("```synth\nvoice m { 4 c4")).toBe(true);
+  });
+  it("does not flag a fully closed block", () => {
+    expect(isTruncated("```synth\n4 c4\n```")).toBe(false);
+  });
+  it("does not flag plain prose with no fences", () => {
+    expect(isTruncated("plain text")).toBe(false);
   });
 });

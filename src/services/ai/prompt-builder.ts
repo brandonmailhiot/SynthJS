@@ -93,12 +93,26 @@ export function buildPrompt({ currentSource, instruction, reference }: BuildProm
 
 /**
  * Extract the first \`\`\`synth code block from the model's output. Tolerates
- * extra prose on either side and tags like \`\`\`synthjs / \`\`\`. Returns null
- * when no fenced block is present.
+ * extra prose on either side and tags like \`\`\`synthjs / \`\`\`. When the
+ * output is truncated mid-block (no closing fence — common when the model
+ * hits its token budget), returns everything after the opening fence so the
+ * caller can decide whether to accept the partial result. Returns null only
+ * when no opening fence appears at all.
  */
 export function extractDslBlock(output: string): string | null {
-  const fenceRegex = /```(?:synth(?:js)?|)?\s*\n([\s\S]*?)\n```/;
-  const match = output.match(fenceRegex);
-  if (match?.[1] !== undefined) return match[1].trim();
+  // First try a fully-closed block.
+  const closed = output.match(/```(?:synth(?:js)?|)?\s*\n([\s\S]*?)\n```/);
+  if (closed?.[1] !== undefined) return closed[1].trim();
+  // Fall back to an open-ended block — recovers truncated streams.
+  const open = output.match(/```(?:synth(?:js)?|)?\s*\n([\s\S]+)$/);
+  if (open?.[1] !== undefined) return open[1].trim();
   return null;
+}
+
+/** True when the supplied output ends without a closing fence — useful for
+ *  surfacing a "truncated, hit token limit" warning in the UI. */
+export function isTruncated(output: string): boolean {
+  if (!/```(?:synth(?:js)?|)?\s*\n/.test(output)) return false;
+  const closed = output.match(/```(?:synth(?:js)?|)?\s*\n[\s\S]*?\n```/);
+  return closed === null;
 }

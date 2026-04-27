@@ -155,6 +155,7 @@ export {
   type WebLLMProviderOptions,
   buildPrompt,
   extractDslBlock,
+  isTruncated,
   type BuildPromptArgs,
   diffLines,
   formatDiff,
