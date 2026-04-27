@@ -198,6 +198,13 @@ a:hover {
   min-width: 0;
 }
 
+/* `display: flex` above defeats the browser's default `[hidden] { display: none }`
+   rule, so the API key field stayed visible even with the `hidden` attribute set.
+   Re-assert it explicitly. */
+.field[hidden] {
+  display: none;
+}
+
 .field-label {
   font-family: var(--font-mono);
   font-size: 11px;
