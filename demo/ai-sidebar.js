@@ -61,10 +61,24 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       <pre id="ai-diff" class="ai-diff"></pre>
       <div class="ai-buttons ai-diff-buttons">
         <button id="ai-listen-before" class="btn">
-          <span class="btn-glyph">▶</span><span class="btn-label">before</span>
+          <span class="btn-glyph">▶</span><span class="btn-label">full before</span>
         </button>
         <button id="ai-listen-after" class="btn">
-          <span class="btn-glyph">▶</span><span class="btn-label">after</span>
+          <span class="btn-glyph">▶</span><span class="btn-label">full after</span>
+        </button>
+        <button
+          id="ai-listen-diff-before"
+          class="btn"
+          title="Play the original composition starting at the first beat the change touches"
+        >
+          <span class="btn-glyph">▶</span><span class="btn-label">diff before</span>
+        </button>
+        <button
+          id="ai-listen-diff-after"
+          class="btn"
+          title="Play the proposed composition from the first beat the change touches"
+        >
+          <span class="btn-glyph">▶</span><span class="btn-label">diff after</span>
         </button>
         <button id="ai-stop-preview" class="btn">
           <span class="btn-glyph">■</span><span class="btn-label">stop</span>
@@ -92,6 +106,8 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   const diffEl = parent.querySelector("#ai-diff");
   const listenBeforeBtn = parent.querySelector("#ai-listen-before");
   const listenAfterBtn = parent.querySelector("#ai-listen-after");
+  const listenDiffBeforeBtn = parent.querySelector("#ai-listen-diff-before");
+  const listenDiffAfterBtn = parent.querySelector("#ai-listen-diff-after");
   const stopPreviewBtn = parent.querySelector("#ai-stop-preview");
   const acceptBtn = parent.querySelector("#ai-accept");
   const rejectBtn = parent.querySelector("#ai-reject");
@@ -102,20 +118,83 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   let lastBefore = null;
   let lastAfter = null;
   let lastDiff = null;
+  let lastChangedNames = []; // [{kind: "voice"|"instrument", name}]
   let userReference = null; // user-edited DSL fed back as context for the next prompt
   let previewComposition = null;
+  let previewStopTimer = null;
 
   const setStatus = (text) => {
     statusEl.textContent = text;
   };
 
   const stopPreview = async () => {
+    if (previewStopTimer !== null) {
+      clearTimeout(previewStopTimer);
+      previewStopTimer = null;
+    }
     if (previewComposition) {
       previewComposition.stop();
       try {
         await previewComposition.destroy();
       } catch {}
       previewComposition = null;
+    }
+  };
+
+  /**
+   * Walk an IR and find the union (in whole-note beats) of every event
+   * whose voice or instrument was touched by the merge. Returns null when
+   * no changes were tracked or none of them resolved to a playable event.
+   */
+  const computeChangeRange = (ir, changed) => {
+    if (!ir || !changed?.length) return null;
+    const voiceNames = new Set();
+    const instrumentNames = new Set();
+    for (const c of changed) {
+      if (c.kind === "voice") voiceNames.add(c.name);
+      if (c.kind === "instrument") instrumentNames.add(c.name);
+    }
+    let firstBeat = Number.POSITIVE_INFINITY;
+    let lastEnd = 0;
+    for (const v of ir.voices) {
+      const voiceMatches = voiceNames.has(v.name);
+      for (const e of v.events) {
+        const instrMatches = instrumentNames.has(e.instrument.name);
+        if (!voiceMatches && !instrMatches) continue;
+        if (e.startBeat < firstBeat) firstBeat = e.startBeat;
+        const end = e.startBeat + e.durationBeats;
+        if (end > lastEnd) lastEnd = end;
+      }
+    }
+    if (firstBeat === Number.POSITIVE_INFINITY) return null;
+    return { fromBeat: firstBeat, toBeat: lastEnd };
+  };
+
+  const playFullFrom = async (source, fromBeat, toBeat) => {
+    await stopPreview();
+    let ir;
+    try {
+      ir = compileSync(source);
+    } catch (err) {
+      setStatus(`compile failed: ${err?.message ?? err}`);
+      return;
+    }
+    if (!ir.voices.length || ir.voices.every((v) => v.events.length === 0)) {
+      setStatus("composition has no playable events");
+      return;
+    }
+    previewComposition = new Composition(ir);
+    await previewComposition.play(fromBeat > 0 ? { from: fromBeat } : {});
+    if (typeof toBeat === "number" && toBeat > fromBeat) {
+      const wholeNotesToPlay = toBeat - fromBeat;
+      const seconds = (wholeNotesToPlay * 4 * 60) / ir.tempo;
+      previewStopTimer = setTimeout(
+        () => {
+          stopPreview();
+          setStatus("diff preview finished");
+        },
+        seconds * 1000 + 200, // small tail so the last note's release rings out
+      );
     }
   };
 
@@ -152,6 +231,23 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     lastBefore = null;
     lastAfter = null;
     lastDiff = null;
+    lastChangedNames = [];
+  };
+
+  /**
+   * Parse mergeBlocks' string labels (e.g. "voice pluck", "instrument
+   * pluck_synth") back into structured {kind, name} entries so the
+   * diff-preview range computation can match by IR voice + instrument.
+   */
+  const parseChangedLabels = (merge) => {
+    const out = [];
+    for (const label of [...(merge.replaced ?? []), ...(merge.added ?? [])]) {
+      if (label.startsWith("voice ")) out.push({ kind: "voice", name: label.slice(6) });
+      else if (label.startsWith("instrument ")) {
+        out.push({ kind: "instrument", name: label.slice(11) });
+      }
+    }
+    return out;
   };
 
   sendBtn.addEventListener("click", async () => {
@@ -266,6 +362,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     };
     let merge = applyAllBlocks(currentSource, aiBlocks);
     let proposed = merge.text;
+    lastChangedNames = parseChangedLabels(merge);
     const summary = [];
     if (merge.replaced.length) summary.push(`replaced ${merge.replaced.join(", ")}`);
     if (merge.added.length) summary.push(`added ${merge.added.join(", ")}`);
@@ -347,6 +444,53 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     if (lastAfter === null) return;
     setStatus("previewing the proposed composition");
     playFull(lastAfter);
+  });
+
+  /**
+   * Diff-context preview — plays the FULL composition (all voices) but
+   * starting at the first beat the change touches and stopping after the
+   * last beat the change touches. The musician hears the modified voice
+   * land in context with the rest of the piece.
+   */
+  const playDiffInContext = async (label, source, otherSource) => {
+    if (source === null) return;
+    let ir;
+    try {
+      ir = compileSync(source);
+    } catch (err) {
+      setStatus(`compile failed: ${err?.message ?? err}`);
+      return;
+    }
+    // Range derived from the side that actually contains the changed
+    // events. For "before" the changes don't exist in `source`, so we use
+    // `otherSource` (the proposal) to find the affected beats; the same
+    // beats are then played from the original.
+    let rangeIr = ir;
+    if (otherSource) {
+      try {
+        rangeIr = compileSync(otherSource);
+      } catch {}
+    }
+    const range = computeChangeRange(rangeIr, lastChangedNames);
+    if (!range) {
+      setStatus(`previewing ${label} (no change range — playing from start)`);
+      playFull(source);
+      return;
+    }
+    const fromSec = (range.fromBeat * 4 * 60) / ir.tempo;
+    const toSec = (range.toBeat * 4 * 60) / ir.tempo;
+    setStatus(
+      `previewing ${label} from ${fromSec.toFixed(2)}s to ${toSec.toFixed(2)}s — change in context`,
+    );
+    playFullFrom(source, range.fromBeat, range.toBeat);
+  };
+
+  listenDiffBeforeBtn.addEventListener("click", () => {
+    playDiffInContext("before (diff range)", lastBefore, lastAfter);
+  });
+
+  listenDiffAfterBtn.addEventListener("click", () => {
+    playDiffInContext("after (diff range)", lastAfter, lastAfter);
   });
 
   stopPreviewBtn.addEventListener("click", () => {
