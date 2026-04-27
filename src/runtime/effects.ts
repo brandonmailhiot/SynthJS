@@ -61,12 +61,36 @@ function buildGain(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   return simpleNode(gain);
 }
 
+// Cache reverb impulse responses per (ctx, channels, seconds, decay). Per-event
+// `with reverb(...)` would otherwise regenerate the random IR for every note,
+// blocking the main thread on busy compositions and starving the scheduler.
+const reverbBufferCache = new WeakMap<AudioContextLike, Map<string, AudioBufferLike>>();
+
+function getReverbBuffer(
+  ctx: AudioContextLike,
+  channels: number,
+  seconds: number,
+  decay: number,
+): AudioBufferLike {
+  let perCtx = reverbBufferCache.get(ctx);
+  if (!perCtx) {
+    perCtx = new Map();
+    reverbBufferCache.set(ctx, perCtx);
+  }
+  const key = `${channels}|${seconds}|${decay}`;
+  const cached = perCtx.get(key);
+  if (cached) return cached;
+  const buffer = createReverbBuffer(ctx, channels, seconds, decay);
+  perCtx.set(key, buffer);
+  return buffer;
+}
+
 function buildReverb(ctx: AudioContextLike, e: EffectInvocation): EffectNode {
   const channels = numArg(e, 0, "channels", DEFAULT_EFFECT_ARGS.reverb.channels);
   const seconds = numArg(e, 1, "seconds", DEFAULT_EFFECT_ARGS.reverb.seconds);
   const decay = numArg(e, 2, "decay", DEFAULT_EFFECT_ARGS.reverb.decay);
   const conv = ctx.createConvolver();
-  conv.buffer = createReverbBuffer(ctx, channels, seconds, decay);
+  conv.buffer = getReverbBuffer(ctx, channels, seconds, decay);
   return simpleNode(conv);
 }
 
