@@ -42,7 +42,14 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
         <input
           id="ai-api-key"
           type="password"
-          autocomplete="off"
+          autocomplete="new-password"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="off"
+          name="synthjs-groq-key"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-form-type="other"
           placeholder="gsk_… (get one free at console.groq.com)"
         />
       </label>

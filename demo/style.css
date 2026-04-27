@@ -614,6 +614,22 @@ a:hover {
   letter-spacing: 0;
 }
 
+/* Suppress the browser's autofill / password-manager icon (Safari, Chrome,
+   1Password / iCloud Keychain UI) which silently reserves space inside the
+   input and makes it visibly taller than the adjacent dropdown. */
+#ai-key-field input::-webkit-credentials-auto-fill-button,
+#ai-key-field input::-webkit-contacts-auto-fill-button,
+#ai-key-field input::-webkit-strong-password-auto-fill-button,
+#ai-key-field input::-webkit-caps-lock-indicator {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 0;
+}
+
 #ai-key-field input:hover {
   border-color: var(--accent-warm);
 }
