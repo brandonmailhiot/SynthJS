@@ -4,6 +4,9 @@
  * so smaller browser models (3B-class) have enough to produce valid output.
  */
 
+import { lex } from "../../lexer/lexer.js";
+import { parse } from "../../parser/parser.js";
+
 /**
  * Static system prompt — grammar primer + worked examples. Kept compact so
  * KV-cache reuse on subsequent turns stays cheap and first-token latency
@@ -87,16 +90,66 @@ export function buildUserMessage({
       `User-provided reference (treat as the new baseline):\n\`\`\`synth\n${reference.trim()}\n\`\`\``,
     );
   }
-  const rules = [
+  const targets = inferEditTargets(currentSource, instruction);
+  const ruleLines = [
     "Return ONLY the voices, instrument defs, or directives that need to change for this request — wrapped in a single ```synth fenced block.",
     "Do NOT repeat unchanged voices or instruments.",
     "When the user asks to modify a named voice or instrument, REPLACE THAT EXISTING NAME — do not invent a new name like `*_melancholic` or `*_v2`. The host splices by name, so a new name appends as a new voice instead of replacing the old one.",
     "Emit exactly ONE ```synth block. Do not split your answer into multiple fenced blocks.",
     'Each top-level item must be self-contained: voice NAME { … }, instrument define NAME { … }, \\tempo N, \\time N/D, \\key …, \\use "…".',
     "Do not nest \\version or \\use inside an instrument define or a voice block.",
-  ].join(" ");
-  parts.push(`Task: ${instruction.trim()}\n\n${rules}`);
+  ];
+  if (targets.length > 0) {
+    const list = targets.map((t) => `\`${t}\``).join(", ");
+    ruleLines.unshift(
+      `STRICT SCOPE: the user is targeting ${list}. Emit ONLY those block(s). Do NOT modify tempo, time signature, key, other voices, or any other instruments. If the request implicitly needs a related instrument (e.g. editing a voice that uses a custom instrument), you may also include that instrument's define block — nothing else.`,
+    );
+  }
+  parts.push(`Task: ${instruction.trim()}\n\n${ruleLines.join(" ")}`);
   return parts.join("\n\n");
+}
+
+/**
+ * Heuristic: scan the user instruction for names that exist as voices or
+ * instrument defs in the current source. When a match is found, the prompt
+ * pins the AI to that exact block instead of letting it "improve" the
+ * whole composition.
+ *
+ * Matching is whole-word + case-insensitive on lowercased identifiers.
+ * Voice names tend to be short (kick, lead, pad, …), so we accept any
+ * occurrence in the instruction.
+ */
+function inferEditTargets(currentSource: string, instruction: string): string[] {
+  if (!currentSource.trim()) return [];
+  let voiceNames: string[] = [];
+  let instrumentNames: string[] = [];
+  try {
+    const ast = parse(lex(currentSource));
+    for (const node of ast.body) {
+      if (node.kind === "VoiceDecl") voiceNames.push(node.name);
+      if (node.kind === "InstrumentDef") instrumentNames.push(node.name);
+    }
+  } catch {
+    return [];
+  }
+  // De-dup, longest-first so multi-word names match before single-word ones.
+  voiceNames = [...new Set(voiceNames)].sort((a, b) => b.length - a.length);
+  instrumentNames = [...new Set(instrumentNames)].sort((a, b) => b.length - a.length);
+  const lowered = instruction.toLowerCase();
+  const matched: string[] = [];
+  for (const name of voiceNames) {
+    const re = new RegExp(`\\b${escapeRegExp(name.toLowerCase())}\\b`);
+    if (re.test(lowered)) matched.push(`voice ${name}`);
+  }
+  for (const name of instrumentNames) {
+    const re = new RegExp(`\\b${escapeRegExp(name.toLowerCase())}\\b`);
+    if (re.test(lowered)) matched.push(`instrument ${name}`);
+  }
+  return matched;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

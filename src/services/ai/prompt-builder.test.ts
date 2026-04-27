@@ -37,6 +37,38 @@ describe("buildPrompt", () => {
     const refCount = (p.match(/User-provided reference/g) ?? []).length;
     expect(refCount).toBe(0);
   });
+
+  it("pins the AI to a specific voice when the instruction names it", () => {
+    const src = "voice pluck { 4 c4 }\nvoice lead { 4 d4 }\nvoice kick { 4 c2 }";
+    const p = buildPrompt({
+      currentSource: src,
+      instruction: "make the pluck voice more melancholic",
+    });
+    expect(p).toContain("STRICT SCOPE");
+    expect(p).toContain("voice pluck");
+    // Should NOT pull in unrelated voices
+    expect(p).not.toMatch(/STRICT SCOPE.*voice lead/);
+  });
+
+  it("pins both a voice and its instrument when both are named", () => {
+    const src =
+      "instrument define pluck_synth { oscillator triangle }\nvoice pluck { \\instrument pluck_synth 4 c4 }";
+    const p = buildPrompt({
+      currentSource: src,
+      instruction: "rework the pluck_synth instrument and the pluck voice",
+    });
+    expect(p).toContain("voice pluck");
+    expect(p).toContain("instrument pluck_synth");
+  });
+
+  it("omits the strict-scope rule when the instruction matches no existing names", () => {
+    const src = "voice main { 4 c4 }";
+    const p = buildPrompt({
+      currentSource: src,
+      instruction: "make a synthwave intro",
+    });
+    expect(p).not.toContain("STRICT SCOPE");
+  });
 });
 
 describe("extractDslBlock", () => {
