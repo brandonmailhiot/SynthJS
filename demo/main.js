@@ -198,7 +198,7 @@ voice pluck {
   16 e5 d b4 g e g b e5 g e b4 g e g b e5
   16 c5 e g c e g c6 g5 e c g4 e c e g c5
   16 d5 g b d6 b5 g d g b d6 g6 d b5 g d g
-  16 e5 d# d c# c b4 a# a g# g f# f e r r r
+  16 e5 d# d c# c b4 a# a g# g f# f e d# r r
 }
 
 // ---------- LEAD ----------
