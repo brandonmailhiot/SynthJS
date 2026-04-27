@@ -34,6 +34,8 @@ type ChatChunk = {
   choices?: { delta?: { content?: string } }[];
 };
 
+type StreamLike = AsyncIterable<ChatChunk> | Promise<AsyncIterable<ChatChunk>>;
+
 type ChatEngine = {
   reload?: (modelId: string, opts?: unknown) => Promise<void>;
   chat: {
@@ -43,7 +45,7 @@ type ChatEngine = {
         stream: true;
         max_tokens?: number;
         temperature?: number;
-      }) => AsyncIterable<ChatChunk>;
+      }) => StreamLike;
     };
   };
 };
@@ -145,12 +147,18 @@ export class WebLLMProvider implements AIProvider {
     const engine = this.engine;
     if (!engine) throw new Error("WebLLM engine failed to initialize");
 
-    const stream = engine.chat.completions.create({
+    const streamOrPromise = engine.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       stream: true,
       ...(opts.maxTokens !== undefined ? { max_tokens: opts.maxTokens } : {}),
       ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
     });
+    // WebLLM versions vary: some return AsyncIterable directly, others
+    // return a Promise<AsyncIterable>. Await defensively so either works.
+    const stream: AsyncIterable<ChatChunk> =
+      typeof (streamOrPromise as { then?: unknown }).then === "function"
+        ? await (streamOrPromise as Promise<AsyncIterable<ChatChunk>>)
+        : (streamOrPromise as AsyncIterable<ChatChunk>);
 
     for await (const chunk of stream) {
       if (opts.signal?.aborted) throw new DOMException("Aborted", "AbortError");
