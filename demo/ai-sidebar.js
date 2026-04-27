@@ -1,7 +1,8 @@
 import {
   Composition,
   WebLLMProvider,
-  buildPrompt,
+  buildSystemPrompt,
+  buildUserMessage,
   compileSync,
   diffLines,
   extractDslBlock,
@@ -167,11 +168,20 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     streamEl.hidden = false;
 
     const currentSource = getSource();
-    const prompt = buildPrompt({
-      currentSource,
-      instruction,
-      ...(userReference ? { reference: userReference } : {}),
-    });
+    // Split system + user so providers with KV-cache reuse skip re-encoding
+    // the grammar primer on follow-up turns. Big speedup on second + later
+    // requests in the same session.
+    const messages = [
+      { role: "system", content: buildSystemPrompt() },
+      {
+        role: "user",
+        content: buildUserMessage({
+          currentSource,
+          instruction,
+          ...(userReference ? { reference: userReference } : {}),
+        }),
+      },
+    ];
 
     abort = new AbortController();
     let collected = "";
@@ -185,7 +195,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
         setStatus("ready");
       }
       setStatus("generating…");
-      for await (const chunk of provider.complete(prompt, {
+      for await (const chunk of provider.chat(messages, {
         signal: abort.signal,
         // Compositions are long — multiple voices times many lines. Give the
         // model enough headroom for a full revision; WebLLM's default is

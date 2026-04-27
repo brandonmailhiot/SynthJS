@@ -18,6 +18,11 @@ export type CompleteOptions = {
   signal?: AbortSignal;
 };
 
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
 export interface AIProvider {
   /** Stable identifier — `"webllm"`, `"groq"`, `"anthropic"`, … */
   readonly id: string;
@@ -39,9 +44,16 @@ export interface AIProvider {
   prepare?(opts?: { signal?: AbortSignal }): AsyncIterable<string>;
 
   /**
-   * Stream a completion for the given prompt. The system prompt is
-   * concatenated by the caller before invocation; this method receives the
-   * full assembled text. Returns chunks as they arrive.
+   * Stream a chat completion for an array of role-tagged messages. Splitting
+   * the system prompt from per-turn user content lets KV-caching providers
+   * (WebLLM, OpenAI, Anthropic) reuse the encoded system prefix across
+   * follow-up turns and avoid re-prefilling thousands of tokens each time.
+   */
+  chat(messages: ChatMessage[], opts?: CompleteOptions): AsyncIterable<string>;
+
+  /**
+   * Convenience for single-shot prompts. Default implementations wrap
+   * `chat([{role: "user", content: prompt}])`.
    */
   complete(prompt: string, opts?: CompleteOptions): AsyncIterable<string>;
 }

@@ -1,8 +1,10 @@
-export type { AIProvider, CompleteOptions } from "./provider.js";
+export type { AIProvider, ChatMessage, CompleteOptions } from "./provider.js";
 export { completeText } from "./provider.js";
 export { WebLLMProvider, type WebLLMProviderOptions } from "./webllm-provider.js";
 export {
   buildPrompt,
+  buildSystemPrompt,
+  buildUserMessage,
   extractDslBlock,
   isTruncated,
   type BuildPromptArgs,

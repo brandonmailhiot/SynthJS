@@ -1,4 +1,4 @@
-import type { AIProvider, CompleteOptions } from "./provider.js";
+import type { AIProvider, ChatMessage, CompleteOptions } from "./provider.js";
 
 /**
  * Browser-local provider backed by WebLLM (https://github.com/mlc-ai/web-llm).
@@ -135,11 +135,10 @@ export class WebLLMProvider implements AIProvider {
     await loadPromise;
   }
 
-  async *complete(prompt: string, opts: CompleteOptions = {}): AsyncIterable<string> {
+  async *chat(messages: ChatMessage[], opts: CompleteOptions = {}): AsyncIterable<string> {
     if (!this.engine) {
-      // Drain prepare() so callers can invoke `complete` directly. We yield
-      // its progress messages so the UI still has something to show; they
-      // are namespaced with a sentinel prefix the chat UI strips.
+      // Drain prepare() so callers can invoke chat() directly. Progress
+      // messages are namespaced with a sentinel prefix the chat UI strips.
       for await (const msg of this.prepare({ ...(opts.signal ? { signal: opts.signal } : {}) })) {
         yield `[loading] ${msg}`;
       }
@@ -148,7 +147,7 @@ export class WebLLMProvider implements AIProvider {
     if (!engine) throw new Error("WebLLM engine failed to initialize");
 
     const streamOrPromise = engine.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
+      messages,
       stream: true,
       ...(opts.maxTokens !== undefined ? { max_tokens: opts.maxTokens } : {}),
       ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
@@ -165,5 +164,9 @@ export class WebLLMProvider implements AIProvider {
       const delta = chunk.choices?.[0]?.delta?.content;
       if (delta) yield delta;
     }
+  }
+
+  complete(prompt: string, opts: CompleteOptions = {}): AsyncIterable<string> {
+    return this.chat([{ role: "user", content: prompt }], opts);
   }
 }

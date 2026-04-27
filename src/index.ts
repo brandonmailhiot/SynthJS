@@ -150,10 +150,13 @@ export { rename, type TextEdit } from "./services/rename.js";
 export { isolateIR, type IsolateOptions } from "./services/isolate.js";
 export {
   type AIProvider,
+  type ChatMessage,
   type CompleteOptions,
   WebLLMProvider,
   type WebLLMProviderOptions,
   buildPrompt,
+  buildSystemPrompt,
+  buildUserMessage,
   extractDslBlock,
   isTruncated,
   type BuildPromptArgs,
