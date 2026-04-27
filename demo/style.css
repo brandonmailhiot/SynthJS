@@ -582,6 +582,38 @@ a:hover {
   box-shadow: 0 0 0 3px var(--accent);
 }
 
+/* Groq API key field — matches the field/select silhouette, mono font for the token. */
+#ai-key-field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 14px 16px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+#ai-key-field input::placeholder {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0;
+}
+
+#ai-key-field input:hover {
+  border-color: var(--accent-warm);
+}
+
+#ai-key-field input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
 .ai-buttons {
   display: flex;
   flex-wrap: wrap;
