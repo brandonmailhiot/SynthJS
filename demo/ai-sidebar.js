@@ -179,6 +179,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
 
     abort = new AbortController();
     let collected = "";
+    const MAX_ATTEMPTS = 3;
     try {
       // Drain prepare() messages first if the model isn't loaded.
       if (!provider.isReady()) {
@@ -188,18 +189,39 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
         }
         setStatus("ready");
       }
-      setStatus("generating…");
-      for await (const chunk of provider.chat(messages, {
-        signal: abort.signal,
-        // Full multi-voice revisions are long. Llama-3.2-3B's context
-        // allows much more than the prior cap; give it real headroom so
-        // the assistant doesn't cut off mid-voice.
-        maxTokens: 8192,
-        temperature: 0.7,
-      })) {
-        collected += chunk;
-        streamEl.textContent = collected;
-        streamEl.scrollTop = streamEl.scrollHeight;
+      let attempt = 0;
+      let convo = messages;
+      while (attempt < MAX_ATTEMPTS) {
+        attempt++;
+        setStatus(attempt === 1 ? "generating…" : `continuing… (${attempt}/${MAX_ATTEMPTS})`);
+        for await (const chunk of provider.chat(convo, {
+          signal: abort.signal,
+          // Full multi-voice revisions are long. Llama-3.2-3B's context
+          // allows much more than the prior cap; give it real headroom so
+          // the assistant doesn't cut off mid-voice.
+          maxTokens: 8192,
+          temperature: 0.7,
+        })) {
+          collected += chunk;
+          streamEl.textContent = collected;
+          streamEl.scrollTop = streamEl.scrollHeight;
+        }
+        if (!isTruncated(collected)) break;
+        if (attempt >= MAX_ATTEMPTS) {
+          setStatus(`output still truncated after ${attempt} continuation attempts`);
+          break;
+        }
+        // Auto-continue: feed the partial output back as an assistant turn
+        // and ask the model to resume without repeating itself.
+        convo = [
+          ...messages,
+          { role: "assistant", content: collected },
+          {
+            role: "user",
+            content:
+              "Continue from exactly where you left off. Do not repeat any earlier content. Close the ```synth block when finished.",
+          },
+        ];
       }
     } catch (err) {
       if (err?.name === "AbortError") {
