@@ -32,6 +32,78 @@ describe("getHover — pitches", () => {
   });
 });
 
+describe("getHover — note metadata", () => {
+  const src = `\\version "2.0"
+\\tempo 120
+\\time 4/4
+voice melody {
+  \\instrument sawtooth
+  \\f
+  4 c4 d4
+  8 r e4
+}`;
+
+  it("shows voice + position + duration + volume + instrument for a pitched note", () => {
+    const offset = src.indexOf("c4");
+    const info = getHover(src, offset);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("Voice:");
+    expect(blob).toContain("melody");
+    expect(blob).toContain("Position:");
+    expect(blob).toContain("bar 1");
+    expect(blob).toContain("Duration:");
+    expect(blob).toContain("quarter");
+    expect(blob).toContain("Volume:");
+    expect(blob).toContain("\\f");
+    expect(blob).toContain("Instrument:");
+    expect(blob).toContain("sawtooth");
+  });
+
+  it("position advances for the second note", () => {
+    const offset = src.indexOf("d4");
+    const info = getHover(src, offset);
+    const blob = info?.contents.join("\n") ?? "";
+    // beat 2 at quarter = c4 was beat 1, d4 is beat 2
+    expect(blob).toContain("beat 2");
+  });
+
+  it("rest hover reports duration + voice + position", () => {
+    const offset = src.indexOf(" r") + 1;
+    const info = getHover(src, offset);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("Rest");
+    expect(blob).toContain("Duration:");
+    expect(blob).toContain("eighth");
+    expect(blob).toContain("Voice:");
+    expect(blob).toContain("Position:");
+  });
+
+  it("repeat-expanded notes report a play count", () => {
+    const repSrc = '\\version "2.0"\nvoice main { repeat 3 { 4 c4 } }';
+    const offset = repSrc.indexOf("c4");
+    const info = getHover(repSrc, offset);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("3×");
+  });
+
+  it("articulation is surfaced", () => {
+    const artSrc = '\\version "2.0"\nvoice m { 4 c4. d4 }';
+    const offset = artSrc.indexOf("c4");
+    const info = getHover(artSrc, offset);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("Articulation:");
+    expect(blob).toContain("staccato");
+  });
+
+  it("slide target is surfaced", () => {
+    const slideSrc = '\\version "2.0"\nvoice m { 2 e2 -> c3 }';
+    const offset = slideSrc.indexOf("e2");
+    const info = getHover(slideSrc, offset);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("Slide to:");
+  });
+});
+
 describe("getHover — motif refs", () => {
   it("resolves to binding", () => {
     const src = "/// my intro\nintro = 4 c4\nintro";
