@@ -126,6 +126,50 @@ voice melody {
   });
 });
 
+describe("getHover — instrument", () => {
+  const src = `\\version "2.0"
+instrument define lead {
+  oscillator sawtooth -7
+  oscillator sawtooth
+  oscillator sawtooth 7
+  envelope adsr(0.04, 0.2, 0.75, 0.5)
+  filter lowpass(3500, 0.6)
+  gain 0.85
+}
+voice m { \\instrument lead\n4 c4 }`;
+
+  it("\\instrument directive shows full breakdown", () => {
+    const offset = src.indexOf("\\instrument lead") + "\\instrument ".length;
+    const blob = getHover(src, offset)?.contents.join("\n") ?? "";
+    expect(blob).toContain("\\\\instrument");
+    expect(blob).toContain("lead");
+    expect(blob).toContain("Oscillators");
+    expect(blob).toContain("sawtooth");
+    expect(blob).toContain("Filters:");
+    expect(blob).toContain("lowpass");
+    expect(blob).toContain("Envelope:");
+    expect(blob).toContain("adsr");
+    expect(blob).toContain("Gain:");
+  });
+
+  it("instrument define block shows full breakdown", () => {
+    const offset = src.indexOf("instrument define lead") + "instrument define ".length;
+    const blob = getHover(src, offset)?.contents.join("\n") ?? "";
+    expect(blob).toContain("Instrument");
+    expect(blob).toContain("Oscillators");
+    expect(blob).toContain("Filters:");
+  });
+
+  it("note hover only shows the instrument name, not the breakdown", () => {
+    const offset = src.indexOf("c4");
+    const blob = getHover(src, offset)?.contents.join("\n") ?? "";
+    expect(blob).toContain("**Instrument:** `lead`");
+    // The full breakdown belongs on the directive hover, not the note.
+    expect(blob).not.toContain("Oscillators");
+    expect(blob).not.toContain("Filters:");
+  });
+});
+
 describe("getHover — motif refs", () => {
   it("resolves to binding", () => {
     const src = "/// my intro\nintro = 4 c4\nintro";

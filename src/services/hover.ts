@@ -151,6 +151,19 @@ export function getHover(source: string, offset: number): HoverInfo | null {
     };
   }
 
+  // \instrument directive hover — full instrument breakdown.
+  if (kind === "Instrument") {
+    const dir = node as unknown as { name: string; span: SourceSpan };
+    const spec = lookupInstrumentSpec(source, ast, dir.name);
+    const lines: string[] = [`**\\\\instrument** \`${dir.name}\``];
+    if (spec) {
+      lines.push(...formatInstrumentDetails(spec));
+    } else {
+      lines.push("*(unresolved)*");
+    }
+    return { range: spanToRange(source, dir.span), contents: lines };
+  }
+
   // Binding declaration hover (cursor on a binding name)
   if (kind === "Binding") {
     const binding = node as unknown as Binding;
@@ -160,11 +173,13 @@ export function getHover(source: string, offset: number): HoverInfo | null {
     return { range: spanToRange(source, binding.span), contents: lines };
   }
 
-  // InstrumentDef hover
+  // InstrumentDef hover — full instrument breakdown.
   if (kind === "InstrumentDef") {
     const def = node as unknown as InstrumentDef;
-    const lines = [`**Instrument:** \`${def.name}\``];
+    const lines: string[] = [`**Instrument:** \`${def.name}\``];
     if (def.doc) lines.push(def.doc.trim());
+    const spec = lookupInstrumentSpec(source, ast, def.name);
+    if (spec) lines.push(...formatInstrumentDetails(spec));
     return { range: spanToRange(source, def.span), contents: lines };
   }
 
@@ -371,27 +386,115 @@ function timePosition(
   return { bar: barIndex + 1, beat: beatInBar, seconds };
 }
 
-function instrumentSummary(spec: InstrumentSpec): string {
+function formatInstrumentDetails(spec: InstrumentSpec): string[] {
+  const lines: string[] = [];
   const layers = spec.oscillators.map((l) => {
-    const detune =
-      l.detune !== undefined && l.detune !== 0 ? `${l.detune > 0 ? "+" : ""}${l.detune}c` : "";
-    return l.kind + (detune ? ` (${detune})` : "");
+    const bits: string[] = [l.kind];
+    if (l.detune !== undefined && l.detune !== 0) {
+      bits.push(`${l.detune > 0 ? "+" : ""}${l.detune}c`);
+    }
+    if (l.samplePath) bits.push(`sample("${l.samplePath}")`);
+    if (l.rootHz !== undefined) bits.push(`root@${l.rootHz.toFixed(1)}Hz`);
+    if (l.envelope) bits.push(`env: ${l.envelope.kind}(${l.envelope.args.join(", ")})`);
+    return bits.join(" ");
   });
-  const parts: string[] = [`\`${spec.name}\``];
-  parts.push(`oscillators: ${layers.join(" + ")}`);
+  lines.push(`**Oscillators (${spec.oscillators.length}):** ${layers.join(" + ")}`);
   if (spec.filters.length > 0) {
-    parts.push(
-      `filters: ${spec.filters.map((f) => `${f.type}(${f.cutoff}, ${f.q})`).join(" -> ")}`,
+    lines.push(
+      `**Filters:** ${spec.filters.map((f) => `${f.type}(${f.cutoff}, ${f.q})`).join(" → ")}`,
     );
   }
   if (spec.envelope) {
-    parts.push(`envelope: ${spec.envelope.kind}(${spec.envelope.args.join(", ")})`);
+    lines.push(`**Envelope:** ${spec.envelope.kind}(${spec.envelope.args.join(", ")})`);
   }
-  if (spec.detune !== undefined && spec.detune !== 0) parts.push(`detune: ${spec.detune}c`);
-  if (spec.pitchSweep)
-    parts.push(`pitch_sweep: ${spec.pitchSweep.semitones} semi over ${spec.pitchSweep.duration}s`);
-  if (spec.gain !== undefined && spec.gain !== 1) parts.push(`gain: ×${spec.gain}`);
-  return parts.join(" · ");
+  if (spec.detune !== undefined && spec.detune !== 0) {
+    lines.push(`**Detune:** ${spec.detune > 0 ? "+" : ""}${spec.detune}c`);
+  }
+  if (spec.pitchSweep) {
+    lines.push(
+      `**Pitch sweep:** ${spec.pitchSweep.semitones} semitones over ${spec.pitchSweep.duration}s`,
+    );
+  }
+  if (spec.gain !== undefined && spec.gain !== 1) {
+    lines.push(`**Gain:** ×${spec.gain}`);
+  }
+  return lines;
+}
+
+const PRIMITIVE_KINDS = ["sine", "square", "sawtooth", "triangle", "noise"] as const;
+
+function lookupInstrumentSpec(
+  source: string,
+  ast: Composition,
+  name: string,
+): InstrumentSpec | null {
+  if ((PRIMITIVE_KINDS as readonly string[]).includes(name)) {
+    return {
+      name,
+      oscillators: [{ kind: name as InstrumentSpec["oscillators"][number]["kind"] }],
+      filters: [],
+    };
+  }
+  let ir: CompositionIR | null = null;
+  try {
+    ir = compileSync(source);
+  } catch {
+    ir = null;
+  }
+  if (ir) {
+    for (const v of ir.voices) {
+      for (const e of v.events) {
+        if (e.instrument.name === name) return e.instrument;
+      }
+    }
+  }
+  for (const top of ast.body) {
+    if (top.kind === "InstrumentDef" && top.name === name) {
+      return lowerInstrumentDef(top);
+    }
+  }
+  return null;
+}
+
+function lowerInstrumentDef(def: InstrumentDef): InstrumentSpec {
+  type Layer = InstrumentSpec["oscillators"][number];
+  const oscillators: Layer[] = [];
+  const filters: InstrumentSpec["filters"] = [];
+  let envelope: InstrumentSpec["envelope"];
+  let detune: number | undefined;
+  let pitchSweep: InstrumentSpec["pitchSweep"];
+  let gain: number | undefined;
+  for (const field of def.fields) {
+    if (field.kind === "Oscillator") {
+      const layer: Layer = { kind: field.value as Layer["kind"] };
+      if (field.detune !== undefined && field.detune !== 0) layer.detune = field.detune;
+      oscillators.push(layer);
+    } else if (field.kind === "FilterField") {
+      const args: number[] = [];
+      for (const a of field.call.args) if (a.kind === "NumberArg") args.push(a.value);
+      filters.push({ type: field.call.name, cutoff: args[0] ?? 1000, q: args[1] ?? 1 });
+    } else if (field.kind === "EnvelopeField") {
+      const args: number[] = [];
+      for (const a of field.call.args) if (a.kind === "NumberArg") args.push(a.value);
+      envelope = {
+        kind: field.call.name as NonNullable<InstrumentSpec["envelope"]>["kind"],
+        args,
+      };
+    } else if (field.kind === "DetuneField") {
+      detune = field.cents;
+    } else if (field.kind === "PitchSweepField") {
+      pitchSweep = { semitones: field.semitones, duration: field.duration };
+    } else if (field.kind === "GainField") {
+      gain = field.factor;
+    }
+  }
+  if (oscillators.length === 0) oscillators.push({ kind: "sine" });
+  const spec: InstrumentSpec = { name: def.name, oscillators, filters };
+  if (envelope) spec.envelope = envelope;
+  if (detune !== undefined) spec.detune = detune;
+  if (pitchSweep) spec.pitchSweep = pitchSweep;
+  if (gain !== undefined) spec.gain = gain;
+  return spec;
 }
 
 function describeEventAtSpan(source: string, span: SourceSpan): string[] | null {
@@ -437,8 +540,9 @@ function describeEventAtSpan(source: string, span: SourceSpan): string[] | null 
   const dyn = nearestDynamic(event.gain);
   lines.push(`**Volume:** ${event.gain.toFixed(2)}${dyn ? ` (≈ ${dyn})` : ""}`);
 
-  // Instrument breakdown
-  lines.push(`**Instrument:** ${instrumentSummary(event.instrument)}`);
+  // Instrument name only — hover the `\instrument <name>` directive (or the
+  // `instrument define` block) for the full breakdown.
+  lines.push(`**Instrument:** \`${event.instrument.name}\``);
 
   // Articulation
   if (event.articulation.length > 0) {
