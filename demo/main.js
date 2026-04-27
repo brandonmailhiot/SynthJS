@@ -67,7 +67,11 @@ voice kick {
 voice snare {
   \\instrument snare_drum
   \\mf
-  repeat 8 { 1 r }
+  /// Bars 1-7: silent
+  repeat 7 { 1 r }
+  /// Bar 8: 16th-note drum roll into the drop
+  16 r r r r r r r r d3 d3 d3 d3 d3 d3 d3 d3
+  /// Bars 9-24: backbeat on 2 and 4
   repeat 16 { 4 r d3 r d3 }
 }
 
@@ -125,18 +129,18 @@ voice pad {
 
 voice bass {
   \\instrument bass_synth
-  \\mf
-  /// Intro — sub roots with offbeat octave answer
-  4 e2 r 8 e3 r 4 e2
-  4 c2 r 8 c3 r 4 c2
-  4 g2 r 8 g3 r 4 g2
-  4 d2 r 8 d3 r 4 d2
-  /// Build — driving syncopation, ramps energy
-  ramp(\\mf, \\f) {
+  /// Intro — silent bars 1-2 (pad breathes), gentle root taps bars 3-4
+  \\mp
+  1 r
+  1 r
+  2 e2 r
+  4 e2 r e2 r
+  /// Build — quarter pulses ramping into eighth syncopation
+  ramp(\\mp, \\f) {
+    4 c2 c2 c2 c2
+    4 g2 g2 g2 g2
     8 e1 r e2 e2 e1 r e2 e2
-    8 c1 r c2 c2 c1 r c2 c2
-    8 g1 r g2 g2 g1 r g2 g2
-    8 d1 r d2 d2 d1 r d2 d2
+    8 d1 r d2 d2 d1 d2 a2 b2
   }
   /// Drop A — bars 9-16: syncopated sub + body
   \\f
@@ -146,7 +150,7 @@ voice bass {
     8 g1 r g2 g2 g1 r g2 g2
     8 d1 r d2 d2 d1 r d2 d2
   }
-  /// Drop B — bars 17-24: walking line with passing tones, octave jumps
+  /// Drop B — bars 17-24: walking line, passing tones, octave jumps
   repeat 2 {
     8 e1 e2 g2 e2 e1 e2 b2 a2
     8 c1 c2 e2 c2 c1 c2 g2 e2
@@ -157,28 +161,33 @@ voice bass {
 
 voice pluck {
   \\instrument pluck_synth
+  /// Bars 1-6: silent
+  repeat 6 { 1 r }
+  /// Bars 7-8: sneak in with sparse 16th figures (build fill)
   \\mp
-  repeat 8 { 1 r }
-  /// Phrase 1 (bars 9-12) — basic broken triads
-  8 e4 g4 b4 g4 e4 g4 b4 g4
-  8 c4 e4 g4 e4 c4 e4 g4 e4
-  8 g4 b4 d5 b4 g4 b4 d5 b4
-  8 d4 f#4 a4 f#4 d4 f#4 a4 f#4
-  /// Phrase 2 (bars 13-16) — octave-reach figures
-  8 e4 b4 e5 b4 g4 b4 e5 b4
-  8 c4 g4 c5 g4 e4 g4 c5 g4
-  8 g4 d5 g5 d5 b4 d5 g5 d5
-  8 d4 a4 d5 a4 f#4 a4 d5 a4
-  /// Phrase 3 (bars 17-20) — sixteenth-note flurry
-  16 e5 d5 b4 g4 e4 g4 b4 d5 e5 d5 b4 g4 b4 d5 b4 g4
-  16 c5 b4 g4 e4 c4 e4 g4 b4 c5 b4 g4 e4 g4 b4 g4 e4
-  16 d5 b4 g4 d4 g4 b4 d5 g5 d5 b4 g4 d4 g4 b4 g4 d4
-  16 a4 f#4 d4 a3 d4 f#4 a4 d5 a4 f#4 d4 a3 d4 f#4 d4 a3
-  /// Phrase 4 (bars 21-24) — descending cool-down
-  4 b5 g5 e5 b4
-  4 g5 e5 c5 g4
-  4 d5 b4 g4 d4
-  1 d4
+  16 r r e4 g4 r r b4 e5 r r b4 g4 r r e4 g4
+  16 r r c5 b4 g4 e4 r r r r d5 b4 g4 e4 r r
+  /// Phrase A (bars 9-12) — ascending 16th flurry, climbs each chord
+  \\mf
+  16 e4 g4 b4 e5 b4 g4 e4 g4 b4 e5 g5 e5 b4 g4 e4 g4
+  16 c4 e4 g4 c5 g4 e4 c4 e4 g4 c5 e5 c5 g4 e4 c4 e4
+  16 g4 b4 d5 g5 d5 b4 g4 b4 d5 g5 b5 g5 d5 b4 g4 b4
+  16 d4 f#4 a4 d5 a4 f#4 d4 f#4 a4 d5 f#5 d5 a4 f#4 d4 f#4
+  /// Phrase B (bars 13-16) — call-and-response with 16th + rest gaps
+  16 e5 d5 b4 g4 r r e5 d5 b4 g4 r r e5 d5 b4 g4
+  16 c5 b4 g4 e4 r r c5 b4 g4 e4 r r c5 b4 g4 e4
+  16 d5 b4 g4 d4 r r d5 b4 g4 d4 r r g5 d5 b4 g4
+  16 a4 f#4 d4 a3 r r a4 f#4 d4 a3 r r d5 a4 f#4 d4
+  /// Phrase C (bars 17-20) — peak flurry, octave climb to top
+  16 e4 g4 b4 e5 g5 b5 e6 b5 g5 e5 b4 g4 e4 g4 b4 e5
+  16 c4 e4 g4 c5 e5 g5 c6 g5 e5 c5 g4 e4 c4 e4 g4 c5
+  16 g4 b4 d5 g5 b5 d6 g6 d6 b5 g5 d5 b4 g4 b4 d5 g5
+  16 d4 f#4 a4 d5 f#5 a5 d6 a5 f#5 d5 a4 f#4 d4 f#4 a4 d5
+  /// Phrase D (bars 21-24) — staggered 16ths cooling into a rest
+  16 b5 r g5 r e5 r b4 g4 e4 g4 b4 r e5 r g5 r
+  16 g5 r e5 r c5 r g4 e4 c4 e4 g4 r c5 r e5 r
+  16 d5 r b4 r g4 r d4 b3 g3 b3 d4 r g4 r b4 r
+  1 e3
 }
 
 // ---------- LEAD ----------
