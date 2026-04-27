@@ -23,6 +23,7 @@ Grammar:
 - Effects: with reverb(channels, seconds, decay) { ... }; with delay(seconds, feedback) { ... }.
 - Loops: repeat N { ... }. Annotations: @cue("name"), @chance(0..1).
 - Custom instrument: instrument define NAME { oscillator KIND [DETUNE_C] [{ envelope ... }]  envelope adsr(a,d,s,r)  filter lowpass(cut,q)  pitch_sweep SEMI DUR  detune CENTS  gain X }
+- IMPORTANT: an "instrument define" block ONLY contains those field declarations. NEVER put musical events, notes, chords, dynamics, repeat, with, ramp, or \\instrument inside an instrument define. Those belong in voice { ... } blocks. Each field appears at most once except oscillator and filter (multiple allowed for stacks/chains).
 - Stdlib drums: kick_drum snare_drum hat_closed_808 hat_open_808 bass_drum_808 snare_drum_808 tom_low/mid/high_808 clap_808 cowbell_808 rim_808 cymbal_808.
 - Stdlib instruments: warm_pad lead_saw brass bass_synth bell string_pad.
 

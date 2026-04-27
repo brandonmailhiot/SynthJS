@@ -238,27 +238,68 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     cancelBtn.hidden = true;
     abort = null;
 
-    const proposed = extractDslBlock(collected);
+    let proposed = extractDslBlock(collected);
     if (!proposed) {
       setStatus("model did not return a fenced ```synth block");
       return;
     }
-    const truncated = isTruncated(collected);
+    let truncated = isTruncated(collected);
 
-    // Validate: make sure it compiles. If not, surface diagnostics so the
-    // musician can decide whether to accept anyway.
+    // Validate. If compile fails, send the error back to the AI for a
+    // single auto-fix attempt before surfacing the failure to the user.
+    let compileError = null;
     try {
       compileSync(proposed);
-      setStatus(
-        truncated
-          ? "proposal compiles, but output was truncated — try splitting the request or raising the token budget"
-          : "proposal compiles cleanly",
-      );
     } catch (err) {
+      compileError = err?.message ?? String(err);
+    }
+
+    if (compileError) {
+      setStatus(`proposal does not compile — asking AI to fix: ${compileError}`);
+      try {
+        const fixConvo = [
+          ...messages,
+          { role: "assistant", content: collected },
+          {
+            role: "user",
+            content: `The previous output failed to compile with: ${compileError}\n\nPlease fix the error and emit the FULL corrected composition as a single \`\`\`synth fenced block. Remember: an "instrument define" block contains ONLY field declarations (oscillator, envelope, filter, detune, pitch_sweep, gain) — never musical events.`,
+          },
+        ];
+        let fixed = "";
+        for await (const chunk of provider.chat(fixConvo, {
+          signal: abort?.signal,
+          maxTokens: 8192,
+          temperature: 0.5,
+        })) {
+          fixed += chunk;
+          streamEl.textContent = collected + "\n\n--- AUTO-FIX ---\n" + fixed;
+          streamEl.scrollTop = streamEl.scrollHeight;
+        }
+        const fixedBlock = extractDslBlock(fixed);
+        if (fixedBlock) {
+          proposed = fixedBlock;
+          truncated = isTruncated(fixed);
+          try {
+            compileSync(proposed);
+            compileError = null;
+            setStatus("auto-fix succeeded — proposal compiles cleanly");
+          } catch (err) {
+            compileError = err?.message ?? String(err);
+            setStatus(`auto-fix still does not compile: ${compileError}`);
+          }
+        } else {
+          setStatus(`auto-fix did not return a fenced block; original error: ${compileError}`);
+        }
+      } catch (err) {
+        if (err?.name !== "AbortError") {
+          setStatus(`auto-fix failed: ${err?.message ?? err}`);
+        }
+      }
+    } else {
       setStatus(
         truncated
-          ? `proposal truncated and did not compile: ${err?.message ?? err}`
-          : `proposal does not compile: ${err?.message ?? err}`,
+          ? "proposal compiles, but output was truncated — review carefully"
+          : "proposal compiles cleanly",
       );
     }
 
