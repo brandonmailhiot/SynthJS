@@ -95,6 +95,28 @@ voice melody {
     expect(blob).toContain("staccato");
   });
 
+  it("sticky-octave note shows resolved octave + frequency + metadata", () => {
+    const stickySrc = '\\version "2.0"\nvoice m { 4 c4 d e }';
+    const offsetD = stickySrc.indexOf(" d") + 1;
+    const info = getHover(stickySrc, offsetD);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("d4");
+    expect(blob).toContain("inherited");
+    expect(blob).toMatch(/293\./);
+    expect(blob).toContain("Voice:");
+    expect(blob).toContain("Position:");
+    expect(blob).toContain("beat 2");
+  });
+
+  it("sticky-octave note inside a chord resolves the right pitch", () => {
+    const chordSrc = "voice m { 1 <c3 e g b> }";
+    const offsetE = chordSrc.indexOf(" e ") + 1;
+    const info = getHover(chordSrc, offsetE);
+    const blob = info?.contents.join("\n") ?? "";
+    expect(blob).toContain("e3");
+    expect(blob).toMatch(/164\./);
+  });
+
   it("slide target is surfaced", () => {
     const slideSrc = '\\version "2.0"\nvoice m { 2 e2 -> c3 }';
     const offset = slideSrc.indexOf("e2");

@@ -56,6 +56,32 @@ export function getHover(source: string, offset: number): HoverInfo | null {
     };
   }
 
+  // InheritedPitchLetter hover (sticky octave) — letter is in the AST,
+  // resolved frequency comes from the IR. We also compute the inherited
+  // octave so the tooltip shows the same shape as an explicit-octave note.
+  if (kind === "InheritedPitchLetter") {
+    const inherited = node as unknown as {
+      letter: string;
+      accidental?: string;
+      span: SourceSpan;
+    };
+    const resolved = resolveInheritedPitch(source, ast, inherited.span);
+    const baseLines: string[] = [];
+    if (resolved) {
+      baseLines.push(
+        `**Pitch:** ${inherited.letter}${inherited.accidental ?? ""}${resolved.octave} *(inherited)*`,
+        `**Frequency:** ${resolved.freq.toFixed(2)} Hz`,
+      );
+    } else {
+      baseLines.push(`**Pitch:** ${inherited.letter}${inherited.accidental ?? ""} *(inherited)*`);
+    }
+    const eventLines = describeEventAtSpan(source, inherited.span);
+    return {
+      range: spanToRange(source, inherited.span),
+      contents: eventLines ? [...baseLines, "---", ...eventLines] : baseLines,
+    };
+  }
+
   // Rest hover — rests have no pitch, but we can still show the duration,
   // start time, voice, and articulation that apply.
   if (kind === "Rest") {
@@ -204,6 +230,88 @@ function findBinding(ast: Composition, name: string): Binding | null {
     return null;
   }
   return search(ast.body);
+}
+
+/**
+ * Resolve an InheritedPitchLetter span to its frequency + octave by walking
+ * the IR. Finds the parent Note or Chord AST event containing the inherited
+ * pitch, identifies its index inside any chord pitch list, and looks up the
+ * corresponding entry in the matching TimelineEvent's frequencies array.
+ */
+function resolveInheritedPitch(
+  source: string,
+  ast: Composition,
+  span: SourceSpan,
+): { freq: number; octave: number } | null {
+  // Walk AST to find the smallest enclosing Note/Chord event and the
+  // index of this pitch inside its pitch list.
+  let index = -1;
+  let parentSpan: SourceSpan | null = null;
+
+  function visit(node: unknown): void {
+    if (!node || typeof node !== "object") return;
+    const obj = node as Record<string, unknown>;
+    const kind = obj.kind as string | undefined;
+    if (kind === "Note") {
+      const noteSpan = obj.span as SourceSpan;
+      if (
+        noteSpan.start <= span.start &&
+        noteSpan.end >= span.end &&
+        (parentSpan === null || noteSpan.end - noteSpan.start <= parentSpan.end - parentSpan.start)
+      ) {
+        index = 0;
+        parentSpan = noteSpan;
+      }
+    } else if (kind === "Chord") {
+      const chordSpan = obj.span as SourceSpan;
+      const pitches = obj.pitches as { span: SourceSpan }[] | undefined;
+      if (
+        pitches &&
+        chordSpan.start <= span.start &&
+        chordSpan.end >= span.end &&
+        (parentSpan === null ||
+          chordSpan.end - chordSpan.start <= parentSpan.end - parentSpan.start)
+      ) {
+        for (let i = 0; i < pitches.length; i++) {
+          const p = pitches[i];
+          if (p && p.span.start === span.start && p.span.end === span.end) {
+            index = i;
+            parentSpan = chordSpan;
+            break;
+          }
+        }
+      }
+    }
+    for (const key of Object.keys(obj)) {
+      if (key === "span") continue;
+      const v = obj[key];
+      if (Array.isArray(v)) for (const item of v) visit(item);
+      else if (v && typeof v === "object") visit(v);
+    }
+  }
+  visit(ast);
+  if (index < 0 || !parentSpan) return null;
+
+  let ir: CompositionIR;
+  try {
+    ir = compileSync(source);
+  } catch {
+    return null;
+  }
+  for (const v of ir.voices) {
+    for (const e of v.events) {
+      const ps = parentSpan as SourceSpan;
+      if (e.span.start === ps.start && e.span.end === ps.end) {
+        const freq = e.frequencies[index];
+        if (typeof freq !== "number") return null;
+        // Derive octave from frequency: midi = 69 + 12 * log2(freq/440)
+        const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+        const octave = Math.floor(midi / 12) - 1;
+        return { freq, octave };
+      }
+    }
+  }
+  return null;
 }
 
 // ---- Event metadata (compile to IR, find matching TimelineEvent) ----
