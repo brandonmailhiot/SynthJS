@@ -548,7 +548,11 @@ a:hover {
   display: grid;
   grid-template-columns: minmax(220px, 320px) 1fr;
   gap: 20px;
-  align-items: end;
+  /* `start` keeps the labels pinned at the top of each row regardless of
+     individual input heights. `end` pushed them up by whatever the tallest
+     control was, so a password input padded by extension chrome moved its
+     label visibly higher than the dropdown's label. */
+  align-items: start;
   margin-bottom: 16px;
 }
 
