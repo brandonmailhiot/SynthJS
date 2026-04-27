@@ -8,6 +8,7 @@ import {
   extractDslBlock,
   formatDiff,
   isTruncated,
+  mergeBlocks,
 } from "synth-javascript";
 
 /**
@@ -238,12 +239,21 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     cancelBtn.hidden = true;
     abort = null;
 
-    let proposed = extractDslBlock(collected);
-    if (!proposed) {
+    const aiBlock = extractDslBlock(collected);
+    if (!aiBlock) {
       setStatus("model did not return a fenced ```synth block");
       return;
     }
     let truncated = isTruncated(collected);
+
+    // Splice the AI's partial output into the current composition by named
+    // block. Saves the model from regenerating unchanged voices on every
+    // turn — only the requested edits flow through the LLM.
+    let merge = mergeBlocks(currentSource, aiBlock);
+    let proposed = merge.text;
+    const summary = [];
+    if (merge.replaced.length) summary.push(`replaced ${merge.replaced.join(", ")}`);
+    if (merge.added.length) summary.push(`added ${merge.added.join(", ")}`);
 
     // Validate. If compile fails, send the error back to the AI for a
     // single auto-fix attempt before surfacing the failure to the user.
@@ -277,7 +287,8 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
         }
         const fixedBlock = extractDslBlock(fixed);
         if (fixedBlock) {
-          proposed = fixedBlock;
+          merge = mergeBlocks(currentSource, fixedBlock);
+          proposed = merge.text;
           truncated = isTruncated(fixed);
           try {
             compileSync(proposed);
@@ -296,10 +307,11 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
         }
       }
     } else {
+      const summaryText = summary.length ? ` (${summary.join("; ")})` : "";
       setStatus(
         truncated
-          ? "proposal compiles, but output was truncated — review carefully"
-          : "proposal compiles cleanly",
+          ? `proposal compiles${summaryText}, but output was truncated — review carefully`
+          : `proposal compiles cleanly${summaryText}`,
       );
     }
 

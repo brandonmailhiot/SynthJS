@@ -88,7 +88,7 @@ export function buildUserMessage({
     );
   }
   parts.push(
-    `Task: ${instruction.trim()}\n\nReturn the FULL revised composition as a single \`\`\`synth fenced block. Do not omit unchanged voices.`,
+    `Task: ${instruction.trim()}\n\nReturn ONLY the voices, instrument defs, or directives that need to change for this request — wrapped in a single \`\`\`synth fenced block. Do NOT repeat unchanged voices or instruments. The host will splice your changes into the current composition by name. If you must introduce a brand-new voice or instrument, just write it out; the host will append it. Each block stays self-contained: voice { … }, instrument define { … }, \\tempo N, \\time N/D, \\key …, \\use "…".`,
   );
   return parts.join("\n\n");
 }

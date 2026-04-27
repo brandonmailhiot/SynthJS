@@ -165,4 +165,6 @@ export {
   type DiffSegment,
   type LineDiff,
   completeText,
+  mergeBlocks,
+  type MergeResult,
 } from "./services/ai/index.js";

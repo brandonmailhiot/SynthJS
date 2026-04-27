@@ -10,3 +10,4 @@ export {
   type BuildPromptArgs,
 } from "./prompt-builder.js";
 export { diffLines, formatDiff, type DiffSegment, type LineDiff } from "./diff.js";
+export { mergeBlocks, type MergeResult } from "./merge.js";
