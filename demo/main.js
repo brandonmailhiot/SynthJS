@@ -206,11 +206,12 @@ voice lead {
     8 g4 a4 b4 c5 d5 e5 g5 a5
     1 b5 -> e5
     8 a5 g5 e5 d5 c5 b4 a4 g4
-    /// Tail — recall hook A, resolve to e4
-    8 r b4 r b4 4 d5 e5
-    8 e5 d5 b4 a4 4 g4 a4
-    4 b4 g4 e4 d4
-    1 e4
+    /// Tail — rising stutter, slide accent, chromatic spike to peak,
+    /// then sudden silence while pluck + bass carry the resolution.
+    8 r b4 r d5 4 e5 g5
+    8 r e5 r g5 4 b5 a5
+    2 b5 -> g5 2 a5
+    16 g5 a5 b5 c6 c#6 d6 d#6 e6 r r r r r r r r
   }
 }`,
 
