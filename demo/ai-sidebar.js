@@ -61,6 +61,14 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       <button id="ai-cancel" class="btn" hidden>
         <span class="btn-glyph">■</span><span class="btn-label">cancel</span>
       </button>
+      <button
+        id="ai-start-fresh"
+        class="btn"
+        hidden
+        title="Drop the current proposal + conversation history and start a new request"
+      >
+        <span class="btn-glyph">↺</span><span class="btn-label">start fresh</span>
+      </button>
       <button id="ai-reference" class="btn" title="Send the current edit back to the AI as a reference">
         <span class="btn-glyph">↻</span><span class="btn-label">use as reference</span>
       </button>
@@ -115,6 +123,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   const inputEl = parent.querySelector("#ai-input");
   const sendBtn = parent.querySelector("#ai-send");
   const cancelBtn = parent.querySelector("#ai-cancel");
+  const startFreshBtn = parent.querySelector("#ai-start-fresh");
   const referenceBtn = parent.querySelector("#ai-reference");
   const streamEl = parent.querySelector("#ai-stream");
   const diffPane = parent.querySelector("#ai-diff-pane");
@@ -131,6 +140,14 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   let provider = new WebLLMProvider();
   let abort = null;
   let groqKey = "";
+  // Conversation state for the iterative refinement flow:
+  //   - baselineSource: the editor source as it stood when this conversation
+  //     started. Every proposal is merged against this, so refinements stay
+  //     anchored to the same original instead of compounding edits.
+  //   - history: the running [user, assistant, user, …] turns that get
+  //     re-sent with the system prompt on every refine click.
+  let baselineSource = null;
+  let history = [];
   let lastBefore = null;
   let lastAfter = null;
   let lastDiff = null;
@@ -313,25 +330,45 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   sendBtn.addEventListener("click", async () => {
     const instruction = inputEl.value.trim();
     if (!instruction) return;
-    resetUI();
+
+    // Conversation lifecycle:
+    //   - First send of a session: snapshot the editor as the baseline,
+    //     start a fresh history, build a full grammar+source user message.
+    //   - Refinement send (proposal already on screen): keep the baseline,
+    //     append the prior assistant reply + this new instruction so the
+    //     AI sees the full back-and-forth.
+    const isRefinement = baselineSource !== null;
+    if (!isRefinement) {
+      baselineSource = getSource();
+      history = [
+        {
+          role: "user",
+          content: buildUserMessage({
+            currentSource: baselineSource,
+            instruction,
+            ...(userReference ? { reference: userReference } : {}),
+          }),
+        },
+      ];
+    } else {
+      history.push({ role: "user", content: `Refine: ${instruction}` });
+    }
+    const turn = Math.ceil(history.filter((m) => m.role === "user").length);
+
+    // Reset diff/stream UI but keep conversation state.
+    streamEl.hidden = false;
+    streamEl.textContent = "";
+    diffPane.hidden = true;
+    diffEl.textContent = "";
+    inputEl.value = "";
     sendBtn.hidden = true;
     cancelBtn.hidden = false;
-    streamEl.hidden = false;
+    startFreshBtn.hidden = false;
 
-    const currentSource = getSource();
-    // Split system + user so providers with KV-cache reuse skip re-encoding
-    // the grammar primer on follow-up turns. Big speedup on second + later
-    // requests in the same session.
+    const currentSource = baselineSource;
     const messages = [
       { role: "system", content: buildSystemPrompt() },
-      {
-        role: "user",
-        content: buildUserMessage({
-          currentSource,
-          instruction,
-          ...(userReference ? { reference: userReference } : {}),
-        }),
-      },
+      ...history,
     ];
 
     abort = new AbortController();
@@ -350,7 +387,11 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       let convo = messages;
       while (attempt < MAX_ATTEMPTS) {
         attempt++;
-        setStatus(attempt === 1 ? "generating…" : `continuing… (${attempt}/${MAX_ATTEMPTS})`);
+        setStatus(
+          attempt === 1
+            ? `generating… (turn ${turn})`
+            : `continuing… (${attempt}/${MAX_ATTEMPTS}, turn ${turn})`,
+        );
         for await (const chunk of provider.chat(convo, {
           signal: abort.signal,
           // Full multi-voice revisions are long. Llama-3.2-3B's context
@@ -394,6 +435,9 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     sendBtn.hidden = false;
     cancelBtn.hidden = true;
     abort = null;
+
+    // Record the assistant's reply so the next refine turn can see it.
+    history.push({ role: "assistant", content: collected });
 
     const aiBlocks = extractAllDslBlocks(collected);
     if (aiBlocks.length === 0) {
@@ -558,6 +602,12 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     setStatus("preview stopped");
   });
 
+  const endConversation = () => {
+    baselineSource = null;
+    history = [];
+    startFreshBtn.hidden = true;
+  };
+
   acceptBtn.addEventListener("click", async () => {
     if (lastAfter === null) return;
     await stopPreview();
@@ -565,12 +615,14 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     userReference = null;
     setStatus("applied to editor");
     resetUI();
+    endConversation();
   });
 
   rejectBtn.addEventListener("click", async () => {
     await stopPreview();
     setStatus("rejected");
     resetUI();
+    endConversation();
   });
 
   editBtn.addEventListener("click", async () => {
@@ -579,6 +631,14 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     setSource(lastAfter);
     setStatus("loaded into editor — edit and click 'use as reference' to refine");
     resetUI();
+    endConversation();
+  });
+
+  startFreshBtn.addEventListener("click", async () => {
+    await stopPreview();
+    setStatus("conversation cleared — next request starts fresh");
+    resetUI();
+    endConversation();
   });
 
   referenceBtn.addEventListener("click", () => {
