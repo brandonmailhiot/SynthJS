@@ -148,3 +148,17 @@ export { getCompletions, type CompletionItem } from "./services/completion.js";
 export { getDefinition } from "./services/definition.js";
 export { rename, type TextEdit } from "./services/rename.js";
 export { isolateIR, type IsolateOptions } from "./services/isolate.js";
+export {
+  type AIProvider,
+  type CompleteOptions,
+  WebLLMProvider,
+  type WebLLMProviderOptions,
+  buildPrompt,
+  extractDslBlock,
+  type BuildPromptArgs,
+  diffLines,
+  formatDiff,
+  type DiffSegment,
+  type LineDiff,
+  completeText,
+} from "./services/ai/index.js";

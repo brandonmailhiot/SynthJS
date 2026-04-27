@@ -523,3 +523,118 @@ a:hover {
     align-items: flex-start;
   }
 }
+
+/* ============================================================
+   AI sidebar
+   ============================================================ */
+
+.ai-sidebar .ai-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ai-settings {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 720px) {
+  .ai-settings {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ai-status {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-bottom: 12px;
+}
+
+.ai-input {
+  width: 100%;
+  min-height: 80px;
+  padding: 14px 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.ai-input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.ai-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ai-stream {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-diff-pane {
+  margin-top: 8px;
+  border: 1px solid var(--rule);
+}
+
+.ai-diff-head {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ai-diff {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  background: var(--bg-tint);
+  color: var(--ink);
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Color +/- diff prefixes via CSS by reading the leading character is
+   non-trivial without per-line spans; instead we tint the whole pane
+   neutrally and rely on the prefix glyphs to read clearly. */
+
+.ai-diff-buttons {
+  padding: 12px 16px;
+  margin: 0;
+  background: var(--bg);
+}

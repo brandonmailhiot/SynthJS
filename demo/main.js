@@ -13,6 +13,7 @@ import {
   formatError,
   isolateIR,
 } from "synth-javascript";
+import { mountAiSidebar } from "./ai-sidebar.js";
 import { synthCompletions, synthHover, synthLinter } from "./lsp-extensions.js";
 import { synthLanguage } from "./synth-language.js";
 
@@ -475,6 +476,19 @@ examplesEl.addEventListener("change", () => {
 
 function getSource() {
   return editorView ? editorView.state.doc.toString() : "";
+}
+
+function setSource(text) {
+  if (!editorView) return;
+  editorView.dispatch({
+    changes: { from: 0, to: editorView.state.doc.length, insert: text },
+  });
+  refreshSoloOptions();
+}
+
+const aiPanel = document.getElementById("ai-panel");
+if (aiPanel) {
+  mountAiSidebar({ parent: aiPanel, getSource, setSource });
 }
 
 function compileOrLog() {
