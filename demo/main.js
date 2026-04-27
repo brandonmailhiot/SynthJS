@@ -38,13 +38,22 @@ instrument define lead_synth {
   gain 0.7
 }
 
-/// Plucky pad arp voice — short envelope, soft filter.
+/// Glassy pluck — twin triangles with chorus detune for shimmer,
+/// a brief noise transient (per-layer percussive envelope) for the
+/// attack click, a 2-semitone pitch ping at note start, and a
+/// highpass + resonant lowpass cascade that opens the upper end
+/// without muddying the lows.
 instrument define pluck_synth {
   oscillator triangle
-  oscillator sawtooth -7
-  envelope adsr(0.001, 0.18, 0.0, 0.06)
-  filter lowpass(2400, 1.1)
-  gain 1.1
+  oscillator triangle 9
+  oscillator noise {
+    envelope percussive(0.0005, 0.004)
+  }
+  envelope adsr(0.001, 0.16, 0.0, 0.08)
+  pitch_sweep 2 0.02
+  filter highpass(300, 0.5)
+  filter lowpass(5500, 2.0)
+  gain 1.3
 }
 
 /// Stabby supersaw chord pad.
