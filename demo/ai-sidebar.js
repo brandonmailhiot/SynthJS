@@ -461,7 +461,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       }
       return { text, replaced, added, skipped };
     };
-    let merge = applyAllBlocks(currentSource, aiBlocks);
+    let merge = applyAllBlocks(baselineSource, aiBlocks);
     let proposed = merge.text;
     lastChangedNames = parseChangedLabels(merge);
     const summary = [];
@@ -500,7 +500,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
         }
         const fixedBlocks = extractAllDslBlocks(fixed);
         if (fixedBlocks.length > 0) {
-          merge = applyAllBlocks(currentSource, fixedBlocks);
+          merge = applyAllBlocks(baselineSource, fixedBlocks);
           proposed = merge.text;
           truncated = isTruncated(fixed);
           try {
@@ -528,7 +528,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
       );
     }
 
-    showDiff(currentSource, proposed);
+    showDiff(baselineSource, proposed);
   });
 
   cancelBtn.addEventListener("click", () => {
