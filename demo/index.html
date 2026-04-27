@@ -23,7 +23,8 @@
       "@lezer/highlight": "https://esm.sh/@lezer/highlight@1.2.0",
       "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete@6.16.0?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3,@codemirror/language@6.10.1",
       "@codemirror/search": "https://esm.sh/@codemirror/search@6.5.6?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3",
-      "codemirror": "https://esm.sh/codemirror@6.0.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3,@codemirror/commands@6.5.0,@codemirror/language@6.10.1,@codemirror/lint@6.5.0,@codemirror/autocomplete@6.16.0,@codemirror/search@6.5.6"
+      "codemirror": "https://esm.sh/codemirror@6.0.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.26.3,@codemirror/commands@6.5.0,@codemirror/language@6.10.1,@codemirror/lint@6.5.0,@codemirror/autocomplete@6.16.0,@codemirror/search@6.5.6",
+      "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79"
     }
   }
   </script>
@@ -93,6 +94,8 @@
       <div id="editor" aria-label="SynthJS source editor"></div>
       <p class="hint">audio output muted until first user gesture (browser policy). press play to begin.</p>
     </section>
+
+    <section class="panel" id="ai-panel" aria-label="AI assistant"></section>
 
     <section class="panel" aria-labelledby="features-label">
       <div class="panel-head">

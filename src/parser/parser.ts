@@ -283,14 +283,16 @@ class Parser {
 
     if (val === "\\tempo") {
       const n = this.parseNumber();
-      return { kind: "Tempo", value: n, span: tok.span } as TempoDirective;
+      const span = this.spanRange(tok.span, this.peekPrev().span);
+      return { kind: "Tempo", value: n, span } as TempoDirective;
     }
 
     if (val === "\\time") {
       const num = this.parseInt();
       this.expect("Slash", "expected '/' in \\time");
       const den = this.parseInt();
-      return { kind: "Time", numerator: num, denominator: den, span: tok.span } as TimeDirective;
+      const span = this.spanRange(tok.span, this.peekPrev().span);
+      return { kind: "Time", numerator: num, denominator: den, span } as TimeDirective;
     }
 
     if (val === "\\key") {
@@ -309,7 +311,8 @@ class Parser {
       if (this.check("Identifier") && isMode(this.peek().value)) {
         mode = this.advance().value as Mode;
       }
-      return { kind: "Key", tonic, mode, span: tok.span } as KeyDirective;
+      const span = this.spanRange(tok.span, this.peekPrev().span);
+      return { kind: "Key", tonic, mode, span } as KeyDirective;
     }
 
     if (val === "\\instrument") {
