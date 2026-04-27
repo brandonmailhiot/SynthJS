@@ -144,10 +144,9 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
   //   - baselineSource: the editor source as it stood when this conversation
   //     started. Every proposal is merged against this, so refinements stay
   //     anchored to the same original instead of compounding edits.
-  //   - history: the running [user, assistant, user, …] turns that get
-  //     re-sent with the system prompt on every refine click.
+  //   - turnCount: just for the status line readout.
   let baselineSource = null;
-  let history = [];
+  let turnCount = 0;
   let lastBefore = null;
   let lastAfter = null;
   let lastDiff = null;
@@ -332,28 +331,30 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     if (!instruction) return;
 
     // Conversation lifecycle:
-    //   - First send of a session: snapshot the editor as the baseline,
-    //     start a fresh history, build a full grammar+source user message.
-    //   - Refinement send (proposal already on screen): keep the baseline,
-    //     append the prior assistant reply + this new instruction so the
-    //     AI sees the full back-and-forth.
+    //   - First send of a session: snapshot the editor as the baseline.
+    //   - Refinement send (proposal already on screen): the AI sees the
+    //     current proposal as the new "current composition" + the new
+    //     instruction, framed as a refinement. We do NOT accumulate prior
+    //     assistant turns — that quickly blows past per-minute token caps
+    //     on free hosted tiers (Groq's 12K TPM, etc.). Constant request
+    //     size each turn keeps refinements feasible.
     const isRefinement = baselineSource !== null;
     if (!isRefinement) {
       baselineSource = getSource();
-      history = [
-        {
-          role: "user",
-          content: buildUserMessage({
-            currentSource: baselineSource,
-            instruction,
-            ...(userReference ? { reference: userReference } : {}),
-          }),
-        },
-      ];
+      turnCount = 1;
     } else {
-      history.push({ role: "user", content: `Refine: ${instruction}` });
+      turnCount += 1;
     }
-    const turn = Math.ceil(history.filter((m) => m.role === "user").length);
+    const turn = turnCount;
+
+    const sourceForPrompt = isRefinement && lastAfter ? lastAfter : baselineSource;
+    const userMessage = buildUserMessage({
+      currentSource: sourceForPrompt,
+      instruction: isRefinement
+        ? `This is a refinement of your previous proposal. Apply this change on top of it: ${instruction}`
+        : instruction,
+      ...(userReference ? { reference: userReference } : {}),
+    });
 
     // Reset diff/stream UI but keep conversation state.
     streamEl.hidden = false;
@@ -365,10 +366,9 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     cancelBtn.hidden = false;
     startFreshBtn.hidden = false;
 
-    const currentSource = baselineSource;
     const messages = [
       { role: "system", content: buildSystemPrompt() },
-      ...history,
+      { role: "user", content: userMessage },
     ];
 
     abort = new AbortController();
@@ -435,9 +435,6 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
     sendBtn.hidden = false;
     cancelBtn.hidden = true;
     abort = null;
-
-    // Record the assistant's reply so the next refine turn can see it.
-    history.push({ role: "assistant", content: collected });
 
     const aiBlocks = extractAllDslBlocks(collected);
     if (aiBlocks.length === 0) {
@@ -604,7 +601,7 @@ export function mountAiSidebar({ parent, getSource, setSource }) {
 
   const endConversation = () => {
     baselineSource = null;
-    history = [];
+    turnCount = 0;
     startFreshBtn.hidden = true;
   };
 
