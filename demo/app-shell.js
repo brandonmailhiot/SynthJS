@@ -47,11 +47,11 @@ voice bass {
   \\instrument bass
   \\mp
   repeat 2 {
-    4 ^1.
-    8 r
+    16 ^1. 8 r 4 ^1.
+    8 r 16 r
     8 ^3
-    4 ^1.
-    8 r
+    16 ^1. 8 r 4 ^1.
+    8 r 16 r
     8 ^2
   }
 }
@@ -60,16 +60,18 @@ voice melody {
   \\key c#4 phrygian
   \\instrument melody
   \\mp
-  repeat 4 {
+  repeat 5 {
     16 ^7. ^5. ^3. ^1.
     16 ^6. ^5. ^2. ^1.
   }
+  16 ^5. r ^4. ^3.
+  16 r ^1. ^2. r
 }
 
 voice drums {
   \\instrument hat_closed_808
   \\p
-  repeat 2 {
+  repeat 3 {
     8 r f6 r f r f r f
   }
 }
@@ -77,7 +79,7 @@ voice drums {
 voice kick {
   \\instrument kick_drum
   \\f
-  repeat 2 {
+  repeat 3 {
     4 c2 c c c
   }
 }
@@ -85,7 +87,7 @@ voice kick {
 voice snare {
   \\instrument snare_drum
   \\mf
-  repeat 2 {
+  repeat 3 {
     4 r d3 r d
   }
 }
@@ -99,8 +101,8 @@ instrument define bass {
 
 instrument define melody {
   oscillator sawtooth
-  envelope adsr(0.14, 0.2, 0.75, 0.5)
-  filter highpass(3500, 0.6)
+  envelope adsr(0.44, 0.9, 0.25, 1)
+  filter highpass(3500, 0.1)
   gain 0.85
 }
 `;

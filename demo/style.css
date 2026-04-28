@@ -1719,3 +1719,82 @@ body {
     max-height: none;
   }
 }
+
+/* ============================================================
+   REVIEW MODE — sheet music tab
+   ============================================================ */
+
+.sheet-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.sheet-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 76vh;
+  overflow-y: auto;
+}
+
+.sheet-card {
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  display: grid;
+  grid-template-rows: auto auto;
+}
+
+.sheet-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-tint);
+}
+
+.sheet-card-name {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.sheet-card-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.sheet-card-canvas {
+  padding: 12px 16px 16px;
+  overflow-x: auto;
+  background: var(--bg);
+}
+
+/* VexFlow draws inline svg; force readable colors against the cream bg. */
+.sheet-card-canvas svg path,
+.sheet-card-canvas svg line,
+.sheet-card-canvas svg rect {
+  /* VexFlow's defaults are black, which already matches our --ink. Leave the
+     default unless we ever theme into a different ink. */
+}
+
+.sheet-empty,
+.sheet-error {
+  margin: 0;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.sheet-error {
+  color: var(--danger);
+}

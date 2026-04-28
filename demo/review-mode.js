@@ -13,6 +13,7 @@
  */
 
 import { compileSync } from "synth-javascript";
+import { renderVoiceStaff } from "./sheet-music.js";
 
 const PIXELS_PER_BEAT = 32; // 1 beat = 32 px (whole note = 128 px)
 const VOICE_HEIGHT = 144; // height of each voice canvas in CSS px
@@ -88,7 +89,7 @@ export function mountReviewMode({ parent, project }) {
       resizeHandler = null;
     }
     if (activeTab === "timeline") renderTimeline();
-    else if (activeTab === "sheet") renderSheetPlaceholder();
+    else if (activeTab === "sheet") renderSheet();
     else renderSourcePlaceholder();
   }
 
@@ -175,19 +176,34 @@ export function mountReviewMode({ parent, project }) {
     window.addEventListener("resize", resizeHandler);
   }
 
-  function renderSheetPlaceholder() {
+  function renderSheet() {
     paneEl.innerHTML = `
-      <div class="placeholder-mode">
-        <div class="panel-head">
-          <span class="panel-num">SHEET</span>
-          <h2 class="panel-title">vexflow notation · coming next</h2>
-        </div>
-        <p class="placeholder-blurb">
-          Per-voice staff rendering with bar markers, key signature, dynamic
-          markings inline, and articulation symbols. Lands in PR 25.
-        </p>
+      <div class="sheet-summary">
+        <span class="readout-eyebrow">notation</span>
+        <span class="readout-strong">${ir.tempo} bpm · ${ir.timeSig?.numerator ?? 4}/${ir.timeSig?.denominator ?? 4} · ${ir.voices.length} voices</span>
       </div>
+      <div class="sheet-stack" id="sheet-stack"></div>
     `;
+    const stack = paneEl.querySelector("#sheet-stack");
+    const paneWidth = stack.clientWidth || paneEl.clientWidth || 980;
+    for (const voice of ir.voices) {
+      const card = document.createElement("section");
+      card.className = "sheet-card";
+      card.innerHTML = `
+        <header class="sheet-card-head">
+          <span class="sheet-card-name">${escapeHtml(voice.name)}</span>
+          <span class="sheet-card-meta">${voice.events.length} events · ${voice.events[0]?.instrument.name ?? "—"}</span>
+        </header>
+        <div class="sheet-card-canvas"></div>
+      `;
+      stack.appendChild(card);
+      const target = card.querySelector(".sheet-card-canvas");
+      try {
+        renderVoiceStaff(target, voice, ir, { maxWidth: paneWidth - 64 });
+      } catch (err) {
+        target.innerHTML = `<p class="sheet-error">notation render failed: ${escapeHtml(err?.message ?? String(err))}</p>`;
+      }
+    }
   }
 
   function renderSourcePlaceholder() {
