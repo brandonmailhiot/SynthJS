@@ -1,5 +1,5 @@
 import type { CompositionIR, Diagnostic, TimelineEvent } from "../ir/nodes.js";
-import type { AudioContextLike, AudioNodeLike } from "./audio-context.js";
+import type { AudioContextLike, AudioNodeLike, GainNodeLike } from "./audio-context.js";
 import { type SampleBuffers, type SampleFetcher, preloadSamples } from "./sample-preload.js";
 import { LookaheadScheduler, type SchedulerOptions } from "./scheduler.js";
 import { beatsToSeconds } from "./time.js";
@@ -31,6 +31,11 @@ export class Composition {
   private masterInput: AudioNodeLike | null = null;
   private sampleBuffers: SampleBuffers = new Map();
   private samplesLoaded = false;
+  // Per-voice mute gates — a GainNode sits between every voice's output and
+  // the master bus, so mute/solo flips a single param value with sample
+  // accuracy. No IR swap, no schedule clear, no loop restart needed.
+  private voiceGates: Map<string, GainNodeLike> = new Map();
+  private voiceMuted: Set<string> = new Set();
 
   constructor(
     private readonly ir: CompositionIR,
@@ -90,14 +95,30 @@ export class Composition {
     return headroom;
   }
 
+  /**
+   * Get or create the per-voice mute gate. Each voice routes through a
+   * dedicated GainNode whose value is 1.0 when active and 0.0 when muted —
+   * flipping `setVoiceMuted` is sample-accurate and never needs to
+   * reschedule events.
+   */
+  private getVoiceGate(name: string): GainNodeLike {
+    let gate = this.voiceGates.get(name);
+    if (gate) return gate;
+    gate = this.ctx.createGain();
+    gate.gain.value = this.voiceMuted.has(name) ? 0 : 1;
+    gate.connect(this.getMasterInput());
+    this.voiceGates.set(name, gate);
+    return gate;
+  }
+
   private scheduleIteration(iterStartTime: number, fromBeat = 0): void {
-    const voiceOutput = this.ctx.createGain();
-    voiceOutput.connect(this.getMasterInput());
     for (const voice of this.ir.voices) {
       const filteredVoice = {
         ...voice,
         events: voice.events.filter((e) => e.startBeat >= fromBeat),
       };
+      const voiceOutput = this.ctx.createGain();
+      voiceOutput.connect(this.getVoiceGate(voice.name));
       const player = new VoicePlayer({
         ctx: this.ctx,
         voice: filteredVoice,
@@ -111,6 +132,41 @@ export class Composition {
       });
       player.schedule();
       this.players.push(player);
+    }
+  }
+
+  /**
+   * Mute or unmute a voice in real time. Sample-accurate via the per-voice
+   * gain gate; events keep firing on schedule but produce silence while the
+   * gate is closed. Soloing in callers is "mute every voice that isn't in
+   * the solo set" — implement at the call site.
+   */
+  setVoiceMuted(name: string, muted: boolean): void {
+    if (muted) this.voiceMuted.add(name);
+    else this.voiceMuted.delete(name);
+    const gate = this.voiceGates.get(name);
+    if (!gate) return; // nothing scheduled yet — gate will be created lazily
+    const t = this.ctx.currentTime;
+    gate.gain.cancelScheduledValues(t);
+    gate.gain.setValueAtTime(muted ? 0 : 1, t);
+  }
+
+  /**
+   * Convenience: pass a set of voice names that should remain audible.
+   * When the set is empty, every voice is unmuted. Resolves all known
+   * voices (those that have ever scheduled) plus any in `this.ir.voices`.
+   */
+  setSolo(soloNames: Set<string>): void {
+    const allNames = new Set<string>([
+      ...this.voiceGates.keys(),
+      ...this.ir.voices.map((v) => v.name),
+    ]);
+    if (soloNames.size === 0) {
+      for (const name of allNames) this.setVoiceMuted(name, false);
+      return;
+    }
+    for (const name of allNames) {
+      this.setVoiceMuted(name, !soloNames.has(name));
     }
   }
 
@@ -198,14 +254,9 @@ export class Composition {
     const elapsedSec = this.ctx.currentTime - this.playStartTime;
     const tempo = this.ir.tempo;
     const currentBeat = elapsedSec / (4 * (60 / tempo));
-    // Stop active oscillators (events that have already been dispatched).
+    // Stop active players
     for (const player of this.players) player.stop();
     this.players.length = 0;
-    // Drop every event still pending in the lookahead queue. Loop mode
-    // pre-arms the next iteration's events from the OLD IR ahead of time;
-    // without this, those events would still fire after the swap and
-    // mute/solo changes wouldn't take effect until the loop wrapped.
-    this.scheduler.clearQueue();
     // Swap IR (use unknown cast to bypass readonly)
     (this as unknown as { ir: CompositionIR }).ir = newIR;
     // Re-anchor: reschedule from the *new* IR starting at the current beat

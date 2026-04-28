@@ -27,7 +27,6 @@ import {
   compileSync,
   extractAllDslBlocks,
   isTruncated,
-  isolateIR,
   mergeBlocks,
 } from "synth-javascript";
 
@@ -138,23 +137,33 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
       else soloVoices.add(name);
     }
     renderVoices();
-    if (composition) hotReload();
+    applyMuteSolo();
   });
 
+  /**
+   * Apply the current mute + solo state to the running composition by
+   * flipping per-voice gain gates — sample-accurate, no rescheduling.
+   * Also works before any composition is playing: the gates are created
+   * lazily, so toggling now persists into the next play().
+   */
+  function applyMuteSolo() {
+    if (!composition) return;
+    if (soloVoices.size > 0) {
+      composition.setSolo(soloVoices);
+    } else {
+      composition.setSolo(new Set()); // clear any prior solo
+      for (const v of currentIR.voices) {
+        composition.setVoiceMuted(v.name, mutedVoices.has(v.name));
+      }
+    }
+  }
+
   // ---- Transport ----
-  function activeVoiceNames() {
-    if (soloVoices.size > 0) return [...soloVoices];
-    return currentIR.voices.map((v) => v.name).filter((n) => !mutedVoices.has(n));
-  }
-
-  function buildLiveIR() {
-    return isolateIR(currentIR, { voices: activeVoiceNames() });
-  }
-
   async function startLoop() {
     if (composition) return;
-    const ir = buildLiveIR();
-    composition = new Composition(ir);
+    composition = new Composition(currentIR);
+    // Re-apply any mute/solo state set before play started.
+    applyMuteSolo();
     isLooping = true;
     transportPlayBtn.classList.add("is-on");
     setAiStatus("loop running — ask the assistant for a part");
@@ -177,10 +186,16 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
     clearBeatLEDs();
   }
 
-  async function hotReload() {
+  /**
+   * Used when the IR itself changes (AI-accepted proposal). Mute/solo
+   * doesn't go through here — the per-voice gain gates handle those
+   * without touching the schedule.
+   */
+  async function hotReloadIR() {
     if (!composition) return;
     try {
-      await composition.update(buildLiveIR());
+      await composition.update(currentIR);
+      applyMuteSolo();
     } catch (err) {
       console.warn("live: hot-reload failed", err);
     }
@@ -341,7 +356,7 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
     clearProposal();
     aiStreamEl.hidden = true;
     setAiStatus(isLooping ? "applied · running" : "applied · press play to hear it");
-    if (composition) await hotReload();
+    if (composition) await hotReloadIR();
   });
 
   aiRejectBtn.addEventListener("click", () => {
