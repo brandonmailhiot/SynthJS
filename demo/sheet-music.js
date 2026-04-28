@@ -13,7 +13,7 @@
  *   - Slides + pitch sweeps render only the source pitch.
  */
 
-import { Accidental, Annotation, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
+import { Accidental, Dot, Formatter, Renderer, Stave, StaveNote, Voice } from "vexflow";
 
 const NOTE_VALUES = [
   // [whole-note fraction, vexflow duration code, dotted? ]
@@ -191,7 +191,7 @@ function makeNote(freqs, vfDur, dotted, clef) {
       duration: `${vfDur}r`,
       clef,
     });
-    if (dotted) rest.addModifier(new Annotation(".").setVerticalJustification(2));
+    if (dotted) Dot.buildAndAttach([rest]);
     return rest;
   }
   const filtered = freqs.filter((f) => typeof f === "number" && Number.isFinite(f) && f > 0);
@@ -203,9 +203,6 @@ function makeNote(freqs, vfDur, dotted, clef) {
     clef,
     auto_stem: true,
   });
-  if (dotted) {
-    note.addDotToAll();
-  }
   // Add any necessary accidentals based on the keys we constructed.
   keys.forEach((k, i) => {
     if (k.includes("##")) note.addModifier(new Accidental("##"), i);
@@ -213,6 +210,7 @@ function makeNote(freqs, vfDur, dotted, clef) {
     else if (k.includes("bb")) note.addModifier(new Accidental("bb"), i);
     else if (k.match(/^[a-g]b\//)) note.addModifier(new Accidental("b"), i);
   });
+  if (dotted) Dot.buildAndAttach([note], { all: true });
   return note;
 }
 
