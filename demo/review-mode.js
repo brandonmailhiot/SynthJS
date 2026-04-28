@@ -12,8 +12,12 @@
  * inspector pane on the right.
  */
 
+import { EditorState } from "@codemirror/state";
+import { EditorView, lineNumbers } from "@codemirror/view";
 import { compileSync } from "synth-javascript";
+import { synthHover } from "./lsp-extensions.js";
 import { renderVoiceStaff } from "./sheet-music.js";
+import { synthLanguage } from "./synth-language.js";
 
 const PIXELS_PER_BEAT = 32; // 1 beat = 32 px (whole note = 128 px)
 const VOICE_HEIGHT = 144; // height of each voice canvas in CSS px
@@ -70,6 +74,7 @@ export function mountReviewMode({ parent, project }) {
   const paneEl = parent.querySelector("#review-pane");
   let activeTab = "timeline";
   let resizeHandler = null;
+  let sourceView = null;
 
   for (const tab of parent.querySelectorAll(".review-tab")) {
     tab.addEventListener("click", () => {
@@ -88,9 +93,13 @@ export function mountReviewMode({ parent, project }) {
       window.removeEventListener("resize", resizeHandler);
       resizeHandler = null;
     }
+    if (sourceView) {
+      sourceView.destroy();
+      sourceView = null;
+    }
     if (activeTab === "timeline") renderTimeline();
     else if (activeTab === "sheet") renderSheet();
-    else renderSourcePlaceholder();
+    else renderSource();
   }
 
   // ---------- Timeline (piano-roll per voice) ----------
@@ -206,20 +215,33 @@ export function mountReviewMode({ parent, project }) {
     }
   }
 
-  function renderSourcePlaceholder() {
+  function renderSource() {
     paneEl.innerHTML = `
-      <div class="placeholder-mode">
-        <div class="panel-head">
-          <span class="panel-num">SOURCE</span>
-          <h2 class="panel-title">read-only inspect view · coming next</h2>
-        </div>
-        <p class="placeholder-blurb">
-          A read-only mirror of the SynthJS source with hover-metadata
-          tooltips and click-to-jump in the timeline view.
-        </p>
-        <pre class="review-error" style="white-space: pre-wrap; color: var(--ink); border-color: var(--rule); background: var(--bg-tint);">${escapeHtml(project.source)}</pre>
+      <div class="sheet-summary">
+        <span class="readout-eyebrow">source</span>
+        <span class="readout-strong">${countLines(project.source)} lines · read-only · hover any pitch / rest for metadata</span>
       </div>
+      <div class="source-screen" id="source-screen"></div>
     `;
+    const target = paneEl.querySelector("#source-screen");
+    const state = EditorState.create({
+      doc: project.source,
+      extensions: [
+        EditorState.readOnly.of(true),
+        EditorView.editable.of(false),
+        lineNumbers(),
+        synthLanguage(),
+        synthHover(),
+        EditorView.theme({
+          "&": { fontSize: "14px", height: "100%" },
+          ".cm-scroller": { fontFamily: "ui-monospace, 'SF Mono', Monaco, monospace" },
+          "&.cm-focused": { outline: "none" },
+          ".cm-content": { caretColor: "transparent" },
+        }),
+      ],
+    });
+    const view = new EditorView({ state, parent: target });
+    sourceView = view;
   }
 
   // ---------- Boot ----------
@@ -227,8 +249,13 @@ export function mountReviewMode({ parent, project }) {
   return {
     destroy: () => {
       if (resizeHandler) window.removeEventListener("resize", resizeHandler);
+      if (sourceView) sourceView.destroy();
     },
   };
+}
+
+function countLines(s) {
+  return (s.match(/\n/g)?.length ?? 0) + 1;
 }
 
 // =====================================================================
