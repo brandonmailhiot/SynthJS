@@ -77,6 +77,7 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
   let beatTickHandle = 0;
   let mutedVoices = new Set();
   let soloVoices = new Set();
+  let voiceVolumes = new Map(); // name -> 0..1.5
   let currentSource = project.source;
   let currentIR = baselineIR;
   let pendingProposal = null; // { proposed, summary }
@@ -102,6 +103,7 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
         const muted = mutedVoices.has(v.name);
         const solo = soloVoices.has(v.name);
         const eventCount = v.events.length;
+        const volume = voiceVolumes.get(v.name) ?? 1;
         return `
           <div class="voice-card ${muted ? "is-muted" : ""} ${solo ? "is-solo" : ""}" data-voice="${escapeHtml(v.name)}">
             <div class="voice-card-head">
@@ -110,13 +112,22 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
               <span class="voice-card-meta">${eventCount} ev</span>
             </div>
             <div class="voice-card-buttons">
-              <button class="pad-btn ${muted ? "is-on" : ""}" data-action="mute" title="Mute this voice">
-                M
-              </button>
-              <button class="pad-btn pad-btn-solo ${solo ? "is-on" : ""}" data-action="solo" title="Solo this voice">
-                S
-              </button>
+              <button class="pad-btn ${muted ? "is-on" : ""}" data-action="mute" title="Mute this voice">M</button>
+              <button class="pad-btn pad-btn-solo ${solo ? "is-on" : ""}" data-action="solo" title="Solo this voice">S</button>
             </div>
+            <label class="voice-fader">
+              <span class="voice-fader-label">vol</span>
+              <input
+                type="range"
+                min="0"
+                max="1.5"
+                step="0.01"
+                value="${volume}"
+                data-action="volume"
+                aria-label="${escapeHtml(v.name)} volume"
+              />
+              <span class="voice-fader-readout">${volume.toFixed(2)}</span>
+            </label>
           </div>
         `;
       })
@@ -124,7 +135,7 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
   }
 
   voiceGridEl.addEventListener("click", (ev) => {
-    const btn = ev.target.closest("[data-action]");
+    const btn = ev.target.closest("button[data-action]");
     if (!btn) return;
     const card = btn.closest(".voice-card");
     if (!card) return;
@@ -140,6 +151,21 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
     applyMuteSolo();
   });
 
+  // Volume fader — uses 'input' for live drag feedback, applies straight
+  // to the per-voice gate without rescheduling.
+  voiceGridEl.addEventListener("input", (ev) => {
+    const slider = ev.target.closest('input[data-action="volume"]');
+    if (!slider) return;
+    const card = slider.closest(".voice-card");
+    if (!card) return;
+    const name = card.dataset.voice;
+    const v = Math.max(0, Math.min(1.5, Number.parseFloat(slider.value)));
+    voiceVolumes.set(name, v);
+    const readout = card.querySelector(".voice-fader-readout");
+    if (readout) readout.textContent = v.toFixed(2);
+    if (composition) composition.setVoiceVolume(name, v);
+  });
+
   /**
    * Apply the current mute + solo state to the running composition by
    * flipping per-voice gain gates — sample-accurate, no rescheduling.
@@ -148,6 +174,11 @@ export function mountLiveMode({ parent, project, onSourceChange }) {
    */
   function applyMuteSolo() {
     if (!composition) return;
+    // Push trims first so the gates know the unmute target before mute/solo
+    // resolves; mute always wins regardless of trim.
+    for (const [name, vol] of voiceVolumes.entries()) {
+      composition.setVoiceVolume(name, vol);
+    }
     if (soloVoices.size > 0) {
       composition.setSolo(soloVoices);
     } else {

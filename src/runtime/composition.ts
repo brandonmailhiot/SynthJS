@@ -36,6 +36,7 @@ export class Composition {
   // accuracy. No IR swap, no schedule clear, no loop restart needed.
   private voiceGates: Map<string, GainNodeLike> = new Map();
   private voiceMuted: Set<string> = new Set();
+  private voiceTrim: Map<string, number> = new Map();
 
   constructor(
     private readonly ir: CompositionIR,
@@ -105,7 +106,8 @@ export class Composition {
     let gate = this.voiceGates.get(name);
     if (gate) return gate;
     gate = this.ctx.createGain();
-    gate.gain.value = this.voiceMuted.has(name) ? 0 : 1;
+    const initial = this.voiceMuted.has(name) ? 0 : (this.voiceTrim.get(name) ?? 1);
+    gate.gain.value = initial;
     gate.connect(this.getMasterInput());
     this.voiceGates.set(name, gate);
     return gate;
@@ -148,7 +150,24 @@ export class Composition {
     if (!gate) return; // nothing scheduled yet — gate will be created lazily
     const t = this.ctx.currentTime;
     gate.gain.cancelScheduledValues(t);
-    gate.gain.setValueAtTime(muted ? 0 : 1, t);
+    const target = muted ? 0 : (this.voiceTrim.get(name) ?? 1);
+    gate.gain.setValueAtTime(target, t);
+  }
+
+  /**
+   * Continuous per-voice volume trim (0..1+). Combines with mute: while
+   * muted, the gate stays at 0 even if trim changes. Stored separately so
+   * unmute restores to the user's last trim value.
+   */
+  setVoiceVolume(name: string, volume: number): void {
+    const v = Math.max(0, volume);
+    this.voiceTrim.set(name, v);
+    if (this.voiceMuted.has(name)) return;
+    const gate = this.voiceGates.get(name);
+    if (!gate) return;
+    const t = this.ctx.currentTime;
+    gate.gain.cancelScheduledValues(t);
+    gate.gain.setValueAtTime(v, t);
   }
 
   /**

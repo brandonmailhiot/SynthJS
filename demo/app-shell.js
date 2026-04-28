@@ -293,6 +293,18 @@ export function mountAppShell({ root }) {
     seg.addEventListener("click", () => setMode(seg.dataset.mode));
   }
 
+  // Keyboard shortcuts — Cmd/Ctrl + 1/2/3 jump between modes. Skips when
+  // the user is typing in a CodeMirror editor or the project name input
+  // so plain digits stay editable.
+  window.addEventListener("keydown", (ev) => {
+    if (!(ev.metaKey || ev.ctrlKey)) return;
+    if (ev.key === "1" || ev.key === "2" || ev.key === "3") {
+      ev.preventDefault();
+      const mode = MODES[Number.parseInt(ev.key, 10) - 1];
+      if (mode) setMode(mode);
+    }
+  });
+
   async function remountActiveMode() {
     if (mounted?.destroy) {
       try {
