@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SynthJS — Live Editor</title>
+  <title>SynthJS — agentic music studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="style.css" />
@@ -30,99 +30,7 @@
   </script>
 </head>
 <body>
-  <div class="page">
-    <header class="masthead">
-      <div class="masthead-left">
-        <span class="eyebrow">v2.0 · alpha</span>
-        <h1>synth<span class="js">/js</span></h1>
-        <p class="tagline">a web-native music programming language.</p>
-      </div>
-      <div class="masthead-right">
-        <span class="meta-line">live editor</span>
-        <span class="meta-line">diagnostics · hover · autocomplete</span>
-      </div>
-    </header>
-
-    <section class="panel" aria-labelledby="transport-label">
-      <div class="panel-head">
-        <span class="panel-num">01</span>
-        <h2 id="transport-label" class="panel-title">transport</h2>
-      </div>
-      <div class="controls-row">
-        <label class="field">
-          <span class="field-label">example</span>
-          <select id="examples">
-            <option value="showcase">Showcase (full kit)</option>
-            <option value="scale">C Major Scale</option>
-            <option value="chords">Chord Progression</option>
-            <option value="two-voice">Two Voices</option>
-            <option value="custom-instrument">Custom Instrument</option>
-            <option value="slide">Slide Chain</option>
-            <option value="dynamics">Dynamics &amp; Articulation</option>
-            <option value="sampled-drums">Sampled Drums (stdlib bundle)</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="field-label">solo voice</span>
-          <select id="solo">
-            <option value="">all voices</option>
-          </select>
-        </label>
-        <div class="buttons">
-          <button id="play" class="btn btn-primary" title="Play full composition">
-            <span class="btn-glyph">▶</span><span class="btn-label">play</span>
-          </button>
-          <button
-            id="play-selection"
-            class="btn"
-            title="Play only the events in the current editor selection"
-          >
-            <span class="btn-glyph">▶</span><span class="btn-label">selection</span>
-          </button>
-          <button id="stop" class="btn btn-stop">
-            <span class="btn-glyph">■</span><span class="btn-label">stop</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel" aria-labelledby="editor-label">
-      <div class="panel-head">
-        <span class="panel-num">02</span>
-        <h2 id="editor-label" class="panel-title">editor</h2>
-      </div>
-      <div id="editor" aria-label="SynthJS source editor"></div>
-      <p class="hint">audio output muted until first user gesture (browser policy). press play to begin.</p>
-    </section>
-
-    <section class="panel" id="ai-panel" aria-label="AI assistant"></section>
-
-    <section class="panel" aria-labelledby="features-label">
-      <div class="panel-head">
-        <span class="panel-num">03</span>
-        <h2 id="features-label" class="panel-title">features</h2>
-      </div>
-      <ul class="features">
-        <li><span class="dot dot-red"></span><span>errors and warnings highlighted inline as you type</span></li>
-        <li><span class="dot dot-yellow"></span><span>hover any pitch, motif, or effect for details — frequency, signature, docs</span></li>
-        <li>
-          <span class="dot dot-blue"></span>
-          <span>press <kbd>ctrl</kbd> <kbd>space</kbd> for context-aware completions</span>
-        </li>
-        <li>
-          <span class="dot dot-green"></span>
-          <span>doc comments <code>///</code> appear in hover and completion tooltips</span>
-        </li>
-      </ul>
-    </section>
-
-    <footer class="colophon">
-      <span class="colophon-line">synthjs / v2 alpha</span>
-      <span class="colophon-line">
-        <a href="https://github.com/brandonmailhiot/SynthJS">github.com/brandonmailhiot/synthjs</a>
-      </span>
-    </footer>
-  </div>
+  <div id="app" class="app-shell"></div>
   <script type="module" src="main.js"></script>
 </body>
 </html>
