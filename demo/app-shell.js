@@ -39,18 +39,31 @@ const SAVE_PULSE_MS = 700;
 const SEED_SOURCE = `\\version "2.0"
 \\use "@stdlib/instruments"
 \\use "@stdlib/drums"
-\\key c#4 phrygian
 \\tempo 100
 \\time 4/4
 
-voice melody {
-  \\instrument melody_instrument
+voice bass {
+  \\key c#1 locrian
+  \\instrument bass
   \\mp
-  8 ^1
-  4 ^3 ^4
-  8 ^3 ^4
-  4 ^5
-  8 ^7 ^5 ^4 ^2 ^1 ^2
+  repeat 2 {
+    4 ^1.
+    8 r
+    8 ^3
+    4 ^1.
+    8 r
+    8 ^2
+  }
+}
+
+voice melody {
+  \\key c#4 phrygian
+  \\instrument melody
+  \\mp
+  repeat 4 {
+    16 ^7. ^5. ^3. ^1.
+    16 ^6. ^5. ^2. ^1.
+  }
 }
 
 voice drums {
@@ -77,10 +90,17 @@ voice snare {
   }
 }
 
-instrument define melody_instrument {
+instrument define bass {
   oscillator sawtooth
   envelope adsr(0.14, 0.2, 0.75, 0.5)
   filter lowpass(3500, 0.6)
+  gain 0.85
+}
+
+instrument define melody {
+  oscillator sawtooth
+  envelope adsr(0.14, 0.2, 0.75, 0.5)
+  filter highpass(3500, 0.6)
   gain 0.85
 }
 `;
