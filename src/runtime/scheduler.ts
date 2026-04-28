@@ -71,4 +71,13 @@ export class LookaheadScheduler {
   get pendingCount(): number {
     return this.queue.length;
   }
+
+  /**
+   * Drop every queued event without dispatching it. Used by `Composition.update`
+   * when swapping in a new IR so events pre-armed for an upcoming loop
+   * iteration (built from the old IR) don't fire alongside the new schedule.
+   */
+  clearQueue(): void {
+    this.queue.length = 0;
+  }
 }

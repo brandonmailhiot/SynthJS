@@ -198,9 +198,14 @@ export class Composition {
     const elapsedSec = this.ctx.currentTime - this.playStartTime;
     const tempo = this.ir.tempo;
     const currentBeat = elapsedSec / (4 * (60 / tempo));
-    // Stop active players
+    // Stop active oscillators (events that have already been dispatched).
     for (const player of this.players) player.stop();
     this.players.length = 0;
+    // Drop every event still pending in the lookahead queue. Loop mode
+    // pre-arms the next iteration's events from the OLD IR ahead of time;
+    // without this, those events would still fire after the swap and
+    // mute/solo changes wouldn't take effect until the loop wrapped.
+    this.scheduler.clearQueue();
     // Swap IR (use unknown cast to bypass readonly)
     (this as unknown as { ir: CompositionIR }).ir = newIR;
     // Re-anchor: reschedule from the *new* IR starting at the current beat
