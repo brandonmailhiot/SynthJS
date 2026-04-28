@@ -256,7 +256,11 @@ export function mountAppShell({ root }) {
         onSourceChange: (source) => scheduleSave(source),
       });
     } else if (activeMode === "live") {
-      mounted = mountLiveMode({ parent: workspaceEl, project: activeProject });
+      mounted = mountLiveMode({
+        parent: workspaceEl,
+        project: activeProject,
+        onSourceChange: (source) => scheduleSave(source),
+      });
     } else if (activeMode === "review") {
       mounted = mountReviewMode({ parent: workspaceEl, project: activeProject });
     }

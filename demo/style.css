@@ -1243,3 +1243,235 @@ body {
   /* No-op: the new shell never renders these wrappers. Old rules above
      still apply when the AI sidebar / editor reuse panel-head class. */
 }
+
+/* ============================================================
+   LIVE MODE
+   ============================================================ */
+
+.live-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.live-error {
+  border: 1px solid var(--rule);
+  padding: 24px 28px;
+  background: var(--bg);
+}
+
+/* ----- Transport bar ---------------------------------------- */
+.live-transport {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: end;
+  gap: 28px;
+  padding: 18px 22px;
+  border: 1px solid var(--rule);
+  background: var(--code-bg);
+  color: var(--code-fg);
+}
+
+.live-transport-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.readout-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.live-transport-readout .readout-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(255, 212, 0, 0.18);
+}
+
+.live-beat-value {
+  min-width: 8ch;
+  display: inline-block;
+}
+
+.live-transport-buttons {
+  justify-self: end;
+  display: flex;
+  gap: 8px;
+}
+
+.live-play-btn.is-on {
+  background: var(--accent);
+  color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 212, 0, 0.2);
+}
+
+/* ----- Voice grid (mute/solo cards) ------------------------- */
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.voice-card {
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  padding: 14px 14px 12px;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 10px;
+  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.voice-card.is-muted {
+  opacity: 0.45;
+  background: var(--bg-tint);
+}
+
+.voice-card.is-solo {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* Subtle pulse driven by the beat ticker */
+.voice-card-led {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  transition: background 0.08s ease, box-shadow 0.08s ease;
+}
+
+.voice-card.is-pulsing .voice-card-led {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.22);
+}
+
+.voice-card.is-pulse-strong .voice-card-led {
+  background: var(--accent-warm);
+  box-shadow: 0 0 0 4px rgba(255, 122, 26, 0.35);
+}
+
+.voice-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.voice-card-name {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voice-card-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.voice-card-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.pad-btn {
+  appearance: none;
+  height: 38px;
+  border: 1px solid var(--rule);
+  background: var(--bg-tint);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.pad-btn:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.pad-btn.is-on {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.pad-btn-solo.is-on {
+  background: var(--accent);
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+/* ----- Live AI suggest pane --------------------------------- */
+.live-ai-head {
+  align-items: center;
+}
+
+.live-ai-pane {
+  border: 1px solid var(--rule);
+  padding: 18px 20px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.live-ai-result {
+  border: 1px solid var(--rule);
+  padding: 12px 14px;
+  background: var(--bg-tint);
+}
+
+.live-ai-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.live-ai-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.live-ai-tag-replaced {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.live-ai-tag-added {
+  background: var(--ok);
+  color: var(--bg);
+  border-color: var(--ok);
+}
+
+.live-ai-tag-warn {
+  background: var(--accent-warm);
+  color: var(--ink);
+  border-color: var(--accent-warm);
+}
