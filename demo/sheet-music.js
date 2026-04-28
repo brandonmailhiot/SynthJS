@@ -50,27 +50,53 @@ export function renderVoiceStaff(container, voice, ir, opts = {}) {
   // Decide treble vs bass clef based on the median pitch of the voice.
   const clef = pickClef(voice);
 
-  // Lay out measures left-to-right; wrap to a new system every N bars based
-  // on the available width. Width-per-measure is conservative so dense
-  // sixteenth-note voices have room.
-  const baseMeasureWidth = 220;
-  const minSystemBars = 1;
-  const maxSystemBars = Math.max(minSystemBars, Math.floor((opts.maxWidth ?? 980) / baseMeasureWidth));
+  // Density-aware width: each measure gets a width proportional to the
+  // number of notes it contains, with sane minimums. The first measure of
+  // every system also reserves space for a clef + time signature.
+  const PER_NOTE_PX = 38;
+  const MIN_MEASURE_PX = 200;
+  const CLEF_PADDING_PX = 60;
 
-  // Split measures into systems (rows of bars).
+  // Pre-build the note list per measure so the width calculation can use
+  // the post-quantization note count (which exceeds the raw event count
+  // when long durations decompose into multiple notes).
+  const measureNotes = measures.map((m) => measureToNotes(m, clef, tsDen));
+  const measureWidths = measureNotes.map((notes) => {
+    const noteCount = Math.max(1, notes.length);
+    return Math.max(MIN_MEASURE_PX, noteCount * PER_NOTE_PX);
+  });
+
+  // Pack measures into systems (rows). Each system can grow until its
+  // accumulated width hits the pane budget — but a single dense measure
+  // wider than the pane gets its own system and the pane scrolls.
+  const paneWidth = opts.maxWidth ?? 980;
   const systems = [];
-  for (let i = 0; i < measures.length; i += maxSystemBars) {
-    systems.push(measures.slice(i, i + maxSystemBars));
+  let cursor = [];
+  let cursorWidth = 0;
+  for (let i = 0; i < measures.length; i++) {
+    const w = measureWidths[i] + (cursor.length === 0 ? CLEF_PADDING_PX : 0);
+    if (cursor.length > 0 && cursorWidth + w > paneWidth) {
+      systems.push({ measures: cursor, widths: cursor.map((idx) => measureWidths[idx]) });
+      cursor = [];
+      cursorWidth = 0;
+    }
+    if (cursor.length === 0) cursorWidth += CLEF_PADDING_PX;
+    cursor.push(i);
+    cursorWidth += measureWidths[i];
+  }
+  if (cursor.length > 0) {
+    systems.push({ measures: cursor, widths: cursor.map((idx) => measureWidths[idx]) });
   }
 
-  const totalWidth = Math.min(
-    opts.maxWidth ?? 980,
-    baseMeasureWidth * Math.min(maxSystemBars, measures.length) + 80,
+  // Total width = the widest system; height stacks per system.
+  const totalWidth = Math.max(
+    paneWidth,
+    ...systems.map((s) => s.widths.reduce((a, b) => a + b, 0) + CLEF_PADDING_PX + 16),
   );
-  const systemHeight = 130;
+  const systemHeight = 140;
   const totalHeight = systemHeight * systems.length + 24;
 
-  container.innerHTML = ""; // clear
+  container.innerHTML = "";
   const renderer = new Renderer(container, Renderer.Backends.SVG);
   renderer.resize(totalWidth, totalHeight);
   const ctx = renderer.getContext();
@@ -78,26 +104,27 @@ export function renderVoiceStaff(container, voice, ir, opts = {}) {
 
   systems.forEach((system, sysIdx) => {
     const y = sysIdx * systemHeight + 4;
-    const widthPerMeasure = (totalWidth - 60) / system.length;
     let x = 16;
-    system.forEach((measure, idx) => {
-      const isFirst = sysIdx === 0 && idx === 0;
-      const stave = new Stave(x, y, widthPerMeasure);
-      if (isFirst) {
+    system.measures.forEach((measureIdx, idxInSystem) => {
+      const isFirstOfSystem = idxInSystem === 0;
+      const measureWidth = measureWidths[measureIdx] + (isFirstOfSystem ? CLEF_PADDING_PX : 0);
+      const stave = new Stave(x, y, measureWidth);
+      if (isFirstOfSystem) {
         stave.addClef(clef);
-        stave.addTimeSignature(`${tsNum}/${tsDen}`);
+        if (sysIdx === 0) stave.addTimeSignature(`${tsNum}/${tsDen}`);
       }
       stave.setContext(ctx).draw();
 
-      const notes = measureToNotes(measure, clef, tsDen);
-      if (notes.length > 0) {
+      const notes = measureNotes[measureIdx];
+      if (notes && notes.length > 0) {
         const voiceObj = new Voice({ num_beats: tsNum, beat_value: tsDen, resolution: 16384 });
         voiceObj.setStrict(false);
         voiceObj.addTickables(notes);
-        new Formatter().joinVoices([voiceObj]).format([voiceObj], widthPerMeasure - 32);
+        const formatWidth = measureWidth - (isFirstOfSystem ? CLEF_PADDING_PX + 16 : 24);
+        new Formatter().joinVoices([voiceObj]).format([voiceObj], formatWidth);
         voiceObj.draw(ctx, stave);
       }
-      x += widthPerMeasure;
+      x += measureWidth;
     });
   });
 }
