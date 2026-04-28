@@ -638,3 +638,608 @@ a:hover {
   margin: 0;
   background: var(--bg);
 }
+
+/* ============================================================
+   APP SHELL · v2 — agentic music studio
+   Library + topbar + workspace; TE hardware feel; immersive
+   transitions; LED indicators for save state.
+   ============================================================ */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  /* Override the page-level body background with a barely-warmer tint so the
+     shell's hairlines and screens read against a slightly different field. */
+  background: var(--bg);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  grid-template-rows: 100vh;
+  background: var(--bg);
+}
+
+@media (max-width: 880px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+}
+
+/* ----- Library (left) -------------------------------------- */
+
+.library {
+  border-right: 1px solid var(--rule);
+  padding: 24px 16px 24px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-tint);
+}
+
+.library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.library-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.library-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  align-items: center;
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.library-item:hover {
+  border-color: var(--rule);
+  background: var(--bg);
+}
+
+.library-item.is-active {
+  border-color: var(--rule);
+  background: var(--bg);
+}
+
+.library-card {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  border-radius: 0;
+  min-width: 0;
+}
+
+.library-led {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.library-item.is-active .library-led {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 212, 0, 0.25);
+}
+
+.library-name {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.library-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.library-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding-right: 8px;
+}
+
+.library-item:hover .library-actions,
+.library-item:focus-within .library-actions {
+  opacity: 1;
+}
+
+/* Tiny utility button — used in library + topbar */
+.btn-tiny {
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink);
+  border-radius: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.btn-tiny:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* ----- Shell main column (topbar + workspace) -------------- */
+
+.shell-main {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ----- Topbar ---------------------------------------------- */
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.project-name {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed transparent;
+  padding: 4px 2px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  outline: none;
+  min-width: 0;
+  width: 220px;
+  transition: border-color 0.15s ease;
+}
+
+.project-name:hover,
+.project-name:focus {
+  border-bottom-color: var(--ink);
+}
+
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.save-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--ink-faint);
+  border-radius: 50%;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.save-indicator.is-pulsing .save-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 212, 0, 0.18);
+  transform: scale(1.1);
+}
+
+.topbar-right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.readout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.readout-label {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+.readout-value {
+  color: var(--ink);
+}
+
+/* ----- Mode switcher (3-position rocker w/ sliding thumb) -- */
+
+.mode-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 120px);
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  padding: 0;
+  user-select: none;
+}
+
+.mode-switch-rail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mode-switch-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% / 3);
+  height: 100%;
+  background: var(--ink);
+  transition: transform 0.32s cubic-bezier(0.7, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.mode-segment {
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  transition: color 0.18s ease;
+}
+
+.mode-segment + .mode-segment {
+  border-left: 1px solid var(--rule);
+}
+
+.mode-num {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  transition: color 0.18s ease;
+}
+
+.mode-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.mode-segment.is-active {
+  color: var(--bg);
+}
+
+.mode-segment.is-active .mode-num {
+  color: rgba(244, 239, 231, 0.6);
+}
+
+.mode-segment:hover:not(.is-active) {
+  color: var(--accent-warm);
+}
+
+/* ----- Workspace ------------------------------------------- */
+
+.workspace {
+  position: relative;
+  overflow: auto;
+  padding: 32px 28px 48px;
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+
+.workspace.is-fading {
+  opacity: 0;
+}
+
+/* Compose-mode grid — editor + AI side by side on wide screens */
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workspace-left,
+.workspace-right {
+  min-width: 0;
+}
+
+.workspace-left .panel-head,
+.workspace-right .panel-head {
+  margin-bottom: 14px;
+}
+
+.workspace-left #editor {
+  min-height: 480px;
+  margin-bottom: 16px;
+}
+
+.transport-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.transport-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding-top: 24px; /* aligns visually with the select bottom */
+}
+
+@media (max-width: 720px) {
+  .transport-row {
+    grid-template-columns: 1fr;
+  }
+  .transport-buttons {
+    padding-top: 0;
+  }
+}
+
+/* AI panel slot — lets the existing ai-sidebar.js styles drive */
+.ai-panel {
+  border: 1px solid var(--rule);
+  background: var(--bg-tint);
+  padding: 20px 22px;
+}
+
+/* ----- Placeholder modes (live + review) ------------------- */
+
+.placeholder-mode {
+  border: 1px solid var(--rule);
+  padding: 28px 32px 32px;
+  background: var(--bg);
+}
+
+.placeholder-mode .panel-head {
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.placeholder-blurb {
+  margin: 24px 0 12px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 64ch;
+}
+
+.placeholder-meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Live placeholder — hardware sequencer pad grid */
+.placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  max-width: 720px;
+}
+
+@media (max-width: 720px) {
+  .placeholder-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.pad {
+  appearance: none;
+  aspect-ratio: 1;
+  border: 1px solid var(--rule);
+  background: var(--bg-tint);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transition: background 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+}
+
+/* Status LED dot — pulses to suggest the panel is alive */
+.status-led {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.status-led--idle {
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(255, 212, 0, 0.6);
+  animation: ledPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes ledPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 212, 0, 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 212, 0, 0);
+    transform: scale(1.18);
+  }
+}
+
+/* Review placeholder — three "instrument screens" stacked */
+.review-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.review-summary > div {
+  border: 1px solid var(--rule);
+  padding: 10px 12px;
+  background: var(--bg-tint);
+}
+
+.review-summary dt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 2px;
+}
+
+.review-summary dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.review-error {
+  margin: 0 0 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 10px 12px;
+  background: rgba(210, 59, 42, 0.06);
+}
+
+.review-screens {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 880px) {
+  .review-screens {
+    grid-template-columns: 1fr;
+  }
+}
+
+.review-screen {
+  border: 1px solid var(--rule);
+  background: var(--code-bg);
+  color: var(--code-fg);
+  padding: 28px 18px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.screen-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.screen-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* ----- Hide legacy page-level CSS that the v2 shell replaces ---- */
+
+.page,
+.masthead,
+.panel,
+.colophon {
+  /* No-op: the new shell never renders these wrappers. Old rules above
+     still apply when the AI sidebar / editor reuse panel-head class. */
+}
